@@ -1,0 +1,65 @@
+{
+    "games": [
+        {
+            "id": "12345",
+            "phase": "pickHero/draft/placement/battle/end",
+            "name": "Glebby vs Maxy",
+            "currentTurn": "player_123",
+            "logs": [
+                "Vasya228 закончил ход"
+            ],
+            "players": {
+                "player_123": {
+                    "id": "player_123",
+                    "name": "Vasya228",
+                    "hero": "Mage",
+                    "resources": {
+                        "agility": 0,
+                        "rage": 35,
+                        "light_mana": 24,
+                        "dark_mana": 13,
+                        "destruction_mana": 10
+                    },
+                    "artifacts": [
+                        {
+                            "id": "123",
+                            "face": "doubleAgility",
+                            "state": "readyToUse",
+                            "currentHp": 45,
+                            "maxHp": 70,
+                            "position": 1,
+                            "line": "back",
+                            "effects": [
+                                {
+                                    "id": "invisibility",
+                                    "duration": "next_round/current/current_and_next"
+                                }
+                            ]
+                        }
+                    ],
+                    "spellsCooldown": {
+                        "light": [
+                            "resurrection"
+                        ],
+                        "dark": [],
+                        "destruction": []
+                    },
+                    "effects": [
+                        {
+                            "id": "silence",
+                            "duration": "next_round/current_round/current_and_next"
+                        }
+                    ],
+                    "ready": false,
+                    "drafted_item": "321",
+                    "draft_deck": [
+                        "fire_sword",
+                        "cold_bow"
+                    ]
+                }
+            }
+        }
+    ]
+}
+
+
