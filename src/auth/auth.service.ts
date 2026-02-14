@@ -105,7 +105,6 @@ export class AuthService {
 
 
     async refreshTokens(refreshToken: string) {
-        
         try {
             const payload = await this.tokenService.verifyRefreshToken(refreshToken);
             

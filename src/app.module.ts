@@ -13,6 +13,11 @@ import { JwtRefreshStrategy } from './auth/strategies/jwt-refresh.strategy';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { InviteCodeModule } from './invite-code/invite-code.module';
+import { RedisModule } from './redis/redis.module';
+import { LobbyModule } from './lobby/lobby.module';
+import { SocketConnectionModule } from './socket-connection/socket-connection.module';
+import redisConfig from './config/redis.config';
 
 
 @Module({
@@ -20,7 +25,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
         ConfigModule.forRoot({
             isGlobal: true,
             envFilePath: '.env',
-            load: [jwtConfig, databaseConfig]
+            load: [jwtConfig, databaseConfig, redisConfig]
         }),
         PassportModule.register({ defaultStrategy: 'jwt' }),
         DatabaseModule,
@@ -37,6 +42,10 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
                 },
             }),
         }),
+        InviteCodeModule,
+        RedisModule,
+        LobbyModule,
+        SocketConnectionModule,
     ],
     controllers: [AppController],
     providers: [TokenService, AppService, JwtRefreshStrategy, JwtStrategy, JwtAuthGuard],

@@ -5,6 +5,13 @@ export class RegisterDto {
     @ApiProperty()
     @IsString()
     @MinLength(4)
+    @MaxLength(100)
+    @IsNotEmpty()
+    inviteCode: string
+
+    @ApiProperty()
+    @IsString()
+    @MinLength(4)
     @MaxLength(30)
     @IsNotEmpty()
     nickname: string

@@ -853,7 +853,7 @@ banUser(@Param('id') id: string, @Body() banDto: BanUserDto): void
 
 ```typescript
 
-// Сгенерировать уникальный 6-значный код, сохранить в БД
+// Сгенерировать уникальный 8-значный код, сохранить в БД
 generateInviteCode(): string
 
 // Проверить существует ли код и не использован ли он

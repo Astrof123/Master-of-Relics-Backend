@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { TokenService } from './jwt/token.service';
 import { RegisterDto } from './dto/register.dto';
@@ -53,7 +53,7 @@ export class AuthController {
         };
     }
 
-    @Post('refresh')
+    @Get('refresh')
     @HttpCode(HttpStatus.OK)
     async refresh(
         @Req() request: express.Request,
@@ -87,5 +87,4 @@ export class AuthController {
 
         return;
     }
-
 }
