@@ -8,7 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { TokensDto } from './dto/tokens.dto';
 import { LoginDto } from './dto/login.dto';
 import { InvalidCredentialsException, UserAlreadyExistsException } from './exceptions/auth.exception';
-import { CustomException } from 'src/common/custom.exception';
+import { CustomHttpException } from 'src/common/custom-http.exception';
 
 @Injectable()
 export class AuthService {
@@ -51,7 +51,7 @@ export class AuthService {
             };
         }
         catch (error) {
-            if (error instanceof CustomException) {
+            if (error instanceof CustomHttpException) {
                 throw error;
             }
             
@@ -91,7 +91,7 @@ export class AuthService {
             };
         }
         catch (error) {
-            if (error instanceof CustomException) {
+            if (error instanceof CustomHttpException) {
                 throw error;
             }
             
@@ -130,7 +130,7 @@ export class AuthService {
             };
         }
         catch (error) {
-            if (error instanceof CustomException) {
+            if (error instanceof CustomHttpException) {
                 throw error;
             }
             

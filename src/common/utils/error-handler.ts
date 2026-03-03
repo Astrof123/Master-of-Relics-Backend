@@ -1,4 +1,6 @@
-import { LobbyError } from "src/lobby/types/lobby-errors";
+import { GameException } from "src/game-state/types/game-exceptions";
+import { LobbyException } from "src/lobby/types/lobby-exceptions";
+import { CustomException } from "../custom.exception";
 
 export enum COMMON_ERROR_CODE {
     // Общие ошибки (1000-1999)
@@ -14,6 +16,17 @@ export const COMMON_ERROR_MESSAGE: Record<COMMON_ERROR_CODE, string> = {
 };
 
 
+export class CommonException extends CustomException {
+    constructor(
+        public code: COMMON_ERROR_CODE,
+        public details?: any
+    ) {
+        super(COMMON_ERROR_MESSAGE[code], code);
+        this.name = 'CommonError';
+    }
+}
+
+
 export interface ErrorResponse {
     success: false;
     data: null;
@@ -27,14 +40,13 @@ export interface ErrorResponse {
 export function handleError(error: unknown, callback?: Function): void {
     let errorResponse: ErrorResponse;
     
-    if (error instanceof LobbyError) {
+    if (error instanceof CustomException) {
         errorResponse = {
             success: false,
             data: null,
             message: error.message,
             error: {
-                code: error.code,
-                details: error.details
+                code: error.code
             }
         };
     } else if (error instanceof Error) {

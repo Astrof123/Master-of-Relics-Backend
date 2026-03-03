@@ -4,7 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { Lobby, LOBBY_STATE_TYPE, LobbyPlayer } from './types/lobby';
 import { CreateLobbyData } from './types/lobby-evens-data';
 import { UsersService } from 'src/users/users.service';
-import { LOBBY_ERROR_CODE, LobbyError } from './types/lobby-errors';
+import { LOBBY_ERROR_CODE, LobbyException } from './types/lobby-exceptions';
+import { LOBBYPATH } from './types/lobby-redis-paths';
 
 @Injectable()
 export class LobbyService {
@@ -16,21 +17,25 @@ export class LobbyService {
         private readonly usersService: UsersService
     ) {}
 
+    getLobbyKey(lobbyId: string) {
+        return `lobby:${lobbyId}`
+    }
+
     async createLobby(lobbyData: CreateLobbyData, userId: number): Promise<string> {
         
         if (!lobbyData.name || lobbyData.name.length < 3 || lobbyData.name.length > 20) {
-            throw new LobbyError(LOBBY_ERROR_CODE.LOBBY_INCORRECT_NAME);
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_INCORRECT_NAME);
         }
         
         const lobbyId = uuidv4();
-        const key = `lobby:${lobbyId}`;
+        const key = this.getLobbyKey(lobbyId);
         
         const user = await this.usersService.findOne(userId);
 
         const existingLobby = await this.getLobbyByUserId(userId);
         
         if (existingLobby) {
-            throw new LobbyError(LOBBY_ERROR_CODE.PLAYER_ALREADY_IN_LOBBY);
+            throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_ALREADY_IN_LOBBY);
         }
 
         await this.redisService.setJson<Lobby>(key, ".", {
@@ -60,24 +65,30 @@ export class LobbyService {
     }
 
     async joinLobby(lobbyId: string, userId: number): Promise<void> {
-        const key = `lobby:${lobbyId}`;
+        const key = this.getLobbyKey(lobbyId);
+
+        const lobbyByUserId = await this.getLobbyByUserId(userId);
+
+        if (lobbyByUserId !== null) {            
+            throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_ALREADY_IN_LOBBY);
+        }
 
         const lobby = await this.getLobbyById(lobbyId);
 
         if (!lobby) {
-            throw new LobbyError(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
         }
 
         if (lobby.state !== LOBBY_STATE_TYPE.WAITING) {
-            throw new LobbyError(LOBBY_ERROR_CODE.LOBBY_ALREADY_STARTED);
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_ALREADY_STARTED);
         }
 
         if (lobby.players[userId]) {
-            throw new LobbyError(LOBBY_ERROR_CODE.PLAYER_ALREADY_IN_LOBBY);
+            throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_ALREADY_IN_LOBBY);
         }
 
         if (Object.keys(lobby.players).length >= this.MAX_PLAYERS) {
-            throw new LobbyError(LOBBY_ERROR_CODE.LOBBY_FULL);
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_FULL);
         }
         
         const user = await this.usersService.findOne(userId);
@@ -89,27 +100,30 @@ export class LobbyService {
             isReady: false
         };
 
-        await this.redisService.setJson(key, `.players.${userId}`, newPlayer);
+        await this.redisService.setJson(key, LOBBYPATH.getPlayerPath(userId), newPlayer);
     }
 
     async leaveLobby(lobbyId: string, userId: number): Promise<void> {
-        const key = `lobby:${lobbyId}`;
+        const key = this.getLobbyKey(lobbyId);
         const lobby = await this.getLobbyById(lobbyId);
 
         if (!lobby) {
-            throw new LobbyError(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
         }
 
         const lobbyPlayer = lobby.players[userId];
 
         if (!lobbyPlayer) {
-            throw new LobbyError(LOBBY_ERROR_CODE.PLAYER_NOT_IN_LOBBY);
+            throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_NOT_IN_LOBBY);
         }
         
         if (Object.keys(lobby.players).length > 1) {
             if (lobbyPlayer.isHost) {
                 const otherPlayerId = Object.values(lobby.players).find(player => player.id !== userId)?.id;
-                await this.redisService.setJson(key, `.players.${otherPlayerId}.isHost`, true);
+
+                if (otherPlayerId) {
+                    await this.redisService.setJson(key, LOBBYPATH.getHostPath(otherPlayerId), true);
+                }
             }
 
             await this.redisService.delete(key, `.players.${userId}`);
@@ -120,25 +134,26 @@ export class LobbyService {
     }
 
     async toggleReadyLobby(lobbyId: string, userId: number): Promise<void> {
-        const key = `lobby:${lobbyId}`;
+        const key = this.getLobbyKey(lobbyId);
         const lobby = await this.getLobbyById(lobbyId);
 
         if (!lobby) {
-            throw new LobbyError(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
         }
 
         if (lobby.state !== LOBBY_STATE_TYPE.WAITING) {
-            throw new LobbyError(LOBBY_ERROR_CODE.LOBBY_ALREADY_STARTED);
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_ALREADY_STARTED);
         }
 
         const lobbyPlayer = lobby.players[userId];
 
         if (!lobbyPlayer) {
-            throw new LobbyError(LOBBY_ERROR_CODE.PLAYER_NOT_IN_LOBBY);
+            throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_NOT_IN_LOBBY);
         }
         
         const newReadyState = !lobbyPlayer.isReady;
-        await this.redisService.setJson(key, `.players.${userId}.isReady`, newReadyState);
+        const path = LOBBYPATH.getPlayerReadyPath(userId);
+        await this.redisService.setJson(key, path, newReadyState);
     }
 
     async getAllLobbyIds(): Promise<string[]> {
@@ -161,8 +176,8 @@ export class LobbyService {
     }
 
     async getLobbyById(lobbyId: string): Promise<Lobby | null> {
-        const key = `lobby:${lobbyId}`;
-        return this.redisService.getJson<Lobby>(key);
+        const key = this.getLobbyKey(lobbyId);
+        return await this.redisService.getJson<Lobby>(key);
     }
 
     async getLobbyByUserId(userId: number): Promise<Lobby|null> {
@@ -178,12 +193,12 @@ export class LobbyService {
     }
 
     async deleteLobby(lobbyId: string): Promise<void> {
-        const key = `lobby:${lobbyId}`;
+        const key = this.getLobbyKey(lobbyId);
 
         const lobby = await this.getLobbyById(lobbyId);
 
         if (!lobby) {
-            throw new LobbyError(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
         }
 
         await this.redisService.delete(key);

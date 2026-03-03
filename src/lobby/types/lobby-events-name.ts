@@ -7,6 +7,7 @@ export const LOBBY_EVENT_NAME  = {
     LEAVE_LOBBY: 'leave-lobby',
     TOGGLE_READY_LOBBY: "toggle-ready-lobby",
     LOBBY_UPDATE: 'lobby-update',
-} as const;
+    GAME_STARTED: 'game-started'
+};
 
 export type LobbyEventName  = typeof LOBBY_EVENT_NAME [keyof typeof LOBBY_EVENT_NAME];

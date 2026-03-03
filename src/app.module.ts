@@ -17,6 +17,10 @@ import { InviteCodeModule } from './invite-code/invite-code.module';
 import { RedisModule } from './redis/redis.module';
 import { LobbyModule } from './lobby/lobby.module';
 import { SocketConnectionModule } from './socket-connection/socket-connection.module';
+import { GameStateModule } from './game-state/game-state.module';
+import { ArtifactModule } from './artifact/artifact.module';
+import { DraftModule } from './draft/draft.module';
+import { PhaseModule } from './phase/phase.module';
 import redisConfig from './config/redis.config';
 
 
@@ -46,6 +50,10 @@ import redisConfig from './config/redis.config';
         RedisModule,
         LobbyModule,
         SocketConnectionModule,
+        GameStateModule,
+        ArtifactModule,
+        DraftModule,
+        PhaseModule,
     ],
     controllers: [AppController],
     providers: [TokenService, AppService, JwtRefreshStrategy, JwtStrategy, JwtAuthGuard],

@@ -16,11 +16,15 @@ import { LOBBY_ROOMS_NAME } from './types/lobby-rooms-name';
 import { UseGuards } from '@nestjs/common';
 import { WebSocketAuthGuard } from 'src/auth/guards/websocket-auth.guard';
 import { handleError } from 'src/common/utils/error-handler';
+import { GameStateService } from 'src/game-state/game-state.service';
 
 
 @WebSocketGateway()
 export class LobbyGateway implements OnGatewayDisconnect  {
-    constructor(private readonly lobbyService: LobbyService) {}
+    constructor(
+        private readonly lobbyService: LobbyService,
+        private readonly gameStateService: GameStateService
+    ) {}
 
     @WebSocketServer()
     server: Server;
@@ -63,11 +67,7 @@ export class LobbyGateway implements OnGatewayDisconnect  {
             }
         } 
         catch (error) {
-            callback({
-                success: false,
-                data: null,
-                message: error.message ?? "Ошибка на стороне сервера"
-            });
+            handleError(error, callback);
         }
     }
 
@@ -77,7 +77,6 @@ export class LobbyGateway implements OnGatewayDisconnect  {
         try {
             const userId = client.data.userId;
             const lobbyId = await this.lobbyService.createLobby(data, userId);
-
             const lobbies = await this.lobbyService.getAllLobbies();
 
             this.server.to(LOBBY_ROOMS_NAME.HALL).emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATE, lobbies)
@@ -104,24 +103,11 @@ export class LobbyGateway implements OnGatewayDisconnect  {
     async handleJoinLobby(client: Socket, lobbyId: string, callback: Function): Promise<void> {
         try {
             const userId = client.data.userId;
-            const lobbyByUserId = await this.lobbyService.getLobbyByUserId(userId);
-
-            if (lobbyByUserId !== null) {
-                callback({
-                    success: false,
-                    data: null,
-                    message: "Вы уже в лобби"
-                });
-                
-                return;
-            }
-
 
             await this.lobbyService.joinLobby(lobbyId, userId);
             const lobbies = await this.lobbyService.getAllLobbies();
             this.server.to(LOBBY_ROOMS_NAME.HALL).emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATE, lobbies)
             
-         
             await client.join(`lobby-${lobbyId}`)   
             const currentLobby = await this.lobbyService.getLobbyById(lobbyId);
             this.server.to(`lobby-${lobbyId}`).emit(LOBBY_EVENT_NAME.LOBBY_UPDATE, currentLobby)
@@ -144,6 +130,7 @@ export class LobbyGateway implements OnGatewayDisconnect  {
     async handleDeleteLobby(client: Socket, lobbyId: string, callback: Function): Promise<void> {
         try {
             await this.lobbyService.deleteLobby(lobbyId);
+            await this.gameStateService.deleteGame(lobbyId);
             const lobbies = await this.lobbyService.getAllLobbies();
 
             this.server.to(LOBBY_ROOMS_NAME.HALL).emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATE, lobbies)
@@ -218,4 +205,5 @@ export class LobbyGateway implements OnGatewayDisconnect  {
             handleError(error, callback);
         }
     }
+    
 }

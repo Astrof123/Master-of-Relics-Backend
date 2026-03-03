@@ -13,7 +13,7 @@ export class RedisService {
         key: string,
         path: string = ".",
         value: T,
-        options?: any
+        ttl?: number
     ): Promise<void> {
         const valueStr = JSON.stringify(value);
         
@@ -22,8 +22,8 @@ export class RedisService {
 
         await this.redisClient.call(command, ...args);
 
-        if (options?.ttl) {
-            await this.redisClient.expire(key, options.ttl);
+        if (ttl) {
+            await this.redisClient.expire(key, ttl);
         }
     }
 

@@ -1,15 +1,16 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { LobbyGateway } from './lobby.gateway';
 import { LobbyService } from './lobby.service';
 import { UsersModule } from 'src/users/users.module';
+import { GameStateModule } from 'src/game-state/game-state.module';
 
 @Module({
     providers: [
         LobbyGateway,
         LobbyService
     ],
-    exports: [],
-    imports: [UsersModule]
+    exports: [LobbyService],
+    imports: [UsersModule, forwardRef(() => GameStateModule)]
 })
 export class LobbyModule {
     

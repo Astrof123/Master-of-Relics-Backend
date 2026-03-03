@@ -3,14 +3,14 @@
         {
             "id": "123",
             "name": "Лобби 123",
-            "players": [
-                {
-                    "userId": "id_123",
+            "players": {
+                "123": {
+                    "userId": 123,
                     "nickname": "Vasya228",
                     "ready": true,
                     "isHost": true
                 }
-            ],
+            },
             "state": "waiting/playing",
             "options": {
                 "mode": "classic"

@@ -1,0 +1,1 @@
+export const DRAFT_COUNT_ARTIFACTS = 7;

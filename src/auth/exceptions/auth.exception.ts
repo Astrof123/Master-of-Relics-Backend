@@ -1,25 +1,25 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { CustomException } from 'src/common/custom.exception';
+import { CustomHttpException } from 'src/common/custom-http.exception';
 
-export class UserAlreadyExistsException extends CustomException {
+export class UserAlreadyExistsException extends CustomHttpException {
     constructor() {
         super('Пользователь с таким логином уже существует', HttpStatus.CONFLICT);
     }
 }
 
-export class InvalidCredentialsException extends CustomException {
+export class InvalidCredentialsException extends CustomHttpException {
     constructor() {
         super('Неверный логин или пароль', HttpStatus.UNAUTHORIZED);
     }
 }
 
-export class InvalidTokenException extends CustomException {
+export class InvalidTokenException extends CustomHttpException {
     constructor() {
         super('Вы не авторизованы', HttpStatus.UNAUTHORIZED);
     }
 }
 
-export class UserNotFoundException extends CustomException {
+export class UserNotFoundException extends CustomHttpException {
     constructor() {
         super('Пользователь не найден', HttpStatus.NOT_FOUND);
     }
