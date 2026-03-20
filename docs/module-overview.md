@@ -324,7 +324,7 @@ findSessionsByPlayer(playerId: string): GameState[]
 
 # ResourceModule
 
-## ResourcePoolService
+## ResourceService
 
 ```typescript
 
@@ -391,15 +391,6 @@ rerollSingleDice(sessionId: string, artifactId: string): DiceFace
 
 ```
 
-
-## InitiativeService
-
-```typescript
-
-// Определить кто ходит первым
-determineTurnOrder(sessionId: string): string
-
-```
 
 
 ## CombatCalculatorService

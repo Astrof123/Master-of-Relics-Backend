@@ -8,9 +8,11 @@ import { LobbyService } from 'src/lobby/lobby.service';
 import { GAME_ERROR_CODE, GameException } from './types/game-exceptions';
 import { LOBBY_ERROR_CODE, LobbyException } from 'src/lobby/types/lobby-exceptions';
 import { EnemyForClient, GameForClient } from './types/game-for-client';
-import { SPELLS } from 'src/spell/constants/spells';
-import { GAMEPATH } from './types/game-redis-paths';
+import { GAMEPATH } from './constants/game-redis-paths';
 import { LOBBYPATH } from 'src/lobby/types/lobby-redis-paths';
+import { GameForLogic } from './types/game-for-logic';
+import { ARTIFACT } from 'src/artifact/types/artifact';
+import { SKILLS } from 'src/artifact/constants/skills';
 
 @Injectable()
 export class GameStateService {
@@ -58,20 +60,76 @@ export class GameStateService {
 
         // ДОБАВИТЬ ПОТОМ КОЛОДУ ИГРОКА, А НЕ ИЗ ОБЩЕГО
         const defaultDeck = [
-            ARTIFACTS[1].id,
-            ARTIFACTS[2].id,
-            ARTIFACTS[3].id,
-            ARTIFACTS[4].id,
-            ARTIFACTS[5].id,
-            ARTIFACTS[1].id,
-            ARTIFACTS[2].id,
-            ARTIFACTS[3].id,
-            ARTIFACTS[4].id,
-            ARTIFACTS[5].id,
-            ARTIFACTS[1].id,
-            ARTIFACTS[2].id,
-            ARTIFACTS[3].id,
-            ARTIFACTS[4].id,
+            {
+                artifactId: ARTIFACTS[ARTIFACT.INTIMIDATOR].id,
+                maxHp: ARTIFACTS[ARTIFACT.INTIMIDATOR].hp,
+                skillCost: ARTIFACTS[ARTIFACT.INTIMIDATOR].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.INTIMIDATOR].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].id,
+                maxHp: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].hp,
+                skillCost: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.FROST_BOW].id,
+                maxHp: ARTIFACTS[ARTIFACT.FROST_BOW].hp,
+                skillCost: ARTIFACTS[ARTIFACT.FROST_BOW].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.FROST_BOW].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.REGENERATION_POTION].id,
+                maxHp: ARTIFACTS[ARTIFACT.REGENERATION_POTION].hp,
+                skillCost: ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].id,
+                maxHp: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].hp,
+                skillCost: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.SWIFT_BOOTS].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.INTIMIDATOR].id,
+                maxHp: ARTIFACTS[ARTIFACT.INTIMIDATOR].hp,
+                skillCost: ARTIFACTS[ARTIFACT.INTIMIDATOR].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.INTIMIDATOR].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].id,
+                maxHp: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].hp,
+                skillCost: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.FROST_BOW].id,
+                maxHp: ARTIFACTS[ARTIFACT.FROST_BOW].hp,
+                skillCost: ARTIFACTS[ARTIFACT.FROST_BOW].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.FROST_BOW].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.REGENERATION_POTION].id,
+                maxHp: ARTIFACTS[ARTIFACT.REGENERATION_POTION].hp,
+                skillCost: ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].id,
+                maxHp: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].hp,
+                skillCost: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.SWIFT_BOOTS].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.INTIMIDATOR].id,
+                maxHp: ARTIFACTS[ARTIFACT.INTIMIDATOR].hp,
+                skillCost: ARTIFACTS[ARTIFACT.INTIMIDATOR].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.INTIMIDATOR].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].id,
+                maxHp: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].hp,
+                skillCost: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.FROST_BOW].id,
+                maxHp: ARTIFACTS[ARTIFACT.FROST_BOW].hp,
+                skillCost: ARTIFACTS[ARTIFACT.FROST_BOW].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.FROST_BOW].skills![0]].cost
+            },
+            {
+                artifactId: ARTIFACTS[ARTIFACT.REGENERATION_POTION].id,
+                maxHp: ARTIFACTS[ARTIFACT.REGENERATION_POTION].hp,
+                skillCost: ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills![0]].cost
+            }
         ]
 
         const defaultSpells = {
@@ -162,8 +220,6 @@ export class GameStateService {
         const key = this.getKeyGame(gameId);
         const game = await this.redisService.getJson<Game>(key);
 
-        console.log(game?.players[userId].draft)
-
         if (game === null) {
             return null;
         }
@@ -204,6 +260,58 @@ export class GameStateService {
         }
 
         return gameForClient;
+    }
+
+    async getGameForLogicById(gameId: string, userId: number): Promise<GameForLogic | null> {
+        const key = this.getKeyGame(gameId);
+        const game = await this.redisService.getJson<Game>(key);
+
+        if (game === null) {
+            return null;
+        }
+
+        if (!game.players[userId]) {
+            throw new GameException(GAME_ERROR_CODE.PLAYER_NOT_IN_GAME);
+        }
+
+        const enemyKey = Object.keys(game.players).find(key => Number(key) !== userId);
+
+        if (enemyKey === undefined) {
+            throw new GameException(GAME_ERROR_CODE.ENEMY_NOT_FOUND);
+        }
+
+        const gameForClient: GameForLogic = {
+            id: game.id,
+            name: game.name,
+            phase: game.phase,
+            currentTurn: game.currentTurn,
+            logs: game.logs,
+            player: game.players[userId],
+            enemy: game.players[enemyKey]
+        }
+
+        return gameForClient;
+    }
+
+    async saveGameForLogic(gameState: GameForLogic, key: string) {
+        const game: Game = {
+            id: gameState.id,
+            name: gameState.name,
+            phase: gameState.phase,
+            currentTurn: gameState.currentTurn,
+            logs: gameState.logs,
+            players: {
+                [gameState.player.id]: gameState.player,
+                [gameState.enemy.id]: gameState.enemy
+            }
+        }
+
+
+        await this.redisService.setJson<Game>(
+            key, 
+            ".", 
+            game
+        );    
     }
 
     async setPlayerConnectionStatus(status: ConnectionGame, gameId: string, userId: number): Promise<void> {

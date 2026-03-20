@@ -55,6 +55,7 @@ export class DraftGateway {
             const userId = client.data.userId;
 
             await this.draftService.toggleReadyDraft(gameId, userId);
+
             this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
 
 

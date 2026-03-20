@@ -19,6 +19,6 @@ export class DraftException extends CustomException {
         public details?: any
     ) {
         super(DRAFT_ERROR_MESSAGE[code], code);
-        this.name = 'GameError';
+        this.name = 'DraftError';
     }
 }

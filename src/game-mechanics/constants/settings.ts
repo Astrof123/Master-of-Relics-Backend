@@ -1,0 +1,2 @@
+export const MAX_COUNT_ARTIFACTS_ON_LINE = 6;
+export const MAX_AMOUNT_RESOURCES = 100;

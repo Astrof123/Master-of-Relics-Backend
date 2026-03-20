@@ -1,5 +1,10 @@
-import { EffectDuration, EffectType } from "src/effects/types/effect";
+
+import { EffectType } from "src/game-mechanics/types/effect";
 import { Phase } from "./phase";
+import { Face } from "src/game-mechanics/types/face";
+import { RESOURCE } from "src/game-mechanics/types/resource";
+import { ExtraAction, ExtraActionState } from "src/action/types/action";
+import { Skill } from "src/artifact/types/skill";
 
 export const CONNECTIONGAME  = {
     ONLINE: 'online',
@@ -28,32 +33,29 @@ export const ARTIFACT_STATE  = {
 export type ArtifactState  = typeof ARTIFACT_STATE [keyof typeof ARTIFACT_STATE];
 
 
+export interface SkillStateType {
+    id: Skill;
+    description: string;
+    possibleTargets: string[][];
+    countTargetEnemy: number;
+    countTargetAllies: number;
+}
+
 export interface ArtifactAvailableActions {
     face: {
+        id: string;
         description: string;
-        attackTarget: string[],
-        healTarget: string[]
-    },
-    agilityActions: {
-        reroll: true,
-        return_to_battle: false,
-        change_line: true
-    },
-    skill: [
-        {
-            id: number,
-            description: string,
-            countTarget: number,
-            possibleTargets: string[][],
-            targetsType: TargetsType
-        }
-    ] 
+        attackTargets: string[] | null,
+        healTargets: string[] | null,
+    } | null,
+    skills: SkillStateType[],
+    extraActions: ExtraActionState[]
 }
 
 
 export interface ArtifactGameState {
     id: string;
-    artifactId: number;
+    artifactId: string;
     face: Face;
     state: ArtifactState;
     currentHp: number;
@@ -64,31 +66,11 @@ export interface ArtifactGameState {
     availableActions: ArtifactAvailableActions | null
 }
 
-export const FACE  = {
-    AGILITY: 'agility',
-    LIGHT_MANA: 'light_mana',
-    RAGE: 'rage',
-    DARK_MANA: 'dark_mana',
-    DESTRUCTION_MANA: 'destruction_mana',
-    SWORD: 'sword',
-    TARGET: 'target',
-    HEAL: "heal",
-    THREE_SWORD: "three_sword",
-    TWO_SWORD: "two_sword",
-    THREE_DARK_MANA: "three_dark_mana",
-    THREE_LIGHT_MANA: "three_light_mana",
-    THREE_DESTRUCTION_MANA: "three_destruction_mana",
-    ONE_EVERY_MANA: "one_every_mana",
-    ONE_RAGE_TWO_TARGET: "one_rage_two_target",
-    TWO_RAGE_ONE_TARGET: "two_rage_one_target",
-    THREE_HEART: "three_heart",
-    ONE_RAGE_TWO_HEART: "one_rage_two_heart",
-    THREE_AGILITY: "three_agility",
-    THREE_RAGE: "three_rage"
-};
-
-export type Face  = typeof FACE [keyof typeof FACE];
-
+export interface DeckArtifact {
+    artifactId: string;
+    maxHp: number;
+    skillCost: number;
+}
 
 export interface Player {
     id: number;
@@ -96,11 +78,11 @@ export interface Player {
     connection: ConnectionGame;
     hero: string;
     resources: {
-        agility: number;
-        rage: number;
-        light_mana: number;
-        dark_mana: number;
-        destruction_mana: number;
+        [RESOURCE.AGILITY]: number;
+        [RESOURCE.RAGE]: number;
+        [RESOURCE.LIGHT_MANA]: number;
+        [RESOURCE.DARK_MANA]: number;
+        [RESOURCE.DESTRUCTION_MANA]: number;
     },
     artifacts: Record<string, ArtifactGameState>;
     spells: {
@@ -112,8 +94,8 @@ export interface Player {
     isReady: boolean;
     movePoints: number;
     draft: {
-        pickedArtifact: number|null;
-        deck: number[];
+        pickedArtifact: string|null;
+        deck: DeckArtifact[];
     },
     availableActions: {}
 }
@@ -129,20 +111,12 @@ export interface Game {
 }
 
 
-export const TARGETS_TYPE  = {
-    ENEMY: 'enemy',
-    ALLIED: 'allied',
-    ONE_ENEMY_ONE_ALLIED: 'one_enemy_one_allied',
-};
-
-export type TargetsType  = typeof TARGETS_TYPE [keyof typeof TARGETS_TYPE];
-
-
 export interface SpellGameState {
     id: string;
     cooldown: boolean;
     canUse: boolean;
     countTarget: number;
     possibleTargets: string[][];
-    targetsType: TargetsType;
+    countTargetEnemy: number;
+    countTargetAllies: number;
 }

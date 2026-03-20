@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import Redis from 'ioredis';
+import Redis, { ChainableCommander } from 'ioredis';
 
 @Injectable()
 export class RedisService {
@@ -17,10 +17,7 @@ export class RedisService {
     ): Promise<void> {
         const valueStr = JSON.stringify(value);
         
-        let command = 'JSON.SET';
-        const args: any[] = [key, path, valueStr];
-
-        await this.redisClient.call(command, ...args);
+        await this.redisClient.call('JSON.SET', key, path, valueStr);
 
         if (ttl) {
             await this.redisClient.expire(key, ttl);
@@ -41,6 +38,38 @@ export class RedisService {
         }
     }
 
+    multi(): ChainableCommander {
+        return this.redisClient.multi();
+    }
+
+    async execMulti(multi: ChainableCommander): Promise<any[] | null> {
+        return await multi.exec();
+    }
+
+    async watch(...keys: string[]): Promise<void> {
+        await this.redisClient.watch(...keys);
+    }
+
+    async unwatch(): Promise<void> {
+        await this.redisClient.unwatch();
+    }
+
+    jsonSetInTransaction(
+        multi: ChainableCommander,
+        key: string,
+        path: string,
+        value: any
+    ): ChainableCommander {
+        return multi.call('JSON.SET', key, path, JSON.stringify(value));
+    }
+
+    jsonGetInTransaction(
+        multi: ChainableCommander,
+        key: string,
+        path: string
+    ): ChainableCommander {
+        return multi.call('JSON.GET', key, path);
+    }
 
     async arrayAppend(key: string, path: string, ...values: any[]): Promise<number> {
         const stringValues = values.map(v => JSON.stringify(v));

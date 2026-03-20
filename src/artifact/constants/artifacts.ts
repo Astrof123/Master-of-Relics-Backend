@@ -1,11 +1,13 @@
-import { FACE } from "src/game-state/types/game";
-import { Artifact } from "../types/artifact";
-import { EFFECTS } from "src/effects/constants/effects";
+import { FACE } from "src/game-mechanics/types/face";
+import { ARTIFACT, Artifact, ArtifactDataType } from "../types/artifact";
+import { EFFECTS } from "src/game-mechanics/constants/effects";
+import { SKILL } from "../types/skill";
+import { EFFECT } from "src/game-mechanics/types/effect";
 
 
-export const ARTIFACTS: Record<number, Artifact> = {
-    [1]: {
-        id: 1,
+export const ARTIFACTS: Record<string, ArtifactDataType> = {
+    [ARTIFACT.INTIMIDATOR]: {
+        id: ARTIFACT.INTIMIDATOR,
         name: "Intimidator",
         faces: [
             FACE.THREE_SWORD,
@@ -16,11 +18,11 @@ export const ARTIFACTS: Record<number, Artifact> = {
             FACE.TWO_SWORD
         ],
         hp: 105,
-        skillCost: 15,
+        skills: [SKILL.FEAR],
         defaultEffects: []
     },
-    [2]: {
-        id: 2,
+    [ARTIFACT.ARCANE_SHIELD]: {
+        id: ARTIFACT.ARCANE_SHIELD,
         name: "Arcane Shield",
         faces: [
             FACE.THREE_LIGHT_MANA,
@@ -31,11 +33,11 @@ export const ARTIFACTS: Record<number, Artifact> = {
             FACE.ONE_EVERY_MANA
         ],
         hp: 110,
-        skillCost: 0,
+        skills: [SKILL.EAT_DARK_MANA, SKILL.EAT_DESTRUCTION_MANA, SKILL.EAT_LIGHT_MANA],
         defaultEffects: []
     },
-    [3]: {
-        id: 3,
+    [ARTIFACT.FROST_BOW]: {
+        id: ARTIFACT.FROST_BOW,
         name: "Frost Bow",
         faces: [
             FACE.ONE_RAGE_TWO_TARGET,
@@ -46,11 +48,11 @@ export const ARTIFACTS: Record<number, Artifact> = {
             FACE.TWO_RAGE_ONE_TARGET
         ],
         hp: 65,
-        skillCost: 15,
+        skills: [SKILL.FROZE],
         defaultEffects: []
     },
-    [4]: {
-        id: 4,
+    [ARTIFACT.REGENERATION_POTION]: {
+        id: ARTIFACT.REGENERATION_POTION,
         name: "Regeneration Potion",
         faces: [
             FACE.THREE_HEART,
@@ -61,11 +63,11 @@ export const ARTIFACTS: Record<number, Artifact> = {
             FACE.ONE_RAGE_TWO_HEART
         ],
         hp: 105,
-        skillCost: 30,
+        skills: [SKILL.UNIVERSAL_HEALING],
         defaultEffects: []
     },
-    [5]: {
-        id: 5,
+    [ARTIFACT.SWIFT_BOOTS]: {
+        id: ARTIFACT.SWIFT_BOOTS,
         name: "Swift Boots",
         faces: [
             FACE.THREE_AGILITY,
@@ -76,7 +78,7 @@ export const ARTIFACTS: Record<number, Artifact> = {
             FACE.THREE_RAGE
         ],
         hp: 70,
-        skillCost: 30,
-        defaultEffects: [EFFECTS[1]]
+        skills: [SKILL.SWIFT],
+        defaultEffects: [EFFECT.SINGLE_CHARGE]
     }
 }

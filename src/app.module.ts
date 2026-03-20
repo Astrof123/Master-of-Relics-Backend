@@ -21,6 +21,8 @@ import { GameStateModule } from './game-state/game-state.module';
 import { ArtifactModule } from './artifact/artifact.module';
 import { DraftModule } from './draft/draft.module';
 import { PhaseModule } from './phase/phase.module';
+import { GameMechanicsModule } from './game-mechanics/game-mechanics.module';
+import { ActionModule } from './action/action.module';
 import redisConfig from './config/redis.config';
 
 
@@ -54,6 +56,8 @@ import redisConfig from './config/redis.config';
         ArtifactModule,
         DraftModule,
         PhaseModule,
+        GameMechanicsModule,
+        ActionModule,
     ],
     controllers: [AppController],
     providers: [TokenService, AppService, JwtRefreshStrategy, JwtStrategy, JwtAuthGuard],

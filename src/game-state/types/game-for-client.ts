@@ -1,12 +1,11 @@
-import { EffectType } from "src/effects/types/effect";
-import { ArtifactState, ConnectionGame, Face, Line, Player } from "./game";
+import { EffectType } from "src/game-mechanics/types/effect";
+import { ArtifactState, ConnectionGame, DeckArtifact, Line, Player } from "./game";
 import { Phase } from "./phase";
-
-
+import { Face } from "src/game-mechanics/types/face";
 
 export interface EnemyArtifact {
     id: string;
-    artifactId: number;
+    artifactId: string;
     face: Face;
     state: ArtifactState;
     currentHp: number;
@@ -33,7 +32,7 @@ export interface EnemyForClient {
     isReady: boolean;
     movePoints: number;
     draft: {
-        deck: number[];
+        deck: DeckArtifact[];
     }
 }
 

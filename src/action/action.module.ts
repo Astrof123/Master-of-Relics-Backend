@@ -1,0 +1,30 @@
+import { forwardRef, Module } from '@nestjs/common';
+import { ActionGateway } from './action.gateway';
+import { GameStateModule } from 'src/game-state/game-state.module';
+import { ActionValidatorService } from './action-validator.service';
+import { GameMechanicsModule } from 'src/game-mechanics/game-mechanics.module';
+import { ActionResolverService } from './action-resolver.service';
+import { ActionService } from './action.service';
+import { ArtifactModule } from 'src/artifact/artifact.module';
+import { ExtraActionService } from './extra-action.service';
+import { PhaseModule } from 'src/phase/phase.module';
+import { RestrictionService } from './restriction.service';
+
+@Module({
+    providers: [
+        ActionGateway, 
+        ActionValidatorService, 
+        ActionResolverService, 
+        ActionService, 
+        ExtraActionService,
+        RestrictionService
+    ],
+    imports: [
+        GameStateModule, 
+        GameMechanicsModule, 
+        forwardRef(() => PhaseModule), 
+        forwardRef(() => ArtifactModule)
+    ],
+    exports: [ExtraActionService, RestrictionService]
+})
+export class ActionModule {}

@@ -1,14 +1,22 @@
-import { EffectType } from "src/effects/types/effect";
-import { Face, FACE } from "src/game-state/types/game";
+import { Face } from "src/game-mechanics/types/face";
+import { Skill } from "./skill";
+import { Effect, EffectType } from "src/game-mechanics/types/effect";
 
-export interface Artifact {
-    id: number;
+export interface ArtifactDataType {
+    id: string;
     name: string;
     hp: number;
     faces: Face[];
-    skillCost: number;
-    defaultEffects: EffectType[];
+    skills: Skill[] | null;
+    defaultEffects: Effect[];
 }
 
+export const ARTIFACT  = {
+    INTIMIDATOR: 'intimidator',
+    ARCANE_SHIELD: 'arcane_shield',
+    FROST_BOW: 'frost_bow',
+    REGENERATION_POTION: 'regeneration_potion',
+    SWIFT_BOOTS: 'swift_boots',
+};
 
-
+export type Artifact  = typeof ARTIFACT [keyof typeof ARTIFACT];

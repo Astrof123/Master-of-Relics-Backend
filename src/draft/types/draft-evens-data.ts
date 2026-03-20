@@ -1,4 +1,4 @@
 export interface PickArtifactData {
     gameId: string;
-    artifactId: number;
+    artifactId: string;
 }
