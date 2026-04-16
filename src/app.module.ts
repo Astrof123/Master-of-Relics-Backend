@@ -23,6 +23,8 @@ import { DraftModule } from './draft/draft.module';
 import { PhaseModule } from './phase/phase.module';
 import { GameMechanicsModule } from './game-mechanics/game-mechanics.module';
 import { ActionModule } from './action/action.module';
+import { CollectionModule } from './collection/collection.module';
+import { SpellModule } from './spell/spell.module';
 import redisConfig from './config/redis.config';
 
 
@@ -58,6 +60,8 @@ import redisConfig from './config/redis.config';
         PhaseModule,
         GameMechanicsModule,
         ActionModule,
+        CollectionModule,
+        SpellModule,
     ],
     controllers: [AppController],
     providers: [TokenService, AppService, JwtRefreshStrategy, JwtStrategy, JwtAuthGuard],

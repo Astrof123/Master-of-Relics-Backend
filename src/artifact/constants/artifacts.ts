@@ -19,7 +19,9 @@ export const ARTIFACTS: Record<string, ArtifactDataType> = {
         ],
         hp: 105,
         skills: [SKILL.FEAR],
-        defaultEffects: []
+        defaultEffects: [],
+        isForSale: true,
+        price: 100
     },
     [ARTIFACT.ARCANE_SHIELD]: {
         id: ARTIFACT.ARCANE_SHIELD,
@@ -34,7 +36,9 @@ export const ARTIFACTS: Record<string, ArtifactDataType> = {
         ],
         hp: 110,
         skills: [SKILL.EAT_DARK_MANA, SKILL.EAT_DESTRUCTION_MANA, SKILL.EAT_LIGHT_MANA],
-        defaultEffects: []
+        defaultEffects: [],
+        isForSale: true,
+        price: 100
     },
     [ARTIFACT.FROST_BOW]: {
         id: ARTIFACT.FROST_BOW,
@@ -49,7 +53,9 @@ export const ARTIFACTS: Record<string, ArtifactDataType> = {
         ],
         hp: 65,
         skills: [SKILL.FROZE],
-        defaultEffects: []
+        defaultEffects: [],
+        isForSale: true,
+        price: 100
     },
     [ARTIFACT.REGENERATION_POTION]: {
         id: ARTIFACT.REGENERATION_POTION,
@@ -64,7 +70,9 @@ export const ARTIFACTS: Record<string, ArtifactDataType> = {
         ],
         hp: 105,
         skills: [SKILL.UNIVERSAL_HEALING],
-        defaultEffects: []
+        defaultEffects: [],
+        isForSale: true,
+        price: 100
     },
     [ARTIFACT.SWIFT_BOOTS]: {
         id: ARTIFACT.SWIFT_BOOTS,
@@ -79,6 +87,14 @@ export const ARTIFACTS: Record<string, ArtifactDataType> = {
         ],
         hp: 70,
         skills: [SKILL.SWIFT],
-        defaultEffects: [EFFECT.SINGLE_CHARGE]
+        defaultEffects: [EFFECT.SINGLE_CHARGE],
+        isForSale: true,
+        price: 100
     }
 }
+
+export const getCardByInnerId = (innerCardId: string) => 
+    Object.values(ARTIFACTS).find(card => card.id === innerCardId);
+
+export const getCardsForSale = () =>
+    Object.values(ARTIFACTS).filter(card => card.isForSale);

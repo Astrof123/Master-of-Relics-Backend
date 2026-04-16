@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Lobby, LOBBY_STATE_TYPE, LobbyStateType } from 'src/lobby/types/lobby';
 import { RedisService } from 'src/redis/redis.service';
-import { PHASE } from './types/phase';
+import { MINIPHASE, PHASE } from './types/phase';
 import { ConnectionGame, CONNECTIONGAME, Game, Player } from './types/game';
 import { ARTIFACTS } from 'src/artifact/constants/artifacts';
 import { LobbyService } from 'src/lobby/lobby.service';
@@ -13,6 +13,10 @@ import { LOBBYPATH } from 'src/lobby/types/lobby-redis-paths';
 import { GameForLogic } from './types/game-for-logic';
 import { ARTIFACT } from 'src/artifact/types/artifact';
 import { SKILLS } from 'src/artifact/constants/skills';
+import { SPELL, SPELLTYPE } from 'src/spell/types/spell';
+import { SPELLS } from 'src/spell/constants/spells';
+import { SpellHelper } from 'src/spell/spell.helper';
+import { MAX_COUNT_ARTIFACTS_ON_LINE } from 'src/game-mechanics/constants/settings';
 
 @Injectable()
 export class GameStateService {
@@ -133,9 +137,15 @@ export class GameStateService {
         ]
 
         const defaultSpells = {
-            light: [],
-            dark: [],
-            destruction: []
+            [SPELLTYPE.LIGHT]: {
+                [SPELL.TOUCH_OF_LIGHT]: SpellHelper.getDefaultSpellState(SPELL.TOUCH_OF_LIGHT)
+            },
+            [SPELLTYPE.DARK]: {
+
+            },
+            [SPELLTYPE.DESTRUCTION]: {
+                [SPELL.PIERCING_BOLT]: SpellHelper.getDefaultSpellState(SPELL.PIERCING_BOLT)
+            }
         }
 
         const player1: Player = {
@@ -159,7 +169,7 @@ export class GameStateService {
                 pickedArtifact: null,
                 deck: defaultDeck
             },
-            availableActions: {}
+            temporaryArtifacts: {}
         }
 
         const player2: Player = {
@@ -183,7 +193,7 @@ export class GameStateService {
                 pickedArtifact: null,
                 deck: defaultDeck.reverse()
             },
-            availableActions: {}
+            temporaryArtifacts: {}
         }
 
         await this.redisService.setJson<Game>(key, ".", {
@@ -195,6 +205,11 @@ export class GameStateService {
             players: {
                 [lobby.players[userId].id]: player1,
                 [lobby.players[enemyKey].id]: player2,
+            },
+            end: null,
+            miniPhase: MINIPHASE.MOVEMENT,
+            constants: {
+                maxCountArtifactsOnLine: MAX_COUNT_ARTIFACTS_ON_LINE
             }
         }, this.GAME_TTL)
 
@@ -203,7 +218,8 @@ export class GameStateService {
         await this.redisService.addToSortedSet(
             'games:index',
             Date.now(),
-            lobbyId
+            lobbyId,
+            this.GAME_TTL
         );
 
         return lobbyId;
@@ -256,7 +272,10 @@ export class GameStateService {
             currentTurn: game.currentTurn,
             logs: game.logs,
             player: game.players[userId],
-            enemy: enemyForClient
+            enemy: enemyForClient,
+            end: game.end,
+            miniPhase: game.miniPhase,
+            constants: game.constants
         }
 
         return gameForClient;
@@ -287,7 +306,10 @@ export class GameStateService {
             currentTurn: game.currentTurn,
             logs: game.logs,
             player: game.players[userId],
-            enemy: game.players[enemyKey]
+            enemy: game.players[enemyKey],
+            end: game.end,
+            miniPhase: game.miniPhase,
+            constants: game.constants
         }
 
         return gameForClient;
@@ -303,7 +325,10 @@ export class GameStateService {
             players: {
                 [gameState.player.id]: gameState.player,
                 [gameState.enemy.id]: gameState.enemy
-            }
+            },
+            end: gameState.end,
+            miniPhase: gameState.miniPhase,
+            constants: gameState.constants
         }
 
 
@@ -311,7 +336,36 @@ export class GameStateService {
             key, 
             ".", 
             game
-        );    
+        );
+
+        const lobbyKey = await this.lobbyService.getLobbyKey(gameState.id);
+        const lobbyIndexesKey = await this.lobbyService.getLobbyIndexesKey();
+
+        await this.redisService.expire(lobbyKey, this.GAME_TTL);
+        await this.redisService.expire(lobbyIndexesKey, this.GAME_TTL);
+    }
+
+    async saveGameForLogicInTransaction(
+        gameState: GameForLogic, 
+        key: string, 
+        multi: any
+    ): Promise<void> {
+        const game: Game = {
+            id: gameState.id,
+            name: gameState.name,
+            phase: gameState.phase,
+            currentTurn: gameState.currentTurn,
+            logs: gameState.logs,
+            players: {
+                [gameState.player.id]: gameState.player,
+                [gameState.enemy.id]: gameState.enemy
+            },
+            end: gameState.end,
+            miniPhase: gameState.miniPhase,
+            constants: gameState.constants
+        };
+
+        await this.redisService.jsonSetInTransaction(multi, key, ".", game);
     }
 
     async setPlayerConnectionStatus(status: ConnectionGame, gameId: string, userId: number): Promise<void> {

@@ -10,7 +10,7 @@ export class RestrictionService {
     constructor(
     ) {}
 
-    checkRestrictions(player: Player, enemy: Player, artifact: ArtifactGameState, restrictions: Restriction[]): boolean {
+    checkArtifactRestrictions(restrictions: Restriction[], artifact: ArtifactGameState): boolean {
         if (restrictions.includes(RESTRICTION.ONLY_READY)) {
             if (artifact.state !== ARTIFACT_STATE.READY_TO_USE) {
                 return false;
@@ -21,6 +21,22 @@ export class RestrictionService {
                 return false;
             }
         }
+        if (restrictions.includes(RESTRICTION.ZERO_USED_SKILL_CHARGES)) {
+            const effect = artifact.effects.find((effect) => effect.id === EFFECT.USED_SKILL_CHARGES);
+
+            if (effect && effect.number && effect.number > 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    checkSpellRestrictions(restrictions: Restriction[]): boolean {
+        return true;
+    }
+
+    checkGeneralRestrictions(player: Player, enemy: Player, restrictions: Restriction[]): boolean {
         if (restrictions.includes(RESTRICTION.BACK_LINE_IS_FREE)) {
             if (Object.values(enemy.artifacts).filter((art) => art.line === LINE.BACK).length >= MAX_COUNT_ARTIFACTS_ON_LINE) {
                 return false;
@@ -46,23 +62,22 @@ export class RestrictionService {
                 return false;
             }
         }
-        if (restrictions.includes(RESTRICTION.ZERO_USED_SKILL_CHARGES)) {
-            const effect = artifact.effects.find((effect) => effect.id === EFFECT.USED_SKILL_CHARGES);
 
-            if (effect && effect.number && effect.number > 0) {
-                return false;
-            }
-        }
         return true;
     }
 
     getTargetsByRestrictions(player: Player, enemy: Player, restrictions: TargetRestriction[]): string[][] {
-        const allies: string[] = [];
-        const enemies: string[] = [];
+        let allies: string[] = [];
+        let enemies: string[] = [];
         
         if (restrictions.includes(TARGET_RESTRICTION.ANY_ENEMY)) {
             Object.values(enemy.artifacts).forEach((artifact) => {
                 enemies.push(artifact.id);
+            })
+        }
+        if (restrictions.includes(TARGET_RESTRICTION.ANY_ALLY)) {
+            Object.values(player.artifacts).forEach((artifact) => {
+                allies.push(artifact.id);
             })
         }
         if (restrictions.includes(TARGET_RESTRICTION.ONLY_FRONT_LINE_ENEMY)) {
@@ -71,6 +86,11 @@ export class RestrictionService {
                     enemies.push(artifact.id);
                 }
             })
+        }
+
+        if (restrictions.includes(TARGET_RESTRICTION.ALIVE)) {
+            enemies = enemies.filter(e => enemy.artifacts[e].state !== ARTIFACT_STATE.BREAKEN);
+            allies = allies.filter(e => player.artifacts[e].state !== ARTIFACT_STATE.BREAKEN);
         }
 
         return [allies, enemies];

@@ -1,0 +1,59 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug NestJS",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "start:dev"
+            ],
+            "console": "integratedTerminal",
+            "restart": true,
+            "protocol": "inspector",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "NODE_ENV": "development"
+            }
+        },
+        {
+            "name": "Debug NestJS (Attach)",
+            "type": "node",
+            "request": "attach",
+            "port": 9229,
+            "restart": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "Debug Jest Tests",
+            "type": "node",
+            "request": "launch",
+            "runtimeArgs": [
+                "node_modules/.bin/jest",
+                "--runInBand",
+                "--watchAll=false"
+            ],
+            "console": "integratedTerminal",
+            "protocol": "inspector"
+        },
+        {
+            "name": "Debug Specific Test",
+            "type": "node",
+            "request": "launch",
+            "runtimeArgs": [
+                "node_modules/.bin/jest",
+                "--runInBand",
+                "--watchAll=false",
+                "${relativeFile}"
+            ],
+            "console": "integratedTerminal",
+            "protocol": "inspector"
+        }
+    ]
+}

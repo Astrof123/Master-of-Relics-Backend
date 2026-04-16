@@ -9,6 +9,7 @@ import { TokensDto } from './dto/tokens.dto';
 import { LoginDto } from './dto/login.dto';
 import { InvalidCredentialsException, UserAlreadyExistsException } from './exceptions/auth.exception';
 import { CustomHttpException } from 'src/common/custom-http.exception';
+import { CollectionService } from 'src/collection/collection.service';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +17,7 @@ export class AuthService {
         @InjectRepository(User)
         private usersRepository: Repository<User>,
         private tokenService: TokenService,
+        private collectionService: CollectionService
     ) {}
 
 
@@ -40,6 +42,8 @@ export class AuthService {
             });
 
             await this.usersRepository.save(user);
+
+            await this.collectionService.createForNewUser(user.id);
 
             const tokens = await this.tokenService.generateTokens({
                 sub: user.id

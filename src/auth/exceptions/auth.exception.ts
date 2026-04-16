@@ -18,9 +18,3 @@ export class InvalidTokenException extends CustomHttpException {
         super('Вы не авторизованы', HttpStatus.UNAUTHORIZED);
     }
 }
-
-export class UserNotFoundException extends CustomHttpException {
-    constructor() {
-        super('Пользователь не найден', HttpStatus.NOT_FOUND);
-    }
-}

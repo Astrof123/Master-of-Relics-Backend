@@ -18,7 +18,7 @@ export class EatDarkManaStrategy implements SkillStrategy {
         private readonly resourceService: ResourceService
     ) {}
 
-    getActionType(): Skill {
+    getSkillType(): Skill {
         return SKILL.EAT_DARK_MANA;
     }
 

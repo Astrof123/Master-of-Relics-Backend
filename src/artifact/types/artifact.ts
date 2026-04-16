@@ -9,6 +9,8 @@ export interface ArtifactDataType {
     faces: Face[];
     skills: Skill[] | null;
     defaultEffects: Effect[];
+    isForSale: boolean;
+    price: number;
 }
 
 export const ARTIFACT  = {

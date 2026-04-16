@@ -1,16 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from 'src/redis/redis.service';
 import { v4 as uuidv4 } from 'uuid';
-import { Lobby, LOBBY_STATE_TYPE, LobbyPlayer } from './types/lobby';
+import { Lobby, LOBBY_STATE_TYPE, LobbyPlayer, LobbyStateType } from './types/lobby';
 import { CreateLobbyData } from './types/lobby-evens-data';
 import { UsersService } from 'src/users/users.service';
 import { LOBBY_ERROR_CODE, LobbyException } from './types/lobby-exceptions';
 import { LOBBYPATH } from './types/lobby-redis-paths';
+import * as crypto from 'crypto';
+import { uid } from 'uid';
 
 @Injectable()
 export class LobbyService {
     private readonly MAX_PLAYERS = 2;
-    private readonly LOBBY_TTL = 60 * 60 * 6;
+    private readonly LOBBY_TTL = 60 * 60 * 24;
 
     constructor(
         private readonly redisService: RedisService,
@@ -19,6 +21,21 @@ export class LobbyService {
 
     getLobbyKey(lobbyId: string) {
         return `lobby:${lobbyId}`
+    }
+
+    getLobbyIndexesKey() {
+        return `lobbies:index`
+    }
+
+    async changeLobbyState(lobbyId: string, newState: LobbyStateType) {
+        const key = this.getLobbyKey(lobbyId);
+        const existingLobby = await this.getLobbyById(lobbyId);
+        
+        if (!existingLobby) {
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
+        }
+
+        await this.redisService.setJson<LobbyStateType>(key, LOBBYPATH.getStatePath(), newState, this.LOBBY_TTL);
     }
 
     async createLobby(lobbyData: CreateLobbyData, userId: number): Promise<string> {
@@ -38,6 +55,8 @@ export class LobbyService {
             throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_ALREADY_IN_LOBBY);
         }
 
+        const code = lobbyData.isPrivate ? uid(6).toUpperCase() : null;
+
         await this.redisService.setJson<Lobby>(key, ".", {
             id: lobbyId,
             name: lobbyData.name,
@@ -49,16 +68,19 @@ export class LobbyService {
                     isReady: false
                 }
             },
+            code: code,
+            isPrivate: lobbyData.isPrivate,
             state: LOBBY_STATE_TYPE.WAITING,
             options: {
                 mode: 'classic'
             }
-        }, this.LOBBY_TTL);    
+        }, this.LOBBY_TTL);
 
         await this.redisService.addToSortedSet(
-            'lobbies:index',
+            this.getLobbyIndexesKey(),
             Date.now(),
-            lobbyId
+            lobbyId,
+            this.LOBBY_TTL
         );
         
         return lobbyId;
@@ -91,6 +113,10 @@ export class LobbyService {
             throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_FULL);
         }
         
+        if (lobby.isPrivate) {
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_IS_PRIVATE);
+        }
+
         const user = await this.usersService.findOne(userId);
 
         const newPlayer: LobbyPlayer = {
@@ -158,13 +184,13 @@ export class LobbyService {
 
     async getAllLobbyIds(): Promise<string[]> {
         return await this.redisService.getSortedSetRange(
-            'lobbies:index',
+            this.getLobbyIndexesKey(),
             0,
             -1
         );
     }
 
-    async getAllLobbies(): Promise<Lobby[]> {
+    async getAllLobbies(userId: number): Promise<Lobby[]> {
         const lobbyIds = await this.getAllLobbyIds();
         
         const lobbyPromises = lobbyIds.map(id => 
@@ -172,12 +198,48 @@ export class LobbyService {
         );
         
         const lobbies = await Promise.all(lobbyPromises);
-        return lobbies.filter(lobby => lobby !== null);
+        let filteredLobbies = lobbies.filter(lobby => lobby !== null);
+        filteredLobbies = filteredLobbies.filter(lobby => lobby.state !== LOBBY_STATE_TYPE.END);
+
+        filteredLobbies = filteredLobbies.map(lobby => {
+            if (Object.values(lobby.players).find(l => l.id === userId)) {
+                return lobby;
+            }
+            else {
+                const lobbyWithoutCode: Lobby = {
+                    id: lobby.id,
+                    name: lobby.name,
+                    players: lobby.players, 
+                    isPrivate: lobby.isPrivate,
+                    code: null, 
+                    options: lobby.options,
+                    state: lobby.state
+                }
+
+                return lobbyWithoutCode;
+            }
+        })
+
+        return filteredLobbies;
     }
 
     async getLobbyById(lobbyId: string): Promise<Lobby | null> {
         const key = this.getLobbyKey(lobbyId);
         return await this.redisService.getJson<Lobby>(key);
+    }
+
+    async getLobbyByCode(code: string): Promise<Lobby | null> {
+        const lobbyIds = await this.getAllLobbyIds();
+        
+        const lobbyPromises = lobbyIds.map(id => 
+            this.redisService.getJson<Lobby>(`lobby:${id}`)
+        );
+        
+        const lobbies = await Promise.all(lobbyPromises);
+        let filteredLobbies = lobbies.filter(lobby => lobby !== null);
+        filteredLobbies = filteredLobbies.filter(lobby => lobby.state !== LOBBY_STATE_TYPE.END);
+        
+        return filteredLobbies.find(l => l.code === code && Object.keys(l.players).length === 1) ?? null;
     }
 
     async getLobbyByUserId(userId: number): Promise<Lobby|null> {
@@ -189,6 +251,7 @@ export class LobbyService {
         
         let lobbies = await Promise.all(lobbyPromises);
         let filteredLobbies = lobbies.filter(lobby => lobby !== null);
+        filteredLobbies = filteredLobbies.filter(lobby => lobby.state !== LOBBY_STATE_TYPE.END);
         return filteredLobbies.find(lobby => lobby.players[userId]) ?? null;
     }
 
@@ -202,6 +265,6 @@ export class LobbyService {
         }
 
         await this.redisService.delete(key);
-        await this.redisService.removeFromSortedSet('lobbies:index', lobbyId);
+        await this.redisService.removeFromSortedSet(this.getLobbyIndexesKey(), lobbyId);
     }
 }

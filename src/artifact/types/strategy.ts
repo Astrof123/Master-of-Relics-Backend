@@ -5,6 +5,6 @@ import { GameForLogic } from "src/game-state/types/game-for-logic";
 import { Skill } from "./skill";
 
 export interface SkillStrategy {
-    getActionType(): Skill;
+    getSkillType(): Skill;
     execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[]): void;
 }

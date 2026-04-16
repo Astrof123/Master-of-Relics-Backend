@@ -9,6 +9,7 @@ import { ArtifactModule } from 'src/artifact/artifact.module';
 import { ExtraActionService } from './extra-action.service';
 import { PhaseModule } from 'src/phase/phase.module';
 import { RestrictionService } from './restriction.service';
+import { SpellModule } from 'src/spell/spell.module';
 
 @Module({
     providers: [
@@ -23,7 +24,8 @@ import { RestrictionService } from './restriction.service';
         GameStateModule, 
         GameMechanicsModule, 
         forwardRef(() => PhaseModule), 
-        forwardRef(() => ArtifactModule)
+        forwardRef(() => ArtifactModule),
+        forwardRef(() => SpellModule)
     ],
     exports: [ExtraActionService, RestrictionService]
 })

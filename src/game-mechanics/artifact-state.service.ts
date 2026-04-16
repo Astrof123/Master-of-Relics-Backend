@@ -18,10 +18,16 @@ export class ArtifactStateService {
 
     updateStateNewRound(gameState: GameForLogic) {
         for (const [key, artifact] of Object.entries(gameState.player.artifacts)) {
+            if (artifact.state === ARTIFACT_STATE.BREAKEN) {
+                continue;
+            }
             this.applyState(gameState.player, artifact.id, ARTIFACT_STATE.READY_TO_USE);
         }
 
         for (const [key, artifact] of Object.entries(gameState.enemy.artifacts)) {
+            if (artifact.state === ARTIFACT_STATE.BREAKEN) {
+                continue;
+            }
             this.applyState(gameState.enemy, artifact.id, ARTIFACT_STATE.READY_TO_USE);
         }
     }

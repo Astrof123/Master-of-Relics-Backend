@@ -11,6 +11,8 @@ export interface Lobby {
     name: string,
     players: Record<number, LobbyPlayer>,
     state: LobbyStateType,
+    isPrivate: boolean;
+    code: string | null;
     options: {
         mode: GameModeType
     }
@@ -18,7 +20,8 @@ export interface Lobby {
 
 export const LOBBY_STATE_TYPE  = {
     WAITING: 'waiting',
-    PLAYING: 'playing'
+    PLAYING: 'playing',
+    END: 'end',
 } as const;
 
 export type LobbyStateType  = typeof LOBBY_STATE_TYPE [keyof typeof LOBBY_STATE_TYPE];

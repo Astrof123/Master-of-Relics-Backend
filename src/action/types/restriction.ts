@@ -13,7 +13,9 @@ export type Restriction = typeof RESTRICTION[keyof typeof RESTRICTION];
 
 
 export const TARGET_RESTRICTION = {
-    ANY_ENEMY: "only_enemy",
+    ANY_ENEMY: "any_enemy",
+    ANY_ALLY: "any_ally",
+    ALIVE: "alive",
     ONLY_FRONT_LINE_ENEMY: "only_front_line_enemy",
 }
 

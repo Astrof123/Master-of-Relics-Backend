@@ -19,6 +19,7 @@ import { GameForLogic } from 'src/game-state/types/game-for-logic';
 import { ChainableCommander } from 'ioredis';
 import { EffectType } from 'src/game-mechanics/types/effect';
 import { EFFECTS } from 'src/game-mechanics/constants/effects';
+import { SKILLS } from 'src/artifact/constants/skills';
 
 
 @Injectable()
@@ -132,7 +133,7 @@ export class DraftService {
         
         if (isSuccessEndMulti && Object.values(gameState.player.artifacts).length === DRAFT_COUNT_ARTIFACTS) {
             gameState.phase = PHASE.BATTLE;
-            this.phaseService.newRound(gameState);
+            await this.phaseService.newRound(gameState);
             
             await this.gameStateService.saveGameForLogic(gameState, key);
         }
@@ -187,11 +188,18 @@ export class DraftService {
                 })
             })
 
+            let artifactPlayerSkillCost: number | null = null;
+            if (ARTIFACTS[pickedArtifactPlayer].skills && ARTIFACTS[pickedArtifactPlayer].skills.length > 0) {
+                const skill = ARTIFACTS[pickedArtifactPlayer].skills[0];
+                artifactPlayerSkillCost = SKILLS[skill].cost;
+            }
+
             const artifactPlayer: ArtifactGameState = {
                 id: artifactPlayerId,
                 artifactId: pickedArtifactPlayer,
                 face: ARTIFACTS[pickedArtifactPlayer].faces[0],
                 state: ARTIFACT_STATE.READY_TO_USE,
+                skillCost: artifactPlayerSkillCost,
                 currentHp: ARTIFACTS[pickedArtifactPlayer].hp,
                 maxHp: ARTIFACTS[pickedArtifactPlayer].hp,
                 position: Object.values(playerArtifacts).length % MAX_COUNT_ARTIFACTS_ON_LINE,
@@ -200,12 +208,19 @@ export class DraftService {
                 availableActions: null
             };
 
+            let artifactEnemySkillCost: number | null = null;
+            if (ARTIFACTS[pickedArtifactEnemy].skills && ARTIFACTS[pickedArtifactEnemy].skills.length > 0) {
+                const skill = ARTIFACTS[pickedArtifactEnemy].skills[0];
+                artifactEnemySkillCost = SKILLS[skill].cost;
+            }
+
             const artifactEnemy: ArtifactGameState = {
                 id: artifactEnemyId,
                 artifactId: pickedArtifactEnemy,
                 face: ARTIFACTS[pickedArtifactEnemy].faces[0],
                 state: ARTIFACT_STATE.READY_TO_USE,
                 currentHp: ARTIFACTS[pickedArtifactEnemy].hp,
+                skillCost: artifactEnemySkillCost,
                 maxHp: ARTIFACTS[pickedArtifactEnemy].hp,
                 position: Object.values(enemyArtifacts).length % MAX_COUNT_ARTIFACTS_ON_LINE,
                 line: Object.values(enemyArtifacts).length < MAX_COUNT_ARTIFACTS_ON_LINE ? LINE.BACK : LINE.FRONT,
@@ -259,10 +274,5 @@ export class DraftService {
         }
 
         return false;
-    }
-
-    async finishDraft(gameState: GameForLogic, key: string) {
-        gameState.phase = PHASE.BATTLE;
-        this.phaseService.newRound(gameState);
     }
 }

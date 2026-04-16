@@ -21,7 +21,7 @@ export class SwiftStrategy implements SkillStrategy {
         private readonly resourceService: ResourceService
     ) {}
 
-    getActionType(): Skill {
+    getSkillType(): Skill {
         return SKILL.SWIFT;
     }
 

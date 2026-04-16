@@ -1,5 +1,6 @@
 import { Skill } from "src/artifact/types/skill";
 import { ExtraAction } from "./action";
+import { ArtifactGameState, Line } from "src/game-state/types/game";
 
 export interface UseFaceData {
     gameId: string;
@@ -15,6 +16,12 @@ export interface UseSkillData {
     targets: string[][];
 }
 
+export interface UseSpellData {
+    spellId: Skill;
+    gameId: string;
+    targets: string[][];
+}
+
 export interface EndTurnData {
     gameId: string;
 }
@@ -26,5 +33,18 @@ export interface EndRoundData {
 export interface ExtraActionData {
     gameId: string;
     artifactGameId: string;
-    type: ExtraAction
+    type: ExtraAction;
+    details: MoveArtifactDetails | null;
+}
+
+
+export interface ToggleReadyMovementData {
+    gameId: string;
+    artifactsWithNewPosition: Record<string, ArtifactGameState>;
+}
+
+
+export interface MoveArtifactDetails {
+    newPosition: number;
+    newLine: Line;
 }

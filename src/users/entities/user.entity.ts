@@ -5,55 +5,60 @@ import {
     CreateDateColumn,
     DeleteDateColumn,
     Index,
+    OneToMany,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserCollection } from 'src/collection/entities/collection.entity';
 
 
 @Entity('users')
 export class User {
     @ApiProperty({ example: 1 })
     @PrimaryGeneratedColumn()
-    id: number;
+    id!: number;
 
     @ApiProperty({ example: 'vasya_228', minLength: 4, maxLength: 30 })
     @Column({ length: 30 })
-    nickname: string;
+    nickname!: string;
 
     @ApiProperty({ example: 'john_doe', minLength: 4, maxLength: 30 })
     @Column({ unique: true, length: 30})
     @Index()
-    login: string;
+    login!: string;
 
     @Exclude()
     @Column()
-    password: string;
+    password!: string;
 
     @Exclude()
     @ApiProperty({ example: 'Запрещенный ник' })
     @Column({ nullable: true })
-    banReason: string;
+    banReason!: string;
 
     @Exclude() 
     @ApiProperty()
     @Column({ nullable: true })
-    bannedAt: Date;
+    bannedAt!: Date;
 
     @ApiProperty()
     @CreateDateColumn()
-    createdAt: Date;
+    createdAt!: Date;
 
     @ApiProperty()
     @DeleteDateColumn()
-    @Exclude() 
-    deletedAt: Date;
+    @Exclude()
+    deletedAt!: Date;
 
     @ApiProperty({ example: false })
     @Column({ default: false })
-    @Exclude() 
-    isAdmin: boolean;
+    @Exclude()
+    isAdmin!: boolean;
 
     @ApiProperty()
     @Column({ default: 0 })
-    gold: number;
+    gold!: number;
+
+    @OneToMany(() => UserCollection, (userCollection) => userCollection.user)
+    collections!: UserCollection[];
 }

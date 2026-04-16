@@ -7,19 +7,19 @@ export class CreateUserDto {
     @MinLength(4)
     @MaxLength(30)
     @IsNotEmpty()
-    nickname: string
+    nickname!: string
 
     @ApiProperty()
     @IsString()
     @MinLength(4)
     @MaxLength(30)
     @IsNotEmpty()
-    login: string
+    login!: string
 
     @ApiProperty()
     @IsString()
     @MinLength(6)
     @MaxLength(50)
     @IsNotEmpty()
-    password: string
+    password!: string
 }

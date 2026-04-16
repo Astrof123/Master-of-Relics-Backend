@@ -23,5 +23,12 @@ export const EXTRA_ACTIONS: Record<ExtraAction, ExtraActionDataType> = {
         resourceType: RESOURCE.AGILITY,
         getDescription: (cost: number) => `Убрать перезарядку за ${cost} ловкости`,
         restrictions: [RESTRICTION.ONLY_COOLDOWN]
+    },
+    [EXTRA_ACTION.MOVE]: {
+        id: EXTRA_ACTION.MOVE,
+        cost: 15,
+        resourceType: RESOURCE.AGILITY,
+        getDescription: (cost: number) => `Переместить за ${cost} ловкости`,
+        restrictions: [RESTRICTION.ONLY_READY]
     }
 }

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { UserNotFoundException } from './exceptions/users.exception';
 
 
 @Injectable()
@@ -19,7 +20,7 @@ export class UsersService {
         });
 
         if (!user) {
-            throw new NotFoundException(`Пользователь не найден`);
+            throw new UserNotFoundException();
         }
 
         return user;

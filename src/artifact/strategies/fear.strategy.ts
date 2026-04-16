@@ -15,7 +15,7 @@ export class FearStrategy implements SkillStrategy {
         private readonly artifactService: ArtifactService
     ) {}
 
-    getActionType(): Skill {
+    getSkillType(): Skill {
         return SKILL.FEAR;
     }
 

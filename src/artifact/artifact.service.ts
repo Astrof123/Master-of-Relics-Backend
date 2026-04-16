@@ -22,6 +22,15 @@ export class ArtifactService {
     calculateAvailableActions(gameState: GameForLogic, player: Player, enemy: Player) {
         for (const [key, artifact] of Object.entries(player.artifacts)) {
             const face = this.getFaceAction(artifact, player, enemy);
+            if (artifact.state === ARTIFACT_STATE.BREAKEN) {
+                artifact.availableActions = {
+                    face: face,
+                    skills: [],
+                    extraActions: []
+                };
+                continue;
+            }
+
             const extraActions = this.extraActionService.getExtraActions(player, enemy, artifact);
             const skills = this.getSkills(player, enemy, artifact)
 
@@ -33,6 +42,8 @@ export class ArtifactService {
 
             artifact.availableActions = availableActions;
         }
+
+        player.temporaryArtifacts = player.artifacts;
     }
 
     getFaceAction(artifact: ArtifactGameState, player: Player, enemy: Player) {
@@ -62,9 +73,13 @@ export class ArtifactService {
 
     getSwordAttackTargets(artifacts: Record<string, ArtifactGameState>): string[] {
         const attackTarget: string[] = []; 
-        let haveFrontArtifact = Object.values(artifacts).find(art => art.line === LINE.FRONT);
+        let haveFrontArtifact = Object.values(artifacts).find(art => art.line === LINE.FRONT && art.state !== ARTIFACT_STATE.BREAKEN);
 
         for (const [key, enemyArtifact] of Object.entries(artifacts)) {
+            if (enemyArtifact.state === ARTIFACT_STATE.BREAKEN) {
+                continue;
+            }
+
             if (!haveFrontArtifact) {
                 attackTarget.push(enemyArtifact.id);
                 continue;
@@ -82,6 +97,10 @@ export class ArtifactService {
         const attackTarget: string[] = [];
 
         for (const [key, enemyArtifact] of Object.entries(artifacts)) {
+            if (enemyArtifact.state === ARTIFACT_STATE.BREAKEN) {
+                continue;
+            }
+
             attackTarget.push(enemyArtifact.id);
         }
 
@@ -93,6 +112,10 @@ export class ArtifactService {
 
         for (const [key, artifact] of Object.entries(artifacts)) {
             if (artifact.currentHp < artifact.maxHp) {
+                if (artifact.state === ARTIFACT_STATE.BREAKEN) {
+                    continue;
+                }
+
                 healTargets.push(artifact.id);
             }
         }
@@ -110,18 +133,21 @@ export class ArtifactService {
         ARTIFACTS[artifact.artifactId].skills?.forEach((skill) => {
             const skillData = SKILLS[skill];
 
-            if (player.resources[RESOURCE.RAGE] >= skillData.cost
-                && this.restrictionService.checkRestrictions(player, enemy, artifact, skillData.restrictions)) {
-                    
-                const possibleTargets = this.restrictionService.getTargetsByRestrictions(player, enemy, skillData.target_restrictions);
+            if (player.resources[RESOURCE.RAGE] >= skillData.cost) {
+                if (this.restrictionService.checkGeneralRestrictions(player, enemy, skillData.restrictions)) {
+                    if (this.restrictionService.checkArtifactRestrictions(skillData.restrictions, artifact)) {
+                        const possibleTargets = this.restrictionService.getTargetsByRestrictions(player, enemy, skillData.targetRestrictions);
 
-                skills.push({
-                    id: skillData.id,
-                    description: skillData.description,
-                    countTargetEnemy: skillData.countTargetEnemy,
-                    countTargetAllies: skillData.countTargetAllies,
-                    possibleTargets: possibleTargets
-                })
+                        skills.push({
+                            id: skillData.id,
+                            description: skillData.description,
+                            countAnyTarget: skillData.countAnyTarget,
+                            countTargetEnemy: skillData.countTargetEnemy,
+                            countTargetAllies: skillData.countTargetAllies,
+                            possibleTargets: possibleTargets
+                        })
+                    }     
+                }
             }
         })
 

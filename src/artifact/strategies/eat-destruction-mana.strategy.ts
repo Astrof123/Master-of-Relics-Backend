@@ -18,7 +18,7 @@ export class EatDestructionManaStrategy implements SkillStrategy {
         private readonly resourceService: ResourceService
     ) {}
 
-    getActionType(): Skill {
+    getSkillType(): Skill {
         return SKILL.EAT_DESTRUCTION_MANA;
     }
 

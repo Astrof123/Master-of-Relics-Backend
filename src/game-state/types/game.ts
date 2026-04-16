@@ -1,10 +1,11 @@
 
 import { EffectType } from "src/game-mechanics/types/effect";
-import { Phase } from "./phase";
+import { MiniPhase, Phase } from "./phase";
 import { Face } from "src/game-mechanics/types/face";
 import { RESOURCE } from "src/game-mechanics/types/resource";
 import { ExtraAction, ExtraActionState } from "src/action/types/action";
 import { Skill } from "src/artifact/types/skill";
+import { Spell, SPELLTYPE } from "src/spell/types/spell";
 
 export const CONNECTIONGAME  = {
     ONLINE: 'online',
@@ -27,7 +28,8 @@ export const ARTIFACT_STATE  = {
     READY_TO_USE: 'ready_to_use',
     COOLDOWN: 'cooldown',
     STUNNED: 'stunned',
-    ROOTED: 'rooted'
+    ROOTED: 'rooted',
+    BREAKEN: "breaken"
 } as const;
 
 export type ArtifactState  = typeof ARTIFACT_STATE [keyof typeof ARTIFACT_STATE];
@@ -37,6 +39,7 @@ export interface SkillStateType {
     id: Skill;
     description: string;
     possibleTargets: string[][];
+    countAnyTarget: number;
     countTargetEnemy: number;
     countTargetAllies: number;
 }
@@ -61,6 +64,7 @@ export interface ArtifactGameState {
     currentHp: number;
     maxHp: number;
     position: number;
+    skillCost: number | null;
     line: Line;
     effects: EffectType[];
     availableActions: ArtifactAvailableActions | null
@@ -86,9 +90,9 @@ export interface Player {
     },
     artifacts: Record<string, ArtifactGameState>;
     spells: {
-        light: SpellGameState[],
-        dark: SpellGameState[],
-        destruction: SpellGameState[]
+        [SPELLTYPE.LIGHT]: Record<Spell, SpellGameState>,
+        [SPELLTYPE.DARK]: Record<Spell, SpellGameState>,
+        [SPELLTYPE.DESTRUCTION]: Record<Spell, SpellGameState>
     };
     effects: EffectType[];
     isReady: boolean;
@@ -97,7 +101,7 @@ export interface Player {
         pickedArtifact: string|null;
         deck: DeckArtifact[];
     },
-    availableActions: {}
+    temporaryArtifacts: Record<string, ArtifactGameState>;
 }
 
 
@@ -108,15 +112,32 @@ export interface Game {
     currentTurn: number;
     logs: string[];
     players: Record<number, Player>;
+    end: EndState | null;
+    miniPhase: MiniPhase;
+    constants: ConstantsGameState;
+}
+
+export interface ConstantsGameState {
+    maxCountArtifactsOnLine: number;
+}
+
+
+export interface EndState {
+    winner: number | null;
+    winner_prize: number;
+    loser_prize: number;
+    draw_prize: number;
 }
 
 
 export interface SpellGameState {
     id: string;
+    description: string;
+    cost: number;
     cooldown: boolean;
     canUse: boolean;
-    countTarget: number;
     possibleTargets: string[][];
+    countAnyTarget: number;
     countTargetEnemy: number;
     countTargetAllies: number;
 }

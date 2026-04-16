@@ -1,0 +1,1 @@
+export const SKILL_TYPE_KEY = 'SKILL_TYPE';

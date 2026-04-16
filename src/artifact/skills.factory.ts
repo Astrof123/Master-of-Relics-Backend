@@ -1,7 +1,8 @@
 import { COMMON_ERROR_CODE, CommonException } from "src/common/utils/error-handler";
-import { Skill, SKILL_TYPE_KEY } from "./types/skill";
+import { Skill } from "./types/skill";
 import { SkillStrategy } from "./types/strategy";
 import { Inject, Injectable } from "@nestjs/common";
+import { SKILL_TYPE_KEY } from "./constants/settings";
 
 @Injectable()
 export class SkillsStrategyFactory {
@@ -16,7 +17,7 @@ export class SkillsStrategyFactory {
 
     private buildHandlersMap(): void {
         this.strategies = new Map(
-            this.handlers.map(handler => [handler.getActionType(), handler])
+            this.handlers.map(handler => [handler.getSkillType(), handler])
         );
     }
 

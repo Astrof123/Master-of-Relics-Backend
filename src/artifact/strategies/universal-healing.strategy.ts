@@ -15,7 +15,7 @@ export class UniversalHealingStrategy implements SkillStrategy {
         private readonly combatService: CombatService
     ) {}
 
-    getActionType(): Skill {
+    getSkillType(): Skill {
         return SKILL.UNIVERSAL_HEALING;
     }
 

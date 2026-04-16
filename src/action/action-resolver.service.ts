@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { GameForLogic } from 'src/game-state/types/game-for-logic';
-import { ACTION_ERROR_CODE, ActionException } from './types/action-exceptions';
 import { ARTIFACT_STATE, ArtifactGameState } from 'src/game-state/types/game';
-import { ExtraActionData, UseFaceData, UseSkillData } from './types/action-evens-data';
+import { ExtraActionData, ToggleReadyMovementData, UseFaceData, UseSkillData, UseSpellData } from './types/action-evens-data';
 import { COMMON_ERROR_CODE, CommonException } from 'src/common/utils/error-handler';
-import { PHASE } from 'src/game-state/types/phase';
+import { MINIPHASE } from 'src/game-state/types/phase';
 import { ResourceService } from 'src/game-mechanics/resource.service';
 import { FACES } from 'src/game-mechanics/constants/faces';
 import { RESOURCE } from 'src/game-mechanics/types/resource';
@@ -12,18 +11,15 @@ import { CombatService } from 'src/game-mechanics/combat.service';
 import { DAMAGE } from 'src/game-mechanics/types/combat';
 import { ArtifactStateService } from 'src/game-mechanics/artifact-state.service';
 import { ANIMATION, AnimationData } from './types/animation';
-import { EXTRA_ACTION, ExtraAction } from './types/action';
-import { DiceService } from 'src/game-mechanics/dice.service';
 import { EXTRA_ACTIONS } from './constants/extra-actions';
 import { PhaseService } from 'src/phase/phase.service';
-import { ArtifactService } from 'src/artifact/artifact.service';
 import { SkillsStrategyFactory } from 'src/artifact/skills.factory';
 import { ExtraActionService } from './extra-action.service';
 import { SKILLS } from 'src/artifact/constants/skills';
-
-
-
-
+import { SpellStrategyFactory } from 'src/spell/spell.factory';
+import { SpellHelper } from 'src/spell/spell.helper';
+import { SPELLS } from 'src/spell/constants/spells';
+import { GameStateService } from 'src/game-state/game-state.service';
 
 @Injectable()
 export class ActionResolverService {
@@ -31,11 +27,11 @@ export class ActionResolverService {
         private readonly resourceService: ResourceService,
         private readonly combatService: CombatService,
         private readonly artifactStateService: ArtifactStateService,
-        private readonly diceService: DiceService,
         private readonly phaseService: PhaseService,
-        private readonly artifactService: ArtifactService,
         private readonly skillsFactory: SkillsStrategyFactory,
-        private readonly extraActionService: ExtraActionService
+        private readonly spellsFactory: SpellStrategyFactory,
+        private readonly extraActionService: ExtraActionService,
+        private readonly gameStateService: GameStateService,
     ) {}
 
     useFaceResolve(gameState: GameForLogic, artifact: ArtifactGameState, data: UseFaceData, animations: AnimationData[]) {
@@ -87,16 +83,16 @@ export class ActionResolverService {
         this.artifactStateService.applyState(gameState.player, data.artifactGameId, ARTIFACT_STATE.COOLDOWN);
     }
 
-    endTurnResolve(gameState: GameForLogic) {
+    async endTurnResolve(gameState: GameForLogic) {
         if (gameState.enemy.isReady) {
             gameState.currentTurn = gameState.player.id;
             gameState.player.movePoints = this.resourceService.calculateNewTurnMovePoints(gameState.enemy);
-            this.artifactService.calculateAvailableActions(gameState, gameState.player, gameState.enemy);
+            await this.phaseService.calculateNewState(gameState, false);
         }
         else {
             gameState.currentTurn = gameState.enemy.id;
             gameState.enemy.movePoints = this.resourceService.calculateNewTurnMovePoints(gameState.enemy);
-            this.artifactService.calculateAvailableActions(gameState, gameState.enemy, gameState.player);
+            await this.phaseService.calculateNewState(gameState, true);
         }
     }
 
@@ -108,12 +104,23 @@ export class ActionResolverService {
         gameState.player.resources[RESOURCE.RAGE] -= SKILLS[data.skillId].cost;
     }
 
-    endRoundResolve(gameState: GameForLogic) {
-        this.endTurnResolve(gameState);
+    useSpellResolve(gameState: GameForLogic, data: UseSpellData, animations: AnimationData[]) {
+        const spell = SPELLS[data.spellId];
+        const strategy = this.spellsFactory.getStrategy(data.spellId);
+        strategy.execute(gameState, data, animations);
+    
+        gameState.player.movePoints -= 1;
+        let neededResource = SpellHelper.getResource(spell.type);
+        gameState.player.resources[neededResource] -= SPELLS[data.spellId].cost;
+        gameState.player.spells[spell.type][spell.id].cooldown = true;
+    }
+
+    async endRoundResolve(gameState: GameForLogic) {
+        await this.endTurnResolve(gameState);
         gameState.player.isReady = true;
 
         if (gameState.enemy.isReady) {
-            this.phaseService.newRound(gameState);
+            await this.phaseService.newRound(gameState);
         }
     }
 
@@ -134,5 +141,25 @@ export class ActionResolverService {
         gameState.player.resources[resourceType] -= cost;
     }
 
+    async toggleReadyMovementResolve(
+        gameState: GameForLogic, 
+        data: ToggleReadyMovementData
+    ): Promise<GameForLogic> {
+        gameState.player.temporaryArtifacts = data.artifactsWithNewPosition;
+        gameState.player.isReady = !gameState.player.isReady;
 
+        
+        const bothReady = gameState.enemy.isReady && gameState.player.isReady;
+        
+        if (bothReady) {
+            gameState.miniPhase = MINIPHASE.BATTLE;
+            gameState.player.artifacts = data.artifactsWithNewPosition;
+            gameState.enemy.artifacts = gameState.enemy.temporaryArtifacts!;
+            gameState.enemy.isReady = false;
+            gameState.player.isReady = false;
+            await this.phaseService.calculateNewState(gameState, false, true);
+        }
+        
+        return gameState;
+    }
 }

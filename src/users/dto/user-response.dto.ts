@@ -4,13 +4,13 @@ import { Expose } from 'class-transformer';
 export class UserResponseDto {
     @Expose()
     @ApiProperty()
-    id: number;
+    id!: number;
 
     @Expose()
     @ApiProperty()
-    nickname: string;
+    nickname!: string;
 
     @Expose()
     @ApiProperty()
-    gold: number;
+    gold!: number;
 }

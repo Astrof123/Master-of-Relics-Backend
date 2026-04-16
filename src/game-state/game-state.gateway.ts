@@ -28,7 +28,7 @@ export class GameStateGateway implements OnGatewayDisconnect  {
     ) {}
 
     @WebSocketServer()
-    server: Server;
+    server!: Server;
 
 
     async handleDisconnect(client: Socket) {
@@ -59,8 +59,7 @@ export class GameStateGateway implements OnGatewayDisconnect  {
             const gameId = await this.gameStateService.createGameSessionState(lobbyId, userId);
             client.to(`lobby-${gameId}`).emit(LOBBY_EVENT_NAME.GAME_STARTED, gameId);
 
-            const lobbies = await this.lobbyService.getAllLobbies();
-            this.server.to(LOBBY_ROOMS_NAME.HALL).emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATE, lobbies)
+            this.server.to(LOBBY_ROOMS_NAME.HALL).emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED)
 
             const currentLobby = await this.lobbyService.getLobbyById(lobbyId);
             this.server.to(`lobby-${lobbyId}`).emit(LOBBY_EVENT_NAME.LOBBY_UPDATE, currentLobby)

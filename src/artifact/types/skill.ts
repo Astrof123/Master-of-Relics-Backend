@@ -6,10 +6,11 @@ export interface SkillDataType {
     type: "active" | "passive"
     cost: number;
     description: string;
+    countAnyTarget: number;
     countTargetEnemy: number;
     countTargetAllies: number;
     restrictions: Restriction[];
-    target_restrictions: TargetRestriction[];
+    targetRestrictions: TargetRestriction[];
 }
 
 export const SKILL  = {
@@ -25,4 +26,3 @@ export const SKILL  = {
 export type Skill  = typeof SKILL [keyof typeof SKILL];
 
 
-export const SKILL_TYPE_KEY = 'SKILL_TYPE';

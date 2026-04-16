@@ -16,7 +16,7 @@ export class FrozeStrategy implements SkillStrategy {
         private readonly combatService: CombatService
     ) {}
 
-    getActionType(): Skill {
+    getSkillType(): Skill {
         return SKILL.FROZE;
     }
 

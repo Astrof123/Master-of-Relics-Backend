@@ -49,6 +49,8 @@ export function handleError(error: unknown, callback?: Function): void {
                 code: error.code
             }
         };
+
+        console.error('Unhandled error:', error);
     } else if (error instanceof Error) {
         errorResponse = {
             success: false,
@@ -70,6 +72,8 @@ export function handleError(error: unknown, callback?: Function): void {
                 code: COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR
             }
         };
+
+        console.error('Unhandled error:', error);
     }
     
     if (callback && typeof callback === 'function') {

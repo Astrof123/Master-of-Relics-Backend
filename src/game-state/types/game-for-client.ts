@@ -1,6 +1,6 @@
 import { EffectType } from "src/game-mechanics/types/effect";
-import { ArtifactState, ConnectionGame, DeckArtifact, Line, Player } from "./game";
-import { Phase } from "./phase";
+import { ArtifactState, ConnectionGame, ConstantsGameState, DeckArtifact, EndState, Line, Player } from "./game";
+import { MiniPhase, Phase } from "./phase";
 import { Face } from "src/game-mechanics/types/face";
 
 export interface EnemyArtifact {
@@ -8,6 +8,7 @@ export interface EnemyArtifact {
     artifactId: string;
     face: Face;
     state: ArtifactState;
+    skillCost: number | null;
     currentHp: number;
     maxHp: number;
     position: number;
@@ -45,4 +46,7 @@ export interface GameForClient {
     logs: string[];
     player: Player;
     enemy: EnemyForClient;
+    end: EndState | null;
+    miniPhase: MiniPhase;
+    constants: ConstantsGameState;
 }

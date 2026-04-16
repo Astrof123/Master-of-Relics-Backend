@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { ARTIFACT_STATE, ArtifactGameState, Player } from "src/game-state/types/game";
 import { EXTRA_ACTION, ExtraAction, ExtraActionDataType, ExtraActionState } from "./types/action";
 import { EXTRA_ACTIONS } from "./constants/extra-actions";
@@ -11,6 +11,7 @@ import { ResourceService } from "src/game-mechanics/resource.service";
 import { ArtifactStateService } from "src/game-mechanics/artifact-state.service";
 import { ActionValidatorService } from "./action-validator.service";
 import { RestrictionService } from "./restriction.service";
+import { ArtifactService } from 'src/artifact/artifact.service';
 
 type ExtraActionHandler = (
     gameState: GameForLogic,
@@ -28,11 +29,14 @@ export class ExtraActionService {
         private readonly resourceService: ResourceService,
         private readonly artifactStateService: ArtifactStateService,
         private readonly restrictionService: RestrictionService,
+        @Inject(forwardRef(() => ArtifactService))
+        private readonly artifactService: ArtifactService,
     ) {
         this.handlers = {
             [EXTRA_ACTION.THROW_DICE]: this.handleThrowDice.bind(this),
             [EXTRA_ACTION.EXTRA_MOVE]: this.handleExtraMove.bind(this),
-            [EXTRA_ACTION.RETURN_TO_BATTLE]: this.handleReturnToBattle.bind(this)
+            [EXTRA_ACTION.RETURN_TO_BATTLE]: this.handleReturnToBattle.bind(this),
+            [EXTRA_ACTION.MOVE]: this.handleMove.bind(this)
         };
     }
 
@@ -45,7 +49,8 @@ export class ExtraActionService {
 
         for (const [key, action] of Object.entries(EXTRA_ACTIONS)) {
             if (player.resources[action.resourceType] >= action.cost 
-                && this.restrictionService.checkRestrictions(player, enemy, artifact, action.restrictions)) {
+                && this.restrictionService.checkGeneralRestrictions(player, enemy, action.restrictions)
+                && this.restrictionService.checkArtifactRestrictions(action.restrictions, artifact)) {
 
                 extraActions.push({
                     id: action.id,
@@ -68,5 +73,9 @@ export class ExtraActionService {
     handleReturnToBattle(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[]) {
         this.diceService.throwDice(gameState.player, artifact.id, artifact.artifactId);
         this.artifactStateService.applyState(gameState.player, artifact.id, ARTIFACT_STATE.READY_TO_USE);
+    }
+
+    handleMove(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[]) {
+        this.artifactService.moveArtifact(data.details!.newPosition, artifact, data.details!.newLine, gameState.player.artifacts);
     }
 }

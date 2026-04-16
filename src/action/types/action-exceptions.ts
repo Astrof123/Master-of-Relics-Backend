@@ -13,6 +13,9 @@ export enum ACTION_ERROR_CODE {
     NOT_ENOUGH_RESOURCES = 4008,
     UNKNOWN_SKILL = 4009,
     INVALID_TARGETS = 4010,
+    UNKNOWN_SPELL = 4011,
+    INVALID_DATA = 4012,
+    MINIPHASE_NOT_BATTLE = 4013
 }
 
 export const DRAFT_ERROR_MESSAGE: Record<ACTION_ERROR_CODE, string> = {    
@@ -25,8 +28,11 @@ export const DRAFT_ERROR_MESSAGE: Record<ACTION_ERROR_CODE, string> = {
     [ACTION_ERROR_CODE.UNKNOWN_ARTIFACT]: "Неизвестный артефакт",
     [ACTION_ERROR_CODE.IMPOSSIBLE_ACTION]: "Невозможное действие",
     [ACTION_ERROR_CODE.NOT_ENOUGH_RESOURCES]: "Недостаточно ресурсов",
-    [ACTION_ERROR_CODE.UNKNOWN_SKILL]: "Неизвестное заклинание",
-    [ACTION_ERROR_CODE.INVALID_TARGETS]: "Неправильно заданы цели заклинания",
+    [ACTION_ERROR_CODE.UNKNOWN_SKILL]: "Неизвестная способность",
+    [ACTION_ERROR_CODE.INVALID_TARGETS]: "Неправильно заданы цели",
+    [ACTION_ERROR_CODE.UNKNOWN_SPELL]: "Неизвестное заклинание",
+    [ACTION_ERROR_CODE.INVALID_DATA]: "Не валидные данные",
+    [ACTION_ERROR_CODE.MINIPHASE_NOT_BATTLE]: "Сейчас не фаза перестановки",
 };
 
 export class ActionException extends CustomException {

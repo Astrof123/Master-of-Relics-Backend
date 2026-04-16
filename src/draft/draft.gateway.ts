@@ -24,7 +24,7 @@ export class DraftGateway {
     ) {}
 
     @WebSocketServer()
-    server: Server;
+    server!: Server;
 
     
     @UseGuards(WebSocketAuthGuard)

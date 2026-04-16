@@ -1,0 +1,1 @@
+export const SPELL_TYPE_KEY = 'SPELL_TYPE';
