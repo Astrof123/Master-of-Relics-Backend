@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CollectionService } from './collection.service';
 import { CollectionController } from './collection.controller';
 import { CardsService } from './cards.service';
@@ -13,7 +13,7 @@ import { User } from 'src/users/entities/user.entity';
         TypeOrmModule.forFeature([UserCollection]),
         TypeOrmModule.forFeature([Card]),
         TypeOrmModule.forFeature([User]),
-        UsersModule
+        forwardRef(() => UsersModule),
     ],
     providers: [CollectionService, CardsService],
     controllers: [CollectionController],

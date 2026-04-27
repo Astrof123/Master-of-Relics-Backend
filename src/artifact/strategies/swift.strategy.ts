@@ -13,6 +13,7 @@ import { GameEffectsService } from "src/game-mechanics/game-effects.service";
 import { EFFECT } from "src/game-mechanics/types/effect";
 import { EFFECTS } from "src/game-mechanics/constants/effects";
 import { ResourceService } from "src/game-mechanics/resource.service";
+import { LogHelper } from "src/action/helpers/logHelper";
 
 @Injectable()
 export class SwiftStrategy implements SkillStrategy {
@@ -25,15 +26,15 @@ export class SwiftStrategy implements SkillStrategy {
         return SKILL.SWIFT;
     }
 
-    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[]) {
-        this.resourceService.addResource(gameState.player, RESOURCE.AGILITY, 45)
+    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
+        this.resourceService.addResource(gameState.player, RESOURCE.AGILITY, 45, logParts);
 
         this.gameEffectsService.applyEffect(gameState.player, artifact.id, {
             id: EFFECT.USED_SKILL_CHARGES,
             name: EFFECTS[EFFECT.USED_SKILL_CHARGES].name,
             duration: EFFECTS[EFFECT.USED_SKILL_CHARGES].duration,
             number: EFFECTS[EFFECT.USED_SKILL_CHARGES].number,
-            type: "negative"
-        })
+            type: "negative",
+        }, [])
     }
 }

@@ -1,5 +1,5 @@
 import { EffectType } from "src/game-mechanics/types/effect";
-import { ArtifactState, ConnectionGame, ConstantsGameState, DeckArtifact, EndState, Line, Player } from "./game";
+import { ArtifactState, ConnectionGame, ConstantsGameState, DeckArtifact, EndState, Line, LogState, Player } from "./game";
 import { MiniPhase, Phase } from "./phase";
 import { Face } from "src/game-mechanics/types/face";
 
@@ -35,6 +35,7 @@ export interface EnemyForClient {
     draft: {
         deck: DeckArtifact[];
     }
+    offerDraw: boolean;
 }
 
 
@@ -43,7 +44,7 @@ export interface GameForClient {
     phase: Phase;
     name: string;
     currentTurn: number;
-    logs: string[];
+    logs: LogState[];
     player: Player;
     enemy: EnemyForClient;
     end: EndState | null;

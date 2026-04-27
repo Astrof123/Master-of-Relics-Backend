@@ -132,6 +132,72 @@ export class ActionGateway  {
     }
 
     @UseGuards(WebSocketAuthGuard)
+    @SubscribeMessage(ACTION_EVENT_NAME.GIVE_UP)
+    async handleGiveUp(client: Socket, gameId: string, callback: Function): Promise<void> {
+        try {
+            const userId = client.data.userId;
+            await this.actionService.giveUp(gameId, userId);
+
+            this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
+
+            if (callback) {
+                callback({
+                    success: true,
+                    data: null,
+                    message: "Вы успешно сдались"
+                });
+            }
+        } 
+        catch (error) {
+            handleError(error, callback);
+        }
+    }
+
+    @UseGuards(WebSocketAuthGuard)
+    @SubscribeMessage(ACTION_EVENT_NAME.OFFER_DRAW)
+    async handleOfferDraw(client: Socket, gameId: string, callback: Function): Promise<void> {
+        try {
+            const userId = client.data.userId;
+            await this.actionService.offerDraw(gameId, userId);
+
+            this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
+
+            if (callback) {
+                callback({
+                    success: true,
+                    data: null,
+                    message: "Вы успешно предложили ничью"
+                });
+            }
+        } 
+        catch (error) {
+            handleError(error, callback);
+        }
+    }
+
+    @UseGuards(WebSocketAuthGuard)
+    @SubscribeMessage(ACTION_EVENT_NAME.CANCEL_DRAW)
+    async handleCancelDraw(client: Socket, gameId: string, callback: Function): Promise<void> {
+        try {
+            const userId = client.data.userId;
+            await this.actionService.cancelDraw(gameId, userId);
+
+            this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
+
+            if (callback) {
+                callback({
+                    success: true,
+                    data: null,
+                    message: "Вы успешно отменили ничью"
+                });
+            }
+        } 
+        catch (error) {
+            handleError(error, callback);
+        }
+    }
+
+    @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.END_ROUND)
     async handleEndRound(client: Socket, gameId: string, callback: Function): Promise<void> {
         try {

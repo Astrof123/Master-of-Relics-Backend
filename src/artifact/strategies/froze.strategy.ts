@@ -8,6 +8,8 @@ import { Skill, SKILL } from "../types/skill";;
 import { ArtifactStateService } from "src/game-mechanics/artifact-state.service";
 import { CombatService } from "src/game-mechanics/combat.service";
 import { DAMAGE } from "src/game-mechanics/types/combat";
+import { LogHelper } from "src/action/helpers/logHelper";
+import { ARTIFACTS } from "../constants/artifacts";
 
 @Injectable()
 export class FrozeStrategy implements SkillStrategy {
@@ -20,11 +22,11 @@ export class FrozeStrategy implements SkillStrategy {
         return SKILL.FROZE;
     }
 
-    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[]) {
+    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
         const enemyArtifact = gameState.enemy.artifacts[data.targets[1][0]];
-        this.artifactStateService.applyState(gameState.enemy, enemyArtifact.id, ARTIFACT_STATE.ROOTED);
-        const damage = this.combatService.calculateDamage(gameState.player, 5, DAMAGE.MAGIC);
-        this.combatService.applyDamage(gameState.enemy, enemyArtifact.id, damage);
+        this.artifactStateService.applyState(gameState.enemy, enemyArtifact.id, ARTIFACT_STATE.ROOTED, logParts);
+        const damage = this.combatService.calculateDamage(gameState.player, 5, DAMAGE.RANGED);
+        this.combatService.applyDamage(gameState.enemy, enemyArtifact.id, damage, DAMAGE.RANGED, logParts);
 
         animations.push({
             playerId: gameState.enemy.id,

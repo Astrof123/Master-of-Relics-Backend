@@ -6,5 +6,5 @@ import { Skill } from "./skill";
 
 export interface SkillStrategy {
     getSkillType(): Skill;
-    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[]): void;
+    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]): void;
 }

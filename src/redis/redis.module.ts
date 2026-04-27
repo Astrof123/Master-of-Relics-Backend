@@ -10,7 +10,7 @@ import { RedisService } from './redis.service';
     providers: [
         {
             provide: 'REDIS_CLIENT',
-            useFactory: (configService: ConfigService) => {
+            useFactory: async (configService: ConfigService) => {
                 const logger = new Logger('Redis');
                 
                 const redisOptions = {
@@ -31,6 +31,8 @@ import { RedisService } from './redis.service';
                 
                 const client = new Redis(redisOptions);
 
+                await client.config('SET', 'notify-keyspace-events', 'Ex');
+
                 client.on('connect', () => {
                     logger.log('Redis connected successfully');
                 });
@@ -49,7 +51,7 @@ import { RedisService } from './redis.service';
         },
         RedisService,
     ],
-    exports: [RedisService],
+    exports: ['REDIS_CLIENT', RedisService],
 })
 export class RedisModule {
 

@@ -13,6 +13,8 @@ import { FACE, Face } from './types/face';
 import { FACES } from './constants/faces';
 import { DAMAGE, DamageType } from './types/combat';
 import { ArtifactStateService } from './artifact-state.service';
+import { LogHelper } from 'src/action/helpers/logHelper';
+import { ARTIFACTS } from 'src/artifact/constants/artifacts';
 
 @Injectable()
 export class CombatService {
@@ -20,21 +22,24 @@ export class CombatService {
         private readonly artifactStateService: ArtifactStateService
     ) {}
 
-    applyDamage(enemy: Player, attackedArtifactGameId: string, amount: number) {
+    applyDamage(enemy: Player, attackedArtifactGameId: string, amount: number, damageType: DamageType, logParts: string[]) {
         const newHp = enemy.artifacts[attackedArtifactGameId].currentHp - amount;
 
         enemy.artifacts[attackedArtifactGameId].currentHp = newHp > 0 ? newHp : 0;
 
         if (newHp <= 0) {
-            this.artifactStateService.applyState(enemy, attackedArtifactGameId, ARTIFACT_STATE.BREAKEN);
+            this.artifactStateService.applyState(enemy, attackedArtifactGameId, ARTIFACT_STATE.BREAKEN, logParts);
         }
+
+        logParts.push(LogHelper.getHitLog(amount, damageType, ARTIFACTS[enemy.artifacts[attackedArtifactGameId].artifactId].name))
     }
 
-    applyHealing(player: Player, healedArtifactGameId: string, amount: number) {
+    applyHealing(player: Player, healedArtifactGameId: string, amount: number, logParts: string[]) {
         const currentHp = player.artifacts[healedArtifactGameId].currentHp + amount;
         const maxHp = player.artifacts[healedArtifactGameId].maxHp;
 
         player.artifacts[healedArtifactGameId].currentHp = currentHp > maxHp ? maxHp : currentHp;
+        logParts.push(LogHelper.getHealLog(amount, ARTIFACTS[player.artifacts[healedArtifactGameId].artifactId].name))
     }
 
     calculateFaceHeal(player: Player, healedArtifactGameId: string, healerArtifactGameId: string): number {

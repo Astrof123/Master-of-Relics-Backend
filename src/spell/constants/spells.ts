@@ -5,6 +5,7 @@ import { SPELL, Spell, SpellDataType, SPELLTYPE } from "../types/spell";
 export const SPELLS: Record<Spell, SpellDataType> = {
     [SPELL.TOUCH_OF_LIGHT]: {
         id: SPELL.TOUCH_OF_LIGHT,
+        name: "Touch Of Light",
         type: SPELLTYPE.LIGHT,
         cost: 20,
         description: "Применить способность",
@@ -16,6 +17,7 @@ export const SPELLS: Record<Spell, SpellDataType> = {
     },
     [SPELL.PIERCING_BOLT]: {
         id: SPELL.PIERCING_BOLT,
+        name: "Piercing Bolt",
         type: SPELLTYPE.DESTRUCTION,
         cost: 15,
         description: "Нанести 15 урона вражескому артефакту",

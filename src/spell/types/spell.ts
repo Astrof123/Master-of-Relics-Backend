@@ -14,6 +14,7 @@ export type SpellType  = typeof SPELLTYPE [keyof typeof SPELLTYPE];
 
 export interface SpellDataType {
     id: Spell;
+    name: string;
     type: SpellType;
     cost: number;
     description: string;

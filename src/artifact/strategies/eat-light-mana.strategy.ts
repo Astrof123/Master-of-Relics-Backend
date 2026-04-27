@@ -10,6 +10,8 @@ import { CombatService } from "src/game-mechanics/combat.service";
 import { DAMAGE } from "src/game-mechanics/types/combat";
 import { ResourceService } from "src/game-mechanics/resource.service";
 import { RESOURCE } from "src/game-mechanics/types/resource";
+import { LogHelper } from "src/action/helpers/logHelper";
+import { ARTIFACTS } from "../constants/artifacts";
 
 @Injectable()
 export class EatLightManaStrategy implements SkillStrategy {
@@ -22,13 +24,13 @@ export class EatLightManaStrategy implements SkillStrategy {
         return SKILL.EAT_LIGHT_MANA;
     }
 
-    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[]) {
+    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
         const heal = this.combatService.calculateHeal(gameState.player, artifact.id, 15);
 
-        this.resourceService.decreaseResource(gameState.player, RESOURCE.LIGHT_MANA, 10)
+        this.resourceService.decreaseResource(gameState.player, RESOURCE.LIGHT_MANA, 10, logParts)
 
         if (heal !== 0) {
-            this.combatService.applyHealing(gameState.player, artifact.id, heal);
+            this.combatService.applyHealing(gameState.player, artifact.id, heal, logParts);
             animations.push({
                 playerId: gameState.player.id,
                 artifactGameId: artifact.id,

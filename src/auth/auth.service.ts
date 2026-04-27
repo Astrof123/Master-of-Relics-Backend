@@ -10,12 +10,15 @@ import { LoginDto } from './dto/login.dto';
 import { InvalidCredentialsException, UserAlreadyExistsException } from './exceptions/auth.exception';
 import { CustomHttpException } from 'src/common/custom-http.exception';
 import { CollectionService } from 'src/collection/collection.service';
+import { UserStats } from 'src/users/entities/user-stats.entity';
 
 @Injectable()
 export class AuthService {
     constructor(
         @InjectRepository(User)
         private usersRepository: Repository<User>,
+        @InjectRepository(UserStats)
+        private userStatsRepository: Repository<UserStats>,
         private tokenService: TokenService,
         private collectionService: CollectionService
     ) {}
@@ -40,8 +43,12 @@ export class AuthService {
                 login,
                 password: hashedPassword,
             });
-
             await this.usersRepository.save(user);
+
+            const userStats = this.userStatsRepository.create({
+                userId: user.id
+            });
+            await this.userStatsRepository.save(userStats);
 
             await this.collectionService.createForNewUser(user.id);
 

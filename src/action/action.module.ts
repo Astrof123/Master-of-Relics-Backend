@@ -21,12 +21,12 @@ import { SpellModule } from 'src/spell/spell.module';
         RestrictionService
     ],
     imports: [
-        GameStateModule, 
+        forwardRef(() => GameStateModule), 
         GameMechanicsModule, 
         forwardRef(() => PhaseModule), 
         forwardRef(() => ArtifactModule),
         forwardRef(() => SpellModule)
     ],
-    exports: [ExtraActionService, RestrictionService]
+    exports: [ExtraActionService, RestrictionService, ActionService]
 })
 export class ActionModule {}

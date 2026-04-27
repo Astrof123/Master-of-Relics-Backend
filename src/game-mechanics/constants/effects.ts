@@ -10,7 +10,7 @@ export const EFFECTS: Record<Effect, EffectType> = {
     },
     [EFFECT.EXTRA_MOVE]: {
         id: EFFECT.EXTRA_MOVE,
-        name: "Extra Move",
+        name: "Дополнительное действие",
         duration: EFFECT_DURATION.ALWAYS,
         type: "positive",
         number: null

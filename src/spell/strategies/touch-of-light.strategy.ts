@@ -7,6 +7,8 @@ import { ArtifactStateService } from "src/game-mechanics/artifact-state.service"
 import { CombatService } from "src/game-mechanics/combat.service";
 import { DAMAGE } from "src/game-mechanics/types/combat";
 import { SPELL, Spell } from "../types/spell";
+import { LogHelper } from "src/action/helpers/logHelper";
+import { ARTIFACTS } from "src/artifact/constants/artifacts";
 
 @Injectable()
 export class TouchOfLightStrategy implements SpellStrategy {
@@ -18,14 +20,13 @@ export class TouchOfLightStrategy implements SpellStrategy {
         return SPELL.TOUCH_OF_LIGHT;
     }
 
-    execute(gameState: GameForLogic, data: UseSpellData, animations: AnimationData[]) {
-        
+    execute(gameState: GameForLogic, data: UseSpellData, animations: AnimationData[], logParts: string[]) {
         if (data.targets[0].length > 0) {
             const allyArtifact = gameState.player.artifacts[data.targets[0][0]];
             
             const heal = this.combatService.calculateHeal(gameState.player, allyArtifact.id, 20);
             if (heal !== 0) {
-                this.combatService.applyHealing(gameState.player, allyArtifact.id, heal);
+                this.combatService.applyHealing(gameState.player, allyArtifact.id, heal, logParts);
                 animations.push({
                     playerId: gameState.player.id,
                     artifactGameId: allyArtifact.id,
@@ -37,7 +38,7 @@ export class TouchOfLightStrategy implements SpellStrategy {
         else if (data.targets[1].length > 0) {
             const enemyArtifact = gameState.enemy.artifacts[data.targets[1][0]];
             const damage = this.combatService.calculateDamage(gameState.player, 10, DAMAGE.MAGIC);
-            this.combatService.applyDamage(gameState.enemy, enemyArtifact.id, damage);
+            this.combatService.applyDamage(gameState.enemy, enemyArtifact.id, damage, DAMAGE.MAGIC, logParts);
 
             animations.push({
                 playerId: gameState.enemy.id,

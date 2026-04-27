@@ -14,9 +14,35 @@ export interface Lobby {
     isPrivate: boolean;
     code: string | null;
     options: {
+        withTimers: boolean;
+        timerTurn: number | null;
+        timerDraft: number | null;
+        timerMovement: number | null;
         mode: GameModeType
     }
 }
+
+export interface LobbyInvitation {
+    id: string;
+    lobbyId: string,
+    addresseeId: number,
+    requesterNickname: string;
+    requesterId: number;
+}
+
+export interface FriendForInvite {
+    isOnline: boolean;
+    friendNickname: string;
+    friendId: number;
+    status: InviteStatus;
+}
+
+export const INVITE_STATUS  = {
+    OFFER: 'offer',
+    NO_OFFER: 'no_offer',
+} as const;
+
+export type InviteStatus  = typeof INVITE_STATUS [keyof typeof INVITE_STATUS];
 
 export const LOBBY_STATE_TYPE  = {
     WAITING: 'waiting',

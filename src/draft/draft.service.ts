@@ -7,7 +7,7 @@ import { GAME_ERROR_CODE, GameException } from 'src/game-state/types/game-except
 import { DRAFT_ERROR_CODE, DraftException } from './types/draft-exceptions';
 import { GAMEPATH } from 'src/game-state/constants/game-redis-paths';
 import { DRAFTPATH } from './constants/draft-redis-paths';
-import { ARTIFACT_STATE, ArtifactGameState, LINE } from 'src/game-state/types/game';
+import { ARTIFACT_STATE, ArtifactGameState, LINE, Player } from 'src/game-state/types/game';
 import { v4 as uuidv4 } from 'uuid';
 import { ARTIFACTS } from 'src/artifact/constants/artifacts';
 import { PHASE, Phase } from 'src/game-state/types/phase';
@@ -20,6 +20,10 @@ import { ChainableCommander } from 'ioredis';
 import { EffectType } from 'src/game-mechanics/types/effect';
 import { EFFECTS } from 'src/game-mechanics/constants/effects';
 import { SKILLS } from 'src/artifact/constants/skills';
+import { GameTimerService } from 'src/game-state/game-timer.service';
+import { TIMER_TYPE } from 'src/game-state/types/timer';
+import { Artifact } from 'src/artifact/types/artifact';
+import { randomInt } from 'crypto';
 
 
 @Injectable()
@@ -27,7 +31,8 @@ export class DraftService {
     constructor(
         private readonly gameStateService: GameStateService,
         private readonly redisService: RedisService,
-        private readonly phaseService: PhaseService
+        private readonly phaseService: PhaseService,
+        private readonly gameTimerService: GameTimerService
     ) {}
 
     private async checkPickedArtifact(artifactId: string, gameState: GameForLogic) {
@@ -54,6 +59,10 @@ export class DraftService {
             throw new DraftException(DRAFT_ERROR_CODE.PHASE_NOT_DRAFT);
         }
 
+        if (gameState.end !== null) {
+            throw new DraftException(DRAFT_ERROR_CODE.GAME_OVER);
+        }
+
         await this.checkPickedArtifact(data.artifactId, gameState);
 
         const path = DRAFTPATH.getPickedArtifact(userId);
@@ -62,11 +71,9 @@ export class DraftService {
 
     async toggleReadyDraft(gameId: string, userId: number) {
         const key = this.gameStateService.getKeyGame(gameId);
-        const maxRetries = 5;
         let retries = 0;
-        let isSuccessEndMulti = false;
-
-        while (retries < maxRetries && !isSuccessEndMulti) {
+        
+        while (retries < 5) {
             await this.redisService.watch(key);
             
             try {
@@ -82,197 +89,196 @@ export class DraftService {
                     throw new DraftException(DRAFT_ERROR_CODE.PHASE_NOT_DRAFT);
                 }
 
-                await this.checkToggleReady(gameState);
+                if (gameState.end !== null) {
+                    throw new DraftException(DRAFT_ERROR_CODE.GAME_OVER);
+                }
 
-                const path = GAMEPATH.getPlayerReadyPath(userId);
-                const isReadyPlayer = await this.redisService.getJson<boolean>(key, path);
+                await this.checkToggleReady(gameState);
+                
+                const updatedGameState = this.cloneGameState(gameState);
+                updatedGameState.player.isReady = !updatedGameState.player.isReady;
+                
+                const draftFinished = this.applyFinishDraftIfNeeded(updatedGameState);
+                
+                const allArtifactsCollected = draftFinished && 
+                    Object.keys(updatedGameState.player.artifacts).length === DRAFT_COUNT_ARTIFACTS;
+                
+                if (allArtifactsCollected) {
+                    updatedGameState.phase = PHASE.BATTLE;
+                    await this.phaseService.newRound(updatedGameState);
+                }
                 
                 const multi = this.redisService.multi();
+                await this.gameStateService.saveGameForLogicInTransaction(updatedGameState, key, multi);
                 
-                this.redisService.jsonSetInTransaction(
-                    multi,
-                    key,
-                    path,
-                    !isReadyPlayer
-                );
-
-                await this.finishDraftOneArtifactInTransaction(
-                    gameState, 
-                    key, 
-                    multi,
-                    !isReadyPlayer
-                );
-
                 const results = await this.redisService.execMulti(multi);
-
                 if (results === null) {
                     retries++;
                     continue;
                 }
-
-                isSuccessEndMulti = true;
-            } 
-            catch (error) {
+                
+                if (draftFinished && gameState.constants.timerDraft) {
+                    await this.gameTimerService.startTimer(gameId, TIMER_TYPE.DRAFT, gameState.constants.timerDraft);
+                }
+                
+                return;
+                
+            } catch (error) {
                 await this.redisService.unwatch();
                 retries++;
-                
-                if (retries >= maxRetries) {
-                    if (error instanceof GameException || error instanceof DraftException) {
-                        throw error;
-                    }
-                    throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
-                }
+                if (retries >= 5) throw error;
             }
-        }
-
-        let gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
-
-        if (gameState === null) {
-            throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
-        }
-        
-        if (isSuccessEndMulti && Object.values(gameState.player.artifacts).length === DRAFT_COUNT_ARTIFACTS) {
-            gameState.phase = PHASE.BATTLE;
-            await this.phaseService.newRound(gameState);
-            
-            await this.gameStateService.saveGameForLogic(gameState, key);
         }
     }
 
-    async finishDraftOneArtifactInTransaction(
-        gameState: GameForLogic, 
-        key: string,
-        multi: ChainableCommander,
-        playerReady: boolean
-    ): Promise<boolean> {
-        const pathReadyEnemy = GAMEPATH.getPlayerReadyPath(gameState.enemy.id);
-        const pathPickedArtifactPlayer = DRAFTPATH.getPickedArtifact(gameState.player.id);
-        const pathPickedArtifactEnemy = DRAFTPATH.getPickedArtifact(gameState.enemy.id);
-        const pathPlayerArtifacts = GAMEPATH.getArtifactsPath(gameState.player.id);
-        const pathEnemyArtifacts = GAMEPATH.getArtifactsPath(gameState.enemy.id);
+    async autoFinishDraft(gameId: string, userId: number) {
+        const key = this.gameStateService.getKeyGame(gameId);
+        let retries = 0;
+        
+        while (retries < 5) {
+            await this.redisService.watch(key);
+            
+            try {
+                let gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
+                
+                if (!gameState) {
+                    await this.redisService.unwatch();
+                    throw new GameException(GAME_ERROR_CODE.GAME_NOT_FOUND);
+                }
+                
+                if (gameState.phase !== PHASE.DRAFT) {
+                    await this.redisService.unwatch();
+                    return;
+                }
+                
+                if (gameState.end !== null) {
+                    await this.redisService.unwatch();
+                    return;
+                }
+                
+                if (gameState.player.isReady) {
+                    await this.redisService.unwatch();
+                    return;
+                }
+                
+                let autoPickArtifact;
+                if (!gameState.player.draft.pickedArtifact) {
+                    const randomArtifact = randomInt(0, gameState.player.draft.deck.length)
+                    autoPickArtifact = gameState.player.draft.deck[randomArtifact]?.artifactId;
+                }
+                else {
+                    autoPickArtifact = gameState.player.draft.deck[gameState.player.draft.pickedArtifact]?.artifactId;
+                }
 
-        const isReadyEnemy = await this.redisService.getJson<boolean>(key, pathReadyEnemy);
-        const pickedArtifactPlayer = await this.redisService.getJson<string>(key, pathPickedArtifactPlayer);
-        const pickedArtifactEnemy = await this.redisService.getJson<string>(key, pathPickedArtifactEnemy);
-        const playerArtifacts = await this.redisService.getJson<Record<string, ArtifactGameState>>(key, pathPlayerArtifacts);
-        const enemyArtifacts = await this.redisService.getJson<Record<string, ArtifactGameState>>(key, pathEnemyArtifacts);
+                const updatedGameState = this.cloneGameState(gameState);
+                updatedGameState.player.draft.pickedArtifact = autoPickArtifact;
+                updatedGameState.player.isReady = true;
+                const draftFinished = this.applyFinishDraftIfNeeded(updatedGameState);
+                
+                const allArtifactsCollected = draftFinished && 
+                    Object.keys(updatedGameState.player.artifacts).length === DRAFT_COUNT_ARTIFACTS;
+                
+                if (allArtifactsCollected) {
+                    updatedGameState.phase = PHASE.BATTLE;
+                    await this.phaseService.newRound(updatedGameState);
+                }
+                
+                const multi = this.redisService.multi();
+                await this.gameStateService.saveGameForLogicInTransaction(updatedGameState, key, multi);
+                
+                const results = await this.redisService.execMulti(multi);
+                if (results === null) {
+                    retries++;
+                    continue;
+                }
+                
+                if (draftFinished && gameState.constants.timerDraft) {
+                    await this.gameTimerService.startTimer(gameId, TIMER_TYPE.DRAFT, gameState.constants.timerDraft);
+                }
+                return;
+                
+            } catch (error) {
+                await this.redisService.unwatch();
+                retries++;
+                if (retries >= 5) throw error;
+            }
+        }
+    }
+
+    createArtifact(player: Player, pickedArtifact: Artifact) {
+        const playerArtifacts = player.artifacts;
+
+        const artifactGameId = uuidv4();
+
+        const artifactEffects: EffectType[] = [];
+
+        ARTIFACTS[pickedArtifact].defaultEffects.forEach((effect) => {
+            artifactEffects.push({
+                id: effect,
+                name: EFFECTS[effect].name,
+                duration: EFFECTS[effect].duration,
+                type: EFFECTS[effect].type,
+                number: EFFECTS[effect].number,
+            })
+        })
+
+        let artifactSkillCost: number | null = null;
+        if (ARTIFACTS[pickedArtifact].skills && ARTIFACTS[pickedArtifact].skills.length > 0) {
+            const skill = ARTIFACTS[pickedArtifact].skills[0];
+            artifactSkillCost = SKILLS[skill].cost;
+        }
+
+        const artifactPlayer: ArtifactGameState = {
+            id: artifactGameId,
+            artifactId: pickedArtifact,
+            face: ARTIFACTS[pickedArtifact].faces[0],
+            state: ARTIFACT_STATE.READY_TO_USE,
+            skillCost: artifactSkillCost,
+            currentHp: ARTIFACTS[pickedArtifact].hp,
+            maxHp: ARTIFACTS[pickedArtifact].hp,
+            position: Object.values(playerArtifacts).length % MAX_COUNT_ARTIFACTS_ON_LINE,
+            line: Object.values(playerArtifacts).length < MAX_COUNT_ARTIFACTS_ON_LINE ? LINE.BACK : LINE.FRONT,
+            effects: artifactEffects,
+            availableActions: null,
+            extraData: {
+                lastStateBeforeRoot: ARTIFACT_STATE.READY_TO_USE
+            }
+        };
+
+        return artifactPlayer;
+    }
+
+    private applyFinishDraftIfNeeded(gameState: GameForLogic): boolean {
+        const isReadyEnemy = gameState.enemy.isReady;
+        const pickedArtifactPlayer = gameState.player.draft.pickedArtifact;
+        const pickedArtifactEnemy = gameState.enemy.draft.pickedArtifact;
+        const playerArtifacts = gameState.player.artifacts;
+        const enemyArtifacts = gameState.enemy.artifacts;
 
         if (playerArtifacts === null || enemyArtifacts === null) {
             throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
         }
 
-        if (playerReady && isReadyEnemy && pickedArtifactPlayer && pickedArtifactEnemy) {
-            const artifactPlayerId = uuidv4();
-            const artifactEnemyId = uuidv4();
+        if (gameState.player.isReady && isReadyEnemy && pickedArtifactPlayer && pickedArtifactEnemy) {
+            const artifactPlayer = this.createArtifact(gameState.player, pickedArtifactPlayer);
+            const artifactEnemy = this.createArtifact(gameState.enemy, pickedArtifactEnemy);
 
-            const playerArtifactEffects: EffectType[] = [];
-            const enemyArtifactEffects: EffectType[] = [];
+            gameState.player.artifacts[artifactPlayer.id] = artifactPlayer;
+            gameState.enemy.artifacts[artifactEnemy.id] = artifactEnemy;
 
-            ARTIFACTS[pickedArtifactPlayer].defaultEffects.forEach((effect) => {
-                playerArtifactEffects.push({
-                    id: effect,
-                    name: EFFECTS[effect].name,
-                    duration: EFFECTS[effect].duration,
-                    type: EFFECTS[effect].type,
-                    number: EFFECTS[effect].number,
-                })
-            })
+            gameState.player.draft.pickedArtifact = null;
+            gameState.enemy.draft.pickedArtifact = null;
 
-            ARTIFACTS[pickedArtifactEnemy].defaultEffects.forEach((effect) => {
-                enemyArtifactEffects.push({
-                    id: effect,
-                    name: EFFECTS[effect].name,
-                    duration: EFFECTS[effect].duration,
-                    type: EFFECTS[effect].type,
-                    number: EFFECTS[effect].number,
-                })
-            })
-
-            let artifactPlayerSkillCost: number | null = null;
-            if (ARTIFACTS[pickedArtifactPlayer].skills && ARTIFACTS[pickedArtifactPlayer].skills.length > 0) {
-                const skill = ARTIFACTS[pickedArtifactPlayer].skills[0];
-                artifactPlayerSkillCost = SKILLS[skill].cost;
-            }
-
-            const artifactPlayer: ArtifactGameState = {
-                id: artifactPlayerId,
-                artifactId: pickedArtifactPlayer,
-                face: ARTIFACTS[pickedArtifactPlayer].faces[0],
-                state: ARTIFACT_STATE.READY_TO_USE,
-                skillCost: artifactPlayerSkillCost,
-                currentHp: ARTIFACTS[pickedArtifactPlayer].hp,
-                maxHp: ARTIFACTS[pickedArtifactPlayer].hp,
-                position: Object.values(playerArtifacts).length % MAX_COUNT_ARTIFACTS_ON_LINE,
-                line: Object.values(playerArtifacts).length < MAX_COUNT_ARTIFACTS_ON_LINE ? LINE.BACK : LINE.FRONT,
-                effects: playerArtifactEffects,
-                availableActions: null
-            };
-
-            let artifactEnemySkillCost: number | null = null;
-            if (ARTIFACTS[pickedArtifactEnemy].skills && ARTIFACTS[pickedArtifactEnemy].skills.length > 0) {
-                const skill = ARTIFACTS[pickedArtifactEnemy].skills[0];
-                artifactEnemySkillCost = SKILLS[skill].cost;
-            }
-
-            const artifactEnemy: ArtifactGameState = {
-                id: artifactEnemyId,
-                artifactId: pickedArtifactEnemy,
-                face: ARTIFACTS[pickedArtifactEnemy].faces[0],
-                state: ARTIFACT_STATE.READY_TO_USE,
-                currentHp: ARTIFACTS[pickedArtifactEnemy].hp,
-                skillCost: artifactEnemySkillCost,
-                maxHp: ARTIFACTS[pickedArtifactEnemy].hp,
-                position: Object.values(enemyArtifacts).length % MAX_COUNT_ARTIFACTS_ON_LINE,
-                line: Object.values(enemyArtifacts).length < MAX_COUNT_ARTIFACTS_ON_LINE ? LINE.BACK : LINE.FRONT,
-                effects: enemyArtifactEffects,
-                availableActions: null
-            };
-
-            this.redisService.jsonSetInTransaction(
-                multi,
-                key,
-                DRAFTPATH.getArtifactPath(gameState.player.id, artifactPlayerId),
-                artifactPlayer
-            );
-
-            this.redisService.jsonSetInTransaction(
-                multi,
-                key,
-                DRAFTPATH.getArtifactPath(gameState.enemy.id, artifactEnemyId),
-                artifactEnemy
-            );
-
-            this.redisService.jsonSetInTransaction(
-                multi,
-                key,
-                DRAFTPATH.getPickedArtifact(gameState.player.id),
-                null
-            );
-
-            this.redisService.jsonSetInTransaction(
-                multi,
-                key,
-                DRAFTPATH.getPickedArtifact(gameState.enemy.id),
-                null
-            );
-
-            this.redisService.jsonSetInTransaction(
-                multi,
-                key,
-                GAMEPATH.getPlayerReadyPath(gameState.player.id),
-                false
-            );
-
-            this.redisService.jsonSetInTransaction(
-                multi,
-                key,
-                GAMEPATH.getPlayerReadyPath(gameState.enemy.id),
-                false
-            );
+            gameState.player.isReady = false;
+            gameState.enemy.isReady = false;
 
             return true;
         }
 
         return false;
+    }
+
+    private cloneGameState(gameState: GameForLogic): GameForLogic {
+        return JSON.parse(JSON.stringify(gameState));
     }
 }

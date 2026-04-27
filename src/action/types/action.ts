@@ -10,13 +10,16 @@ export const EXTRA_ACTION = {
     THROW_DICE: "throw_dice",
     EXTRA_MOVE: "extra_move",
     RETURN_TO_BATTLE: "return_to_battle",
-    MOVE: "move"
+    MOVE: "move",
+    REMOVE_ROOT: "remove_root",
+    DESTROY_ARTIFACT: "destroy_artifact"
 }
 
 export type ExtraAction = typeof EXTRA_ACTION[keyof typeof EXTRA_ACTION];
 
 export interface ExtraActionDataType {
     id: ExtraAction;
+    name: string;
     cost: number;
     resourceType: ResourceType;
     getDescription: (cost: number) => string;

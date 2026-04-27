@@ -1,18 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from 'src/redis/redis.service';
 import { v4 as uuidv4 } from 'uuid';
-import { Lobby, LOBBY_STATE_TYPE, LobbyPlayer, LobbyStateType } from './types/lobby';
-import { CreateLobbyData } from './types/lobby-evens-data';
+import { FriendForInvite, INVITE_STATUS, Lobby, LOBBY_STATE_TYPE, LobbyInvitation, LobbyPlayer, LobbyStateType } from './types/lobby';
+import { CreateLobbyData, InviteFriendData, UpdateOptionsLobbyData } from './types/lobby-evens-data';
 import { UsersService } from 'src/users/users.service';
 import { LOBBY_ERROR_CODE, LobbyException } from './types/lobby-exceptions';
 import { LOBBYPATH } from './types/lobby-redis-paths';
 import * as crypto from 'crypto';
 import { uid } from 'uid';
+import { UserNotFoundException } from 'src/users/exceptions/users.exception';
+import { MAX_TIMER_VALUE, MIN_TIMER_VALUE } from './constants/settings';
 
 @Injectable()
 export class LobbyService {
     private readonly MAX_PLAYERS = 2;
     private readonly LOBBY_TTL = 60 * 60 * 24;
+    private readonly LOBBY_INVITE_TTL = 60 * 5;
 
     constructor(
         private readonly redisService: RedisService,
@@ -55,7 +58,16 @@ export class LobbyService {
             throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_ALREADY_IN_LOBBY);
         }
 
-        const code = lobbyData.isPrivate ? uid(6).toUpperCase() : null;
+        let timerDraft = lobbyData.timerDraft < MIN_TIMER_VALUE ? MIN_TIMER_VALUE : lobbyData.timerDraft;
+        timerDraft = timerDraft > MAX_TIMER_VALUE ? MAX_TIMER_VALUE : timerDraft;
+
+        let timerTurn = lobbyData.timerTurn < MIN_TIMER_VALUE ? MIN_TIMER_VALUE : lobbyData.timerTurn;
+        timerTurn = timerTurn > MAX_TIMER_VALUE ? MAX_TIMER_VALUE : timerTurn;
+
+        let timerMovement = lobbyData.timerMovement < MIN_TIMER_VALUE ? MIN_TIMER_VALUE : lobbyData.timerMovement;
+        timerMovement = timerMovement > MAX_TIMER_VALUE ? MAX_TIMER_VALUE : timerMovement;
+
+        const code = uid(6).toUpperCase();
 
         await this.redisService.setJson<Lobby>(key, ".", {
             id: lobbyId,
@@ -72,6 +84,10 @@ export class LobbyService {
             isPrivate: lobbyData.isPrivate,
             state: LOBBY_STATE_TYPE.WAITING,
             options: {
+                withTimers: lobbyData.withTimers,
+                timerDraft: lobbyData.withTimers ? timerDraft : null,
+                timerTurn: lobbyData.withTimers ? timerTurn : null,
+                timerMovement: lobbyData.withTimers ? timerMovement : null,
                 mode: 'classic'
             }
         }, this.LOBBY_TTL);
@@ -84,6 +100,46 @@ export class LobbyService {
         );
         
         return lobbyId;
+    }
+
+    async updateOptionsLobby(lobbyOptions: UpdateOptionsLobbyData, userId: number): Promise<string> {
+        const key = this.getLobbyKey(lobbyOptions.lobbyId);
+        const lobby = await this.getLobbyById(lobbyOptions.lobbyId);
+
+        if (!lobby) {
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
+        }
+
+        if (lobby.state !== LOBBY_STATE_TYPE.WAITING) {
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_ALREADY_STARTED);
+        }
+
+        let timerDraft = lobbyOptions.timerDraft < MIN_TIMER_VALUE ? MIN_TIMER_VALUE : lobbyOptions.timerDraft;
+        timerDraft = timerDraft > MAX_TIMER_VALUE ? MAX_TIMER_VALUE : timerDraft;
+
+        let timerTurn = lobbyOptions.timerTurn < MIN_TIMER_VALUE ? MIN_TIMER_VALUE : lobbyOptions.timerTurn;
+        timerTurn = timerTurn > MAX_TIMER_VALUE ? MAX_TIMER_VALUE : timerTurn;
+
+        let timerMovement = lobbyOptions.timerMovement < MIN_TIMER_VALUE ? MIN_TIMER_VALUE : lobbyOptions.timerMovement;
+        timerMovement = timerMovement > MAX_TIMER_VALUE ? MAX_TIMER_VALUE : timerMovement;
+
+        await this.redisService.setJson<Lobby>(key, ".", {
+            id: lobby.id,
+            name: lobby.name,
+            players: lobby.players,
+            code: lobby.code,
+            isPrivate: lobby.isPrivate,
+            state: lobby.state,
+            options: {
+                withTimers: lobbyOptions.withTimers,
+                timerDraft: lobbyOptions.withTimers ? timerDraft : null,
+                timerTurn: lobbyOptions.withTimers ? timerTurn : null,
+                timerMovement: lobbyOptions.withTimers ? timerMovement : null,
+                mode: 'classic'
+            }
+        }, this.LOBBY_TTL);
+        
+        return lobby.id;
     }
 
     async joinLobby(lobbyId: string, userId: number): Promise<void> {
@@ -111,10 +167,6 @@ export class LobbyService {
 
         if (Object.keys(lobby.players).length >= this.MAX_PLAYERS) {
             throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_FULL);
-        }
-        
-        if (lobby.isPrivate) {
-            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_IS_PRIVATE);
         }
 
         const user = await this.usersService.findOne(userId);
@@ -266,5 +318,95 @@ export class LobbyService {
 
         await this.redisService.delete(key);
         await this.redisService.removeFromSortedSet(this.getLobbyIndexesKey(), lobbyId);
+    }
+
+    async inviteFriend(data: InviteFriendData, currentUserId: number) {
+        const lobby = await this.getLobbyById(data.lobbyId);
+
+        if (!lobby) {
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
+        }   
+
+        const invitedUser = await this.usersService.findOne(data.friendId);
+        const currentUser = await this.usersService.findOne(currentUserId);
+
+        const invitationId = uuidv4();
+        const lobbyInvite: LobbyInvitation = {
+            id: invitationId,
+            addresseeId: invitedUser.id,
+            lobbyId: lobby.id,
+            requesterNickname: currentUser.nickname,
+            requesterId: currentUser.id
+        }
+
+        await this.redisService.addToSet(`user:${invitedUser.id}:invitations`, JSON.stringify(lobbyInvite), this.LOBBY_INVITE_TTL)
+    }
+
+    async deleteInvitation(lobbyInvitation: LobbyInvitation) {
+        await this.redisService.removeFromSet(
+            `user:${lobbyInvitation.addresseeId}:invitations`, 
+            JSON.stringify(lobbyInvitation)
+        );
+    }
+
+    async getInvitations(currentUserId: number) {
+        let invitations = await this.redisService.getSetMembers(`user:${currentUserId}:invitations`);
+        const playerInvitations: LobbyInvitation[] = []
+
+        for (const invitation of invitations) {
+            const parsed: LobbyInvitation = JSON.parse(invitation);
+            const lobby = await this.getLobbyById(parsed.lobbyId);
+
+            if (lobby && Object.keys(lobby.players).length === 1 && parsed.addresseeId === currentUserId) {
+                playerInvitations.push(parsed);
+            }
+        }
+
+        return playerInvitations;
+    }
+
+    async getFriendsForInvite(currentUserId: number): Promise<FriendForInvite[]> {
+        const friends = await this.usersService.getFriends(currentUserId);
+
+        const friendsForInvite: FriendForInvite[] = []; 
+        for (const friend of friends) {
+            const invitations = await this.getInvitations(friend.friendId);
+
+            if (invitations.find(invitation => invitation.requesterId === currentUserId)) {
+                friendsForInvite.push({
+                    friendId: friend.friendId,
+                    status: INVITE_STATUS.OFFER,
+                    friendNickname: friend.nickname,
+                    isOnline: friend.isOnline
+                })
+            }
+            else {
+                friendsForInvite.push({
+                    friendId: friend.friendId,
+                    status: INVITE_STATUS.NO_OFFER,
+                    friendNickname: friend.nickname,
+                    isOnline: friend.isOnline
+                })            
+            }
+        }
+        return friendsForInvite;
+    }
+
+    async joinLobbyByInvitation(invitationId: string, currentUserId: number) {
+        let invitations = await this.redisService.getSetMembers(`user:${currentUserId}:invitations`);
+        const parsedInvitations: LobbyInvitation[] = invitations.map(invitation => JSON.parse(invitation));
+        const invitation = parsedInvitations.find(inv => inv.id === invitationId);
+
+        if (!invitation) {
+            throw new LobbyException(LOBBY_ERROR_CODE.INVITATION_NOT_FOUND);
+        }
+        
+        const lobby = await this.getLobbyById(invitation.lobbyId);
+
+        if (!lobby || Object.keys(lobby.players).length !== 1 || invitation.addresseeId !== currentUserId) {
+            throw new LobbyException(LOBBY_ERROR_CODE.INVITATION_EXPIRED);
+        }
+
+        return invitation;
     }
 }

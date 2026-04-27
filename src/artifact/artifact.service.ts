@@ -11,6 +11,7 @@ import { SKILLS } from './constants/skills';
 import { RESOURCE } from 'src/game-mechanics/types/resource';
 import { ActionValidatorService } from 'src/action/action-validator.service';
 import { RestrictionService } from 'src/action/restriction.service';
+import { LogHelper } from 'src/action/helpers/logHelper';
 
 @Injectable()
 export class ArtifactService {
@@ -22,15 +23,6 @@ export class ArtifactService {
     calculateAvailableActions(gameState: GameForLogic, player: Player, enemy: Player) {
         for (const [key, artifact] of Object.entries(player.artifacts)) {
             const face = this.getFaceAction(artifact, player, enemy);
-            if (artifact.state === ARTIFACT_STATE.BREAKEN) {
-                artifact.availableActions = {
-                    face: face,
-                    skills: [],
-                    extraActions: []
-                };
-                continue;
-            }
-
             const extraActions = this.extraActionService.getExtraActions(player, enemy, artifact);
             const skills = this.getSkills(player, enemy, artifact)
 
@@ -42,8 +34,6 @@ export class ArtifactService {
 
             artifact.availableActions = availableActions;
         }
-
-        player.temporaryArtifacts = player.artifacts;
     }
 
     getFaceAction(artifact: ArtifactGameState, player: Player, enemy: Player) {
@@ -154,7 +144,7 @@ export class ArtifactService {
         return skills;
     }
 
-    moveArtifact(positionInsert: number, artifactInsert: ArtifactGameState, newLine: Line, artifacts: Record<string, ArtifactGameState>) {
+    moveArtifact(positionInsert: number, artifactInsert: ArtifactGameState, newLine: Line, artifacts: Record<string, ArtifactGameState>, logParts: string[]) {
         for (const [key, artifact] of Object.entries(artifacts)) {
             if (artifact.position > artifactInsert.position && artifact.line === artifactInsert.line) {
                 artifact.position -= 1;
@@ -169,5 +159,7 @@ export class ArtifactService {
 
         artifactInsert.position = positionInsert;
         artifactInsert.line = newLine;
+
+        logParts.push(LogHelper.getMoveArtifactLog(ARTIFACTS[artifactInsert.artifactId].name, positionInsert, newLine));
     }
 }

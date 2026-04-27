@@ -12,12 +12,14 @@ import { ArtifactStateService } from "src/game-mechanics/artifact-state.service"
 import { ActionValidatorService } from "./action-validator.service";
 import { RestrictionService } from "./restriction.service";
 import { ArtifactService } from 'src/artifact/artifact.service';
+import { RESOURCE } from "src/game-mechanics/types/resource";
 
 type ExtraActionHandler = (
     gameState: GameForLogic,
     artifact: ArtifactGameState,
     data: ExtraActionData,
-    animations: AnimationData[]
+    animations: AnimationData[],
+    logParts: string[]
 ) => void;
 
 @Injectable()
@@ -36,7 +38,9 @@ export class ExtraActionService {
             [EXTRA_ACTION.THROW_DICE]: this.handleThrowDice.bind(this),
             [EXTRA_ACTION.EXTRA_MOVE]: this.handleExtraMove.bind(this),
             [EXTRA_ACTION.RETURN_TO_BATTLE]: this.handleReturnToBattle.bind(this),
-            [EXTRA_ACTION.MOVE]: this.handleMove.bind(this)
+            [EXTRA_ACTION.MOVE]: this.handleMove.bind(this),
+            [EXTRA_ACTION.REMOVE_ROOT]: this.handleRemoveRoot.bind(this),
+            [EXTRA_ACTION.DESTROY_ARTIFACT]: this.handleDestroyArtifact.bind(this)
         };
     }
 
@@ -62,20 +66,33 @@ export class ExtraActionService {
         return extraActions;
     }
 
-    handleThrowDice(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[]) {
-        this.diceService.throwDice(gameState.player, artifact.id, artifact.artifactId);
+    handleThrowDice(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[], logParts: string[]) {
+        this.diceService.throwDice(gameState.player, artifact.id, artifact.artifactId, logParts);
     }
 
-    handleExtraMove(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[]) {
-        this.resourceService.extraMove(gameState.player);
+    handleExtraMove(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[], logParts: string[]) {
+        this.resourceService.extraMove(gameState.player, logParts);
     }
 
-    handleReturnToBattle(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[]) {
-        this.diceService.throwDice(gameState.player, artifact.id, artifact.artifactId);
-        this.artifactStateService.applyState(gameState.player, artifact.id, ARTIFACT_STATE.READY_TO_USE);
+    handleReturnToBattle(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[], logParts: string[]) {
+        this.diceService.throwDice(gameState.player, artifact.id, artifact.artifactId, logParts);
+        this.artifactStateService.applyState(gameState.player, artifact.id, ARTIFACT_STATE.READY_TO_USE, logParts);
     }
 
-    handleMove(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[]) {
-        this.artifactService.moveArtifact(data.details!.newPosition, artifact, data.details!.newLine, gameState.player.artifacts);
+    handleMove(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[], logParts: string[]) {
+        this.artifactService.moveArtifact(data.details!.newPosition, artifact, data.details!.newLine, gameState.player.artifacts, logParts);
+    }
+
+    handleRemoveRoot(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[], logParts: string[]) {
+        const state = artifact.extraData.lastStateBeforeRoot;
+        this.artifactStateService.applyState(gameState.player, artifact.id, state, logParts);
+    }
+
+    handleDestroyArtifact(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[], logParts: string[]) {
+        const countArtifactOnSameLine = Object.values(gameState.player.artifacts).filter(a => a.line === artifact.line).length;
+        this.artifactService.moveArtifact(countArtifactOnSameLine - 1, artifact, artifact.line, gameState.player.artifacts, logParts);
+        delete gameState.player.artifacts[artifact.id];
+        this.resourceService.addResource(gameState.player, RESOURCE.AGILITY, 30, logParts);
+        this.resourceService.addResource(gameState.player, RESOURCE.RAGE, 30, logParts);
     }
 }

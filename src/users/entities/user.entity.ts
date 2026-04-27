@@ -6,11 +6,13 @@ import {
     DeleteDateColumn,
     Index,
     OneToMany,
+    OneToOne,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserCollection } from 'src/collection/entities/collection.entity';
-
+import { UserStats } from './user-stats.entity';
+import { FriendRelationShip } from './friend-relationship.entity';
 
 @Entity('users')
 export class User {
@@ -61,4 +63,13 @@ export class User {
 
     @OneToMany(() => UserCollection, (userCollection) => userCollection.user)
     collections!: UserCollection[];
+
+    @OneToOne(() => UserStats, (stats) => stats.user)
+    stats!: UserStats;
+
+    @OneToMany(() => FriendRelationShip, (relation) => relation.requester)
+    requester!: FriendRelationShip[];
+
+    @OneToMany(() => FriendRelationShip, (relation) => relation.addressee)
+    addressee!: FriendRelationShip[];
 }

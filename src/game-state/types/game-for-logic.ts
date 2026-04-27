@@ -1,4 +1,4 @@
-import { ConstantsGameState, EndState, Player } from "./game";
+import { ConstantsGameState, EndState, LogState, Player } from "./game";
 import { MiniPhase, Phase } from "./phase";
 
 export interface GameForLogic {
@@ -6,7 +6,7 @@ export interface GameForLogic {
     phase: Phase;
     name: string;
     currentTurn: number;
-    logs: string[];
+    logs: LogState[];
     player: Player;
     enemy: Player;
     end: EndState | null;

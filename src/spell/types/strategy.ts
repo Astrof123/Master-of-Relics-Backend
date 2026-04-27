@@ -6,5 +6,5 @@ import { Spell } from "./spell";
 
 export interface SpellStrategy {
     getSpellType(): Spell;
-    execute(gameState: GameForLogic, data: UseSpellData, animations: AnimationData[]): void;
+    execute(gameState: GameForLogic, data: UseSpellData, animations: AnimationData[], logParts: string[]): void;
 }

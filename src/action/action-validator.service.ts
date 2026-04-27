@@ -215,6 +215,22 @@ export class ActionValidatorService {
         this.generalValidator(gameState);
     }
 
+    giveUpValidator(gameState: GameForLogic) {
+        if (gameState.end !== null) {
+            throw new ActionException(ACTION_ERROR_CODE.PHASE_NOT_BATTLE);
+        }
+    }
+
+    drawValidator(gameState: GameForLogic) {
+        if (gameState.end !== null) {
+            throw new ActionException(ACTION_ERROR_CODE.PHASE_NOT_BATTLE);
+        }
+
+        if (gameState.miniPhase !== MINIPHASE.BATTLE) {
+            throw new ActionException(ACTION_ERROR_CODE.PHASE_NOT_BATTLE);
+        }
+    }
+
     endRoundValidator(gameState: GameForLogic) {
         this.generalValidator(gameState);
     }

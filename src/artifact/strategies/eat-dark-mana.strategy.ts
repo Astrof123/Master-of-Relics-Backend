@@ -10,6 +10,8 @@ import { CombatService } from "src/game-mechanics/combat.service";
 import { DAMAGE } from "src/game-mechanics/types/combat";
 import { RESOURCE } from "src/game-mechanics/types/resource";
 import { ResourceService } from "src/game-mechanics/resource.service";
+import { LogHelper } from "src/action/helpers/logHelper";
+import { ARTIFACTS } from "../constants/artifacts";
 
 @Injectable()
 export class EatDarkManaStrategy implements SkillStrategy {
@@ -22,13 +24,13 @@ export class EatDarkManaStrategy implements SkillStrategy {
         return SKILL.EAT_DARK_MANA;
     }
 
-    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[]) {
+    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
         const heal = this.combatService.calculateHeal(gameState.player, artifact.id, 15);
 
-        this.resourceService.decreaseResource(gameState.player, RESOURCE.DARK_MANA, 10)
+        this.resourceService.decreaseResource(gameState.player, RESOURCE.DARK_MANA, 10, logParts)
 
         if (heal !== 0) {
-            this.combatService.applyHealing(gameState.player, artifact.id, heal);
+            this.combatService.applyHealing(gameState.player, artifact.id, heal, logParts);
             animations.push({
                 playerId: gameState.player.id,
                 artifactGameId: artifact.id,
@@ -36,5 +38,6 @@ export class EatDarkManaStrategy implements SkillStrategy {
                 value: heal
             })
         }
+        
     }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Lobby, LOBBY_STATE_TYPE, LobbyStateType } from 'src/lobby/types/lobby';
 import { RedisService } from 'src/redis/redis.service';
 import { MINIPHASE, PHASE } from './types/phase';
@@ -17,6 +17,8 @@ import { SPELL, SPELLTYPE } from 'src/spell/types/spell';
 import { SPELLS } from 'src/spell/constants/spells';
 import { SpellHelper } from 'src/spell/spell.helper';
 import { MAX_COUNT_ARTIFACTS_ON_LINE } from 'src/game-mechanics/constants/settings';
+import { DEFAULT_TIMER_DURATIONS, TIMER_TYPE, TimerSyncData, TimerType } from './types/timer';
+import { GameTimerService } from './game-timer.service';
 
 @Injectable()
 export class GameStateService {
@@ -24,7 +26,9 @@ export class GameStateService {
 
     constructor(
         private readonly redisService: RedisService,
-        private readonly lobbyService: LobbyService
+        private readonly lobbyService: LobbyService,
+        @Inject(forwardRef(() => GameTimerService))
+        private readonly gameTimerService: GameTimerService
     ) {}
 
     getKeyGame(gameId: string): string {
@@ -169,9 +173,13 @@ export class GameStateService {
                 pickedArtifact: null,
                 deck: defaultDeck
             },
-            temporaryArtifacts: {}
+            temporaryArtifacts: {},
+            offerDraw: false,
+            extraData: {
+                skippedMoves: 0
+            }
         }
-
+        
         const player2: Player = {
             id: lobby.players[enemyKey].id,
             name: lobby.players[enemyKey].nickname,
@@ -193,7 +201,11 @@ export class GameStateService {
                 pickedArtifact: null,
                 deck: defaultDeck.reverse()
             },
-            temporaryArtifacts: {}
+            temporaryArtifacts: {},
+            offerDraw: false,
+            extraData: {
+                skippedMoves: 0
+            }
         }
 
         await this.redisService.setJson<Game>(key, ".", {
@@ -209,6 +221,9 @@ export class GameStateService {
             end: null,
             miniPhase: MINIPHASE.MOVEMENT,
             constants: {
+                timerDraft: lobby.options.timerDraft,
+                timerMovement: lobby.options.timerMovement,
+                timerTurn: lobby.options.timerTurn,
                 maxCountArtifactsOnLine: MAX_COUNT_ARTIFACTS_ON_LINE
             }
         }, this.GAME_TTL)
@@ -221,6 +236,10 @@ export class GameStateService {
             lobbyId,
             this.GAME_TTL
         );
+
+        if (lobby.options.timerDraft) {
+            await this.gameTimerService.startTimer(lobby.id, TIMER_TYPE.DRAFT, lobby.options.timerDraft);
+        }
 
         return lobbyId;
     }
@@ -262,7 +281,8 @@ export class GameStateService {
             movePoints: game.players[enemyKey].movePoints,
             draft: {
                 deck: game.players[enemyKey].draft.deck
-            }
+            },
+            offerDraw: game.players[enemyKey].offerDraw,
         }
 
         const gameForClient: GameForClient = {
@@ -405,5 +425,83 @@ export class GameStateService {
 
         await this.redisService.delete(key);
         await this.redisService.removeFromSortedSet('games:index', gameId);
+    }
+
+    async startGameTimer(
+        gameId: string, 
+        timerType: TimerType, 
+        durationSeconds: number
+    ): Promise<string> {
+        const duration = durationSeconds ?? DEFAULT_TIMER_DURATIONS[timerType];
+        const timerKey = `timer:${gameId}:${timerType}`;
+        
+        await this.redisService.setJson(timerKey, '.', {
+            gameId,
+            type: timerType,
+            startedAt: Date.now(),
+            duration: duration
+        }, duration);
+
+        return timerKey;
+    }
+
+    async cancelGameTimer(gameId: string, timerType: TimerType): Promise<void> {
+        const timerKey = `timer:${gameId}:${timerType}`;
+        await this.redisService.delete(timerKey);
+    }
+
+    async cancelAllGameTimers(gameId: string): Promise<void> {
+        const timers = Object.values(TIMER_TYPE);
+        
+        for (const timerType of timers) {
+            await this.cancelGameTimer(gameId, timerType);
+        }
+    }
+
+    async getTimerRemaining(gameId: string, timerType: TimerType): Promise<number> {
+        const timerKey = `timer:${gameId}:${timerType}`;
+        return await this.redisService.ttl(timerKey);
+    }
+
+    async isTimerActive(gameId: string, timerType: TimerType): Promise<boolean> {
+        const ttl = await this.getTimerRemaining(gameId, timerType);
+        return ttl > 0;
+    }
+
+    async getTimerInfo(gameId: string, timerType: TimerType): Promise<TimerSyncData | null> {
+        const timerKey = `timer:${gameId}:${timerType}`;
+        const timerData = await this.redisService.getJson<{
+            gameId: string;
+            type: TimerType;
+            startedAt: number;
+            duration: number;
+        }>(timerKey);
+        
+        const remaining = await this.redisService.ttl(timerKey);
+        
+        if (!timerData && remaining <= 0) {
+            return null;
+        }
+        
+        return {
+            active: remaining > 0,
+            remaining: remaining > 0 ? remaining : 0,
+            startedAt: timerData?.startedAt || null,
+            duration: timerData?.duration || null,
+            timerType: timerType,
+            timeOnServer: Date.now()
+        };
+    }
+
+    async getActiveTimer(gameId: string): Promise<TimerType | null> {
+        const timers = Object.values(TIMER_TYPE);
+
+        for (const timerType of timers) {
+            if (await this.isTimerActive(gameId, timerType)) {
+                return timerType;
+            }
+        }
+        
+        return null;
     }
 }

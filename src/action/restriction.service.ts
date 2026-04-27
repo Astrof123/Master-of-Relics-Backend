@@ -16,8 +16,18 @@ export class RestrictionService {
                 return false;
             }
         }
+        if (restrictions.includes(RESTRICTION.ONLY_ROOTED)) {
+            if (artifact.state !== ARTIFACT_STATE.ROOTED) {
+                return false;
+            }
+        }
         if (restrictions.includes(RESTRICTION.ONLY_COOLDOWN)) {
             if (artifact.state !== ARTIFACT_STATE.COOLDOWN) {
+                return false;
+            }
+        }
+        if (restrictions.includes(RESTRICTION.ONLY_BREAKEN)) {
+            if (artifact.state !== ARTIFACT_STATE.BREAKEN) {
                 return false;
             }
         }

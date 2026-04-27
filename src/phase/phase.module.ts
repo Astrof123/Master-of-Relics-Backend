@@ -7,17 +7,19 @@ import { ArtifactModule } from 'src/artifact/artifact.module';
 import { SpellModule } from 'src/spell/spell.module';
 import { CollectionModule } from 'src/collection/collection.module';
 import { LobbyModule } from 'src/lobby/lobby.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
     providers: [PhaseService],
     imports: [
         RedisModule, 
-        GameStateModule, 
+        forwardRef(() => GameStateModule), 
         GameMechanicsModule, 
         forwardRef(() => ArtifactModule),
         SpellModule,
         CollectionModule,
-        LobbyModule
+        forwardRef(() => LobbyModule),
+        UsersModule
     ],
     exports: [PhaseService]
 })

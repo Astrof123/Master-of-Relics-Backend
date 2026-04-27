@@ -6,6 +6,7 @@ import { RESOURCE } from "src/game-mechanics/types/resource";
 import { ExtraAction, ExtraActionState } from "src/action/types/action";
 import { Skill } from "src/artifact/types/skill";
 import { Spell, SPELLTYPE } from "src/spell/types/spell";
+import { LogType } from "src/action/types/log";
 
 export const CONNECTIONGAME  = {
     ONLINE: 'online',
@@ -67,7 +68,10 @@ export interface ArtifactGameState {
     skillCost: number | null;
     line: Line;
     effects: EffectType[];
-    availableActions: ArtifactAvailableActions | null
+    availableActions: ArtifactAvailableActions | null;
+    extraData: {
+        lastStateBeforeRoot: ArtifactState;
+    }
 }
 
 export interface DeckArtifact {
@@ -102,6 +106,10 @@ export interface Player {
         deck: DeckArtifact[];
     },
     temporaryArtifacts: Record<string, ArtifactGameState>;
+    offerDraw: boolean;
+    extraData: {
+        skippedMoves: number;
+    }
 }
 
 
@@ -110,7 +118,7 @@ export interface Game {
     phase: Phase;
     name: string;
     currentTurn: number;
-    logs: string[];
+    logs: LogState[];
     players: Record<number, Player>;
     end: EndState | null;
     miniPhase: MiniPhase;
@@ -119,8 +127,10 @@ export interface Game {
 
 export interface ConstantsGameState {
     maxCountArtifactsOnLine: number;
+    timerDraft: number | null;
+    timerMovement: number | null;
+    timerTurn: number | null;
 }
-
 
 export interface EndState {
     winner: number | null;
@@ -128,7 +138,6 @@ export interface EndState {
     loser_prize: number;
     draw_prize: number;
 }
-
 
 export interface SpellGameState {
     id: string;
@@ -140,4 +149,9 @@ export interface SpellGameState {
     countAnyTarget: number;
     countTargetEnemy: number;
     countTargetAllies: number;
+}
+
+export interface LogState {
+    text: string;
+    type: LogType;
 }

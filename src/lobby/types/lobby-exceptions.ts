@@ -11,6 +11,8 @@ export enum LOBBY_ERROR_CODE {
     LOBBY_NOT_FULL = 1006,
     LOBBY_NOT_ALL_READY = 1007,
     LOBBY_IS_PRIVATE = 1008,
+    INVITATION_NOT_FOUND = 1009,
+    INVITATION_EXPIRED = 1010,
     
     // Ошибки игроков (2000-2999)
     PLAYER_NOT_FOUND = 2000,
@@ -31,6 +33,8 @@ export const LOBBY_ERROR_MESSAGE: Record<LOBBY_ERROR_CODE, string> = {
     [LOBBY_ERROR_CODE.LOBBY_NOT_FULL]: "В лобби недостаточно игроков",
     [LOBBY_ERROR_CODE.LOBBY_NOT_ALL_READY]: "Не все игроки готовы к игре",
     [LOBBY_ERROR_CODE.LOBBY_IS_PRIVATE]: "Лобби закрыто",
+    [LOBBY_ERROR_CODE.INVITATION_NOT_FOUND]: "Приглашение не найдено",
+    [LOBBY_ERROR_CODE.INVITATION_EXPIRED]: "Приглашение уже не актуально",
     
     [LOBBY_ERROR_CODE.PLAYER_NOT_FOUND]: "Игрок не найден",
     [LOBBY_ERROR_CODE.PLAYER_ALREADY_IN_LOBBY]: "Вы уже находитесь в лобби",

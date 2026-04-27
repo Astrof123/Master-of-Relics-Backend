@@ -1,6 +1,8 @@
 export const RESTRICTION = {
     ONLY_READY: "only_ready",
     ONLY_COOLDOWN: "only_cooldown",
+    ONLY_ROOTED: "only_rooted",
+    ONLY_BREAKEN: "only_breaken",
     BACK_LINE_IS_FREE: "back_line_is_free",
     HAVE_ENEMY_FOR_SKILLS: "have_enemy_for_skills",
     HAVE_TEN_LIGHT_MANA: "have_ten_light_mana",

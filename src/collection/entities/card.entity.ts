@@ -27,7 +27,7 @@ export class Card {
     isForSale!: boolean;
 
     @ApiProperty({ example: 'intimidator', minLength: 2, maxLength: 30 })
-    @Column({ length: 30 })
+    @Column({ length: 30, unique: true })
     innerCardId!: string;
 
     @ApiProperty()

@@ -119,8 +119,12 @@ export class RedisService {
         return result === 1;
     }
 
-    async addToSet(key: string, member: string): Promise<void> {
+    async addToSet(key: string, member: string, ttl?: number): Promise<void> {
         await this.redisClient.sadd(key, member);
+
+        if (ttl) {
+            await this.redisClient.expire(key, ttl);
+        }
     }
 
     async addToSortedSet(key: string, score: number, member: string, ttl?: number): Promise<void> {
