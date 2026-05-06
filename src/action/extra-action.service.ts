@@ -13,6 +13,8 @@ import { ActionValidatorService } from "./action-validator.service";
 import { RestrictionService } from "./restriction.service";
 import { ArtifactService } from 'src/artifact/artifact.service';
 import { RESOURCE } from "src/game-mechanics/types/resource";
+import { GameEffectsService } from "src/game-mechanics/game-effects.service";
+import { EFFECT } from "src/game-mechanics/types/effect";
 
 type ExtraActionHandler = (
     gameState: GameForLogic,
@@ -27,12 +29,17 @@ export class ExtraActionService {
     private handlers: Record<ExtraAction, ExtraActionHandler>;
     
     constructor(
+        @Inject(forwardRef(() => DiceService))
         private readonly diceService: DiceService,
+        @Inject(forwardRef(() => ResourceService))
         private readonly resourceService: ResourceService,
+        @Inject(forwardRef(() => ArtifactStateService))
         private readonly artifactStateService: ArtifactStateService,
         private readonly restrictionService: RestrictionService,
         @Inject(forwardRef(() => ArtifactService))
         private readonly artifactService: ArtifactService,
+        @Inject(forwardRef(() => GameEffectsService))  // ← ДОБАВИТЬ forwardRef
+        private readonly gameEffectsService: GameEffectsService
     ) {
         this.handlers = {
             [EXTRA_ACTION.THROW_DICE]: this.handleThrowDice.bind(this),
@@ -52,13 +59,24 @@ export class ExtraActionService {
         const extraActions: ExtraActionState[] = [];
 
         for (const [key, action] of Object.entries(EXTRA_ACTIONS)) {
-            if (player.resources[action.resourceType] >= action.cost 
+            let cost = action.cost;
+            
+            if (this.gameEffectsService.countEffect(artifact, EFFECT.GLIMPSE) > 0) {
+                if (action.id === EXTRA_ACTION.MOVE) {
+                    cost = 0;
+                }
+                else if (action.id === EXTRA_ACTION.RETURN_TO_BATTLE) {
+                    cost = 15;
+                }
+            }
+
+            if (player.resources[action.resourceType] >= cost
                 && this.restrictionService.checkGeneralRestrictions(player, enemy, action.restrictions)
-                && this.restrictionService.checkArtifactRestrictions(action.restrictions, artifact)) {
+                && this.restrictionService.checkArtifactRestrictions(action.restrictions, player, artifact)) {
 
                 extraActions.push({
                     id: action.id,
-                    description: action.getDescription(action.cost)
+                    description: action.getDescription(cost)
                 })
             }
         }
@@ -76,7 +94,7 @@ export class ExtraActionService {
 
     handleReturnToBattle(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[], logParts: string[]) {
         this.diceService.throwDice(gameState.player, artifact.id, artifact.artifactId, logParts);
-        this.artifactStateService.applyState(gameState.player, artifact.id, ARTIFACT_STATE.READY_TO_USE, logParts);
+        this.artifactStateService.applyState(artifact, ARTIFACT_STATE.READY_TO_USE, logParts);
     }
 
     handleMove(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[], logParts: string[]) {
@@ -85,13 +103,11 @@ export class ExtraActionService {
 
     handleRemoveRoot(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[], logParts: string[]) {
         const state = artifact.extraData.lastStateBeforeRoot;
-        this.artifactStateService.applyState(gameState.player, artifact.id, state, logParts);
+        this.artifactStateService.applyState(artifact, state, logParts);
     }
 
     handleDestroyArtifact(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData, animations: AnimationData[], logParts: string[]) {
-        const countArtifactOnSameLine = Object.values(gameState.player.artifacts).filter(a => a.line === artifact.line).length;
-        this.artifactService.moveArtifact(countArtifactOnSameLine - 1, artifact, artifact.line, gameState.player.artifacts, logParts);
-        delete gameState.player.artifacts[artifact.id];
+        this.artifactService.destroyArtifact(gameState.player, artifact, logParts)
         this.resourceService.addResource(gameState.player, RESOURCE.AGILITY, 30, logParts);
         this.resourceService.addResource(gameState.player, RESOURCE.RAGE, 30, logParts);
     }

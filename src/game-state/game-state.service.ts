@@ -2,7 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Lobby, LOBBY_STATE_TYPE, LobbyStateType } from 'src/lobby/types/lobby';
 import { RedisService } from 'src/redis/redis.service';
 import { MINIPHASE, PHASE } from './types/phase';
-import { ConnectionGame, CONNECTIONGAME, Game, Player } from './types/game';
+import { ConnectionGame, CONNECTIONGAME, DeckArtifact, Game, Player } from './types/game';
 import { ARTIFACTS } from 'src/artifact/constants/artifacts';
 import { LobbyService } from 'src/lobby/lobby.service';
 import { GAME_ERROR_CODE, GameException } from './types/game-exceptions';
@@ -19,6 +19,8 @@ import { SpellHelper } from 'src/spell/spell.helper';
 import { MAX_COUNT_ARTIFACTS_ON_LINE } from 'src/game-mechanics/constants/settings';
 import { DEFAULT_TIMER_DURATIONS, TIMER_TYPE, TimerSyncData, TimerType } from './types/timer';
 import { GameTimerService } from './game-timer.service';
+import { DeckService } from 'src/collection/deck.service';
+import { ArtifactStateService } from 'src/game-mechanics/artifact-state.service';
 
 @Injectable()
 export class GameStateService {
@@ -26,16 +28,19 @@ export class GameStateService {
 
     constructor(
         private readonly redisService: RedisService,
+        @Inject(forwardRef(() => LobbyService))
         private readonly lobbyService: LobbyService,
         @Inject(forwardRef(() => GameTimerService))
-        private readonly gameTimerService: GameTimerService
+        private readonly gameTimerService: GameTimerService,
+        private readonly deckService: DeckService,
+        private readonly artifactStateService: ArtifactStateService
     ) {}
 
     getKeyGame(gameId: string): string {
         return `game:${gameId}`
     }
 
-    async createGameSessionState(lobbyId: string, userId: number): Promise<string> {
+    async createGameSessionState(lobbyId: string, userId: string): Promise<string> {
         const lobby = await this.lobbyService.getLobbyById(lobbyId);
 
         if (!lobby) {
@@ -54,7 +59,7 @@ export class GameStateService {
             throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_NOT_HOST);
         }
 
-        const enemyKey = Object.keys(lobby.players).find(key => Number(key) !== userId);
+        const enemyKey = Object.keys(lobby.players).find(key => key !== userId);
 
         if (enemyKey === undefined) {
             throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_NOT_FULL);
@@ -66,79 +71,30 @@ export class GameStateService {
 
         const key = this.getKeyGame(lobbyId);
 
-        // ДОБАВИТЬ ПОТОМ КОЛОДУ ИГРОКА, А НЕ ИЗ ОБЩЕГО
-        const defaultDeck = [
-            {
-                artifactId: ARTIFACTS[ARTIFACT.INTIMIDATOR].id,
-                maxHp: ARTIFACTS[ARTIFACT.INTIMIDATOR].hp,
-                skillCost: ARTIFACTS[ARTIFACT.INTIMIDATOR].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.INTIMIDATOR].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].id,
-                maxHp: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].hp,
-                skillCost: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.FROST_BOW].id,
-                maxHp: ARTIFACTS[ARTIFACT.FROST_BOW].hp,
-                skillCost: ARTIFACTS[ARTIFACT.FROST_BOW].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.FROST_BOW].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.REGENERATION_POTION].id,
-                maxHp: ARTIFACTS[ARTIFACT.REGENERATION_POTION].hp,
-                skillCost: ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].id,
-                maxHp: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].hp,
-                skillCost: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.SWIFT_BOOTS].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.INTIMIDATOR].id,
-                maxHp: ARTIFACTS[ARTIFACT.INTIMIDATOR].hp,
-                skillCost: ARTIFACTS[ARTIFACT.INTIMIDATOR].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.INTIMIDATOR].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].id,
-                maxHp: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].hp,
-                skillCost: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.FROST_BOW].id,
-                maxHp: ARTIFACTS[ARTIFACT.FROST_BOW].hp,
-                skillCost: ARTIFACTS[ARTIFACT.FROST_BOW].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.FROST_BOW].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.REGENERATION_POTION].id,
-                maxHp: ARTIFACTS[ARTIFACT.REGENERATION_POTION].hp,
-                skillCost: ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].id,
-                maxHp: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].hp,
-                skillCost: ARTIFACTS[ARTIFACT.SWIFT_BOOTS].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.SWIFT_BOOTS].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.INTIMIDATOR].id,
-                maxHp: ARTIFACTS[ARTIFACT.INTIMIDATOR].hp,
-                skillCost: ARTIFACTS[ARTIFACT.INTIMIDATOR].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.INTIMIDATOR].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].id,
-                maxHp: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].hp,
-                skillCost: ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.ARCANE_SHIELD].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.FROST_BOW].id,
-                maxHp: ARTIFACTS[ARTIFACT.FROST_BOW].hp,
-                skillCost: ARTIFACTS[ARTIFACT.FROST_BOW].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.FROST_BOW].skills![0]].cost
-            },
-            {
-                artifactId: ARTIFACTS[ARTIFACT.REGENERATION_POTION].id,
-                maxHp: ARTIFACTS[ARTIFACT.REGENERATION_POTION].hp,
-                skillCost: ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills === null ? 0 : SKILLS[ARTIFACTS[ARTIFACT.REGENERATION_POTION].skills![0]].cost
-            }
-        ]
+        const playerDecks = await this.deckService.getUserDecks(lobby.players[userId].id);
+        const enemyDecks = await this.deckService.getUserDecks(lobby.players[enemyKey].id);
+
+        const playerActiveDeck = playerDecks.decks.find(deck => deck.isActive)!;
+        const enemyActiveDeck = enemyDecks.decks.find(deck => deck.isActive)!;
+
+        const playerFinalDeck: DeckArtifact[] = [];
+        const enemyFinalDeck: DeckArtifact[] = [];
+
+        for (const card of playerActiveDeck.cards) {
+            playerFinalDeck.push({
+                artifactId: ARTIFACTS[card.innerCardId].id,
+                maxHp: ARTIFACTS[card.innerCardId].hp,
+                skillCost: ARTIFACTS[card.innerCardId].skills === null ? 0 : SKILLS[ARTIFACTS[card.innerCardId].skills![0]].cost
+            })
+        }
+
+        for (const card of enemyActiveDeck.cards) {
+            enemyFinalDeck.push({
+                artifactId: ARTIFACTS[card.innerCardId].id,
+                maxHp: ARTIFACTS[card.innerCardId].hp,
+                skillCost: ARTIFACTS[card.innerCardId].skills === null ? 0 : SKILLS[ARTIFACTS[card.innerCardId].skills![0]].cost
+            })
+        }
 
         const defaultSpells = {
             [SPELLTYPE.LIGHT]: {
@@ -171,7 +127,7 @@ export class GameStateService {
             movePoints: 0,
             draft: {
                 pickedArtifact: null,
-                deck: defaultDeck
+                deck: playerFinalDeck
             },
             temporaryArtifacts: {},
             offerDraw: false,
@@ -199,7 +155,7 @@ export class GameStateService {
             movePoints: 0,
             draft: {
                 pickedArtifact: null,
-                deck: defaultDeck.reverse()
+                deck: enemyFinalDeck
             },
             temporaryArtifacts: {},
             offerDraw: false,
@@ -224,7 +180,8 @@ export class GameStateService {
                 timerDraft: lobby.options.timerDraft,
                 timerMovement: lobby.options.timerMovement,
                 timerTurn: lobby.options.timerTurn,
-                maxCountArtifactsOnLine: MAX_COUNT_ARTIFACTS_ON_LINE
+                maxCountArtifactsOnLine: MAX_COUNT_ARTIFACTS_ON_LINE,
+                isNewRound: false
             }
         }, this.GAME_TTL)
 
@@ -251,7 +208,7 @@ export class GameStateService {
         return game;
     }
 
-    async getGameForClientById(gameId: string, userId: number): Promise<GameForClient | null> {
+    async getGameForClientById(gameId: string, userId: string): Promise<GameForClient | null> {
         const key = this.getKeyGame(gameId);
         const game = await this.redisService.getJson<Game>(key);
 
@@ -263,7 +220,7 @@ export class GameStateService {
             throw new GameException(GAME_ERROR_CODE.PLAYER_NOT_IN_GAME);
         }
 
-        const enemyKey = Object.keys(game.players).find(key => Number(key) !== userId);
+        const enemyKey = Object.keys(game.players).find(key => key !== userId);
 
         if (enemyKey === undefined) {
             throw new GameException(GAME_ERROR_CODE.ENEMY_NOT_FOUND);
@@ -274,7 +231,7 @@ export class GameStateService {
             name: game.players[enemyKey].name,
             connection: game.players[enemyKey].connection,
             hero: game.players[enemyKey].hero,
-            resources: game.players[enemyKey].resources,
+            resources: game.players[enemyKey].resources as EnemyForClient['resources'],
             artifacts: game.players[enemyKey].artifacts,
             effects: game.players[enemyKey].effects,
             isReady: game.players[enemyKey].isReady,
@@ -301,7 +258,7 @@ export class GameStateService {
         return gameForClient;
     }
 
-    async getGameForLogicById(gameId: string, userId: number): Promise<GameForLogic | null> {
+    async getGameForLogicById(gameId: string, userId: string): Promise<GameForLogic | null> {
         const key = this.getKeyGame(gameId);
         const game = await this.redisService.getJson<Game>(key);
 
@@ -313,7 +270,7 @@ export class GameStateService {
             throw new GameException(GAME_ERROR_CODE.PLAYER_NOT_IN_GAME);
         }
 
-        const enemyKey = Object.keys(game.players).find(key => Number(key) !== userId);
+        const enemyKey = Object.keys(game.players).find(key => key !== userId);
 
         if (enemyKey === undefined) {
             throw new GameException(GAME_ERROR_CODE.ENEMY_NOT_FOUND);
@@ -336,6 +293,13 @@ export class GameStateService {
     }
 
     async saveGameForLogic(gameState: GameForLogic, key: string) {
+        this.artifactStateService.clearDestroyedArtifacts(gameState);
+        if (gameState.miniPhase !== MINIPHASE.MOVEMENT || gameState.constants.isNewRound) {
+            gameState.constants.isNewRound = false;
+            gameState.player.temporaryArtifacts = JSON.parse(JSON.stringify(gameState.player.artifacts));
+            gameState.enemy.temporaryArtifacts = JSON.parse(JSON.stringify(gameState.enemy.artifacts));
+        }
+
         const game: Game = {
             id: gameState.id,
             name: gameState.name,
@@ -370,6 +334,13 @@ export class GameStateService {
         key: string, 
         multi: any
     ): Promise<void> {
+        this.artifactStateService.clearDestroyedArtifacts(gameState);
+        if (gameState.miniPhase !== MINIPHASE.MOVEMENT || gameState.constants.isNewRound) {
+            gameState.constants.isNewRound = false;
+            gameState.player.temporaryArtifacts = JSON.parse(JSON.stringify(gameState.player.artifacts));
+            gameState.enemy.temporaryArtifacts = JSON.parse(JSON.stringify(gameState.enemy.artifacts));
+        }
+
         const game: Game = {
             id: gameState.id,
             name: gameState.name,
@@ -388,13 +359,13 @@ export class GameStateService {
         await this.redisService.jsonSetInTransaction(multi, key, ".", game);
     }
 
-    async setPlayerConnectionStatus(status: ConnectionGame, gameId: string, userId: number): Promise<void> {
+    async setPlayerConnectionStatus(status: ConnectionGame, gameId: string, userId: string): Promise<void> {
         const key = this.getKeyGame(gameId);
         const path = GAMEPATH.getPlayerConnectionPath(userId);
         await this.redisService.setJson<ConnectionGame>(key, path, status, this.GAME_TTL);
     }
 
-    async getGameByUserId(userId: number): Promise<Lobby|null> {
+    async getGameByUserId(userId: string): Promise<Lobby|null> {
         const lobbyIds = await this.getAllGameIds();
         
         const lobbyPromises = lobbyIds.map(id => 

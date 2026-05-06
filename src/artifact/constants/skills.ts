@@ -10,25 +10,25 @@ export const SKILLS: Record<string, SkillDataType> = {
         countAnyTarget: 0,
         countTargetEnemy: 1,
         countTargetAllies: 0,
-        restrictions: [RESTRICTION.BACK_LINE_IS_FREE, RESTRICTION.HAVE_ENEMY_FOR_SKILLS, RESTRICTION.ONLY_READY],
-        targetRestrictions: [TARGET_RESTRICTION.ONLY_FRONT_LINE_ENEMY, TARGET_RESTRICTION.ALIVE]
+        restrictions: [RESTRICTION.ENEMY_BACK_LINE_IS_FREE, RESTRICTION.HAVE_ENEMY_FOR_SKILLS, RESTRICTION.ONLY_READY],
+        targetRestrictions: [TARGET_RESTRICTION.ONLY_FRONT_LINE_ENEMY, TARGET_RESTRICTION.NO_AVATAR, TARGET_RESTRICTION.ALIVE]
     },
     [SKILL.FROZE]: {
         id: SKILL.FROZE,
         type: "active",
-        cost: 15,
+        cost: 17,
         description: "Нанести любому вражескому артефакту 5 урона и наложить на него оцепенение.",
         countAnyTarget: 0,
         countTargetEnemy: 1,
         countTargetAllies: 0,
         restrictions: [RESTRICTION.HAVE_ENEMY_FOR_SKILLS, RESTRICTION.ONLY_READY],
-        targetRestrictions: [TARGET_RESTRICTION.ANY_ENEMY, TARGET_RESTRICTION.ALIVE]
+        targetRestrictions: [TARGET_RESTRICTION.ANY_ENEMY, TARGET_RESTRICTION.NO_AVATAR, TARGET_RESTRICTION.ALIVE]
     },
-    [SKILL.UNIVERSAL_HEALING]: {
-        id: SKILL.UNIVERSAL_HEALING,
+    [SKILL.NEIGHBORING_HEALING]: {
+        id: SKILL.NEIGHBORING_HEALING,
         type: "active",
-        cost: 30,
-        description: "Каждый союзный артефакт восстановит 15 прочности.",
+        cost: 18,
+        description: "Восстановить соседним артефактам 15 прочности.",
         countAnyTarget: 0,
         countTargetEnemy: 0,
         countTargetAllies: 0,
@@ -71,12 +71,364 @@ export const SKILLS: Record<string, SkillDataType> = {
     [SKILL.SWIFT]: {
         id: SKILL.SWIFT,
         type: "active",
-        cost: 30,
-        description: "Восстановить 45 ловкости.",
+        cost: 20,
+        description: "Восстановить 35 ловкости.",
         countAnyTarget: 0,
         countTargetEnemy: 0,
         countTargetAllies: 0,
         restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.ZERO_USED_SKILL_CHARGES],
         targetRestrictions: []
+    },
+    [SKILL.LIGHT_MANA_DISCOUNT]: {
+        id: SKILL.LIGHT_MANA_DISCOUNT,
+        type: "passive",
+        cost: null,
+        description: "",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.PROCESS_ONLY_IN_NEW_STATE],
+        targetRestrictions: []
+    },
+    [SKILL.DARK_MANA_DISCOUNT]: {
+        id: SKILL.DARK_MANA_DISCOUNT,
+        type: "passive",
+        cost: null,
+        description: "",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.PROCESS_ONLY_IN_NEW_STATE],
+        targetRestrictions: []
+    },
+    [SKILL.DESTRUCTION_MANA_DISCOUNT]: {
+        id: SKILL.DESTRUCTION_MANA_DISCOUNT,
+        type: "passive",
+        cost: null,
+        description: "",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.PROCESS_ONLY_IN_NEW_STATE],
+        targetRestrictions: []
+    },
+    [SKILL.RAGE_DISCOUNT]: {
+        id: SKILL.RAGE_DISCOUNT,
+        type: "passive",
+        cost: null,
+        description: "",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.PROCESS_ONLY_IN_NEW_STATE],
+        targetRestrictions: []
+    },
+    [SKILL.REFRESH_SPELLS]: {
+        id: SKILL.REFRESH_SPELLS,
+        type: "active",
+        cost: 15,
+        description: "Сбросить перезарядку всех способностей",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY],
+        targetRestrictions: []
+    },
+    [SKILL.FREE_SPELL]: {
+        id: SKILL.FREE_SPELL,
+        type: "active",
+        cost: 30,
+        description: "Получить эффект для бесплатного разыгрыша следующего заклинания",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY],
+        targetRestrictions: []
+    },
+    [SKILL.MOON_BEAM]: {
+        id: SKILL.MOON_BEAM,
+        type: "active",
+        cost: 20,
+        description: "Нанести 15 единиц дальнего урона вражескому артефакту.",
+        countAnyTarget: 0,
+        countTargetEnemy: 1,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.HAVE_ENEMY_FOR_SKILLS],
+        targetRestrictions: [TARGET_RESTRICTION.ANY_ENEMY, TARGET_RESTRICTION.NO_AVATAR, TARGET_RESTRICTION.ALIVE]
+    },
+    [SKILL.UPGRADE]: {
+        id: SKILL.UPGRADE,
+        type: "active",
+        cost: 25,
+        description: "Наложить на Volt эффект «Апгрейд»",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY],
+        targetRestrictions: []
+    },
+    [SKILL.SPAWN_BONES]: {
+        id: SKILL.SPAWN_BONES,
+        type: "active",
+        cost: 30,
+        description: "Создать на передовой линии два союзных Bone Knife",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.FRONT_LINE_HAVE_TWO_FREE_SPOT],
+        targetRestrictions: []
+    },
+    [SKILL.BERSERK]: {
+        id: SKILL.BERSERK,
+        type: "passive",
+        cost: null,
+        description: "",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.PROCESS_ONLY_IN_NEW_STATE],
+        targetRestrictions: []
+    },
+    [SKILL.SPAWN_SELF_COPY]: {
+        id: SKILL.SPAWN_SELF_COPY,
+        type: "active",
+        cost: 15,
+        description: "Создать рядом собственную копию",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.SAME_LINE_HAVE_ONE_FREE_SPOT],
+        targetRestrictions: []
+    },
+    [SKILL.GLIMPSE]: {
+        id: SKILL.GLIMPSE,
+        type: "passive",
+        cost: null,
+        description: "",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.PROCESS_ONLY_IN_NEW_STATE],
+        targetRestrictions: []
+    },
+    [SKILL.HUNT]: {
+        id: SKILL.HUNT,
+        type: "passive",
+        cost: null,
+        description: "",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.PROCESS_ONLY_IN_NEW_STATE],
+        targetRestrictions: []
+    },
+    [SKILL.DISPERSAL_ALLY]: {
+        id: SKILL.DISPERSAL_ALLY,
+        type: "active",
+        cost: 22,
+        description: "Снять все отрицательные эффекты с союзного артефакта",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 1,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.HAVE_ALLY_FOR_SKILLS],
+        targetRestrictions: [TARGET_RESTRICTION.ANY_ALLY, TARGET_RESTRICTION.ALIVE]
+    },
+    [SKILL.DISPERSAL_ENEMY]: {
+        id: SKILL.DISPERSAL_ENEMY,
+        type: "active",
+        cost: 22,
+        description: "Снять все положительные эффекты с вражеского артефакта",
+        countAnyTarget: 0,
+        countTargetEnemy: 1,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.HAVE_ENEMY_FOR_SKILLS],
+        targetRestrictions: [TARGET_RESTRICTION.ANY_ENEMY, TARGET_RESTRICTION.NO_AVATAR, TARGET_RESTRICTION.ALIVE]
+    },
+    [SKILL.INVISIBLE]: {
+        id: SKILL.INVISIBLE,
+        type: "active",
+        cost: 20,
+        description: "Укрыть Veilstrike от вражеских атак",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.NO_INVISIBLE],
+        targetRestrictions: []
+    },
+    [SKILL.ONE_ATTACK_SHIELD]: {
+        id: SKILL.ONE_ATTACK_SHIELD,
+        type: "active",
+        cost: 20,
+        description: "Применить способность",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 1,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.HAVE_ALLY_FOR_SKILLS],
+        targetRestrictions: [TARGET_RESTRICTION.ALIVE, TARGET_RESTRICTION.ANY_ALLY]
+    },
+    [SKILL.DREAM]: {
+        id: SKILL.DREAM,
+        type: "active",
+        cost: 20,
+        description: "Применить на вражеский артефакт сон",
+        countAnyTarget: 0,
+        countTargetEnemy: 1,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.HAVE_ENEMY_FOR_SKILLS],
+        targetRestrictions: [TARGET_RESTRICTION.ALIVE, TARGET_RESTRICTION.ANY_ENEMY, TARGET_RESTRICTION.NO_AVATAR, TARGET_RESTRICTION.NORMAL_STATE]
+    },
+    [SKILL.BLINDLESS]: {
+        id: SKILL.BLINDLESS,
+        type: "active",
+        cost: 20,
+        description: "Запретить вражескому артефакту атаковать с тыловой линии",
+        countAnyTarget: 0,
+        countTargetEnemy: 1,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.HAVE_ENEMY_FOR_SKILLS],
+        targetRestrictions: [TARGET_RESTRICTION.ALIVE, TARGET_RESTRICTION.ANY_ENEMY, TARGET_RESTRICTION.NO_AVATAR]
+    },
+    [SKILL.HOOK]: {
+        id: SKILL.HOOK,
+        type: "active",
+        cost: 22,
+        description: "Притянуть вражеский артефакт на передовую линию",
+        countAnyTarget: 0,
+        countTargetEnemy: 1,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.HAVE_ENEMY_FOR_SKILLS],
+        targetRestrictions: [TARGET_RESTRICTION.ALIVE, TARGET_RESTRICTION.ONLY_BACK_LINE_ENEMY, TARGET_RESTRICTION.NO_AVATAR]
+    },
+    [SKILL.ARTIFACT_SILENCE]: {
+        id: SKILL.ARTIFACT_SILENCE,
+        type: "active",
+        cost: 22,
+        description: "Запретить вражескому артефакту применять активную способность",
+        countAnyTarget: 0,
+        countTargetEnemy: 1,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.HAVE_ENEMY_FOR_SKILLS],
+        targetRestrictions: [TARGET_RESTRICTION.ALIVE, TARGET_RESTRICTION.ANY_ENEMY, TARGET_RESTRICTION.NO_AVATAR]
+    },
+    [SKILL.EXHAUSTION]: {
+        id: SKILL.EXHAUSTION,
+        type: "active",
+        cost: 22,
+        description: "Отключить вражескому артефакту пассивную способность",
+        countAnyTarget: 0,
+        countTargetEnemy: 1,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.HAVE_ENEMY_FOR_SKILLS],
+        targetRestrictions: [TARGET_RESTRICTION.ALIVE, TARGET_RESTRICTION.ANY_ENEMY, TARGET_RESTRICTION.NO_AVATAR]
+    },
+    [SKILL.STEAL_AGILITY]: {
+        id: SKILL.STEAL_AGILITY,
+        type: "active",
+        cost: 20,
+        description: "Украсть 10 ловкости у соперника",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.ENEMY_HAVE_TEN_AGILITY],
+        targetRestrictions: []
+    },
+    [SKILL.STEAL_RAGE]: {
+        id: SKILL.STEAL_RAGE,
+        type: "active",
+        cost: 20,
+        description: "Украсть 10 ярости у соперника",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.ENEMY_HAVE_TEN_RAGE],
+        targetRestrictions: []
+    },
+    [SKILL.STEAL_DARK_MANA]: {
+        id: SKILL.STEAL_DARK_MANA,
+        type: "active",
+        cost: 20,
+        description: "Украсть 10 маны тьмы у соперника",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.ENEMY_HAVE_TEN_DARK_MANA],
+        targetRestrictions: []
+    },
+    [SKILL.STEAL_LIGHT_MANA]: {
+        id: SKILL.STEAL_LIGHT_MANA,
+        type: "active",
+        cost: 20,
+        description: "Украсть 10 маны света у соперника",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [RESTRICTION.ONLY_READY, RESTRICTION.ENEMY_HAVE_TEN_LIGHT_MANA],
+        targetRestrictions: []
+    },
+    [SKILL.STEAL_DESTRUCTION_MANA]: {
+        id: SKILL.STEAL_DESTRUCTION_MANA,
+        type: "active",
+        cost: 20,
+        description: "Украсть 10 маны разрушения у соперника",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [
+            RESTRICTION.ONLY_READY, 
+            RESTRICTION.ENEMY_HAVE_TEN_DESTRUCTION_MANA,
+        ],
+        targetRestrictions: []
+    },
+    [SKILL.REPAIR]: {
+        id: SKILL.REPAIR,
+        type: "active",
+        cost: 30,
+        description: "Починить союзный артефакт",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 1,
+        restrictions: [
+            RESTRICTION.ONLY_READY
+        ],
+        targetRestrictions: [TARGET_RESTRICTION.BREAKEN, TARGET_RESTRICTION.ANY_ALLY]
+    },
+    [SKILL.RUSTING]: {
+        id: SKILL.RUSTING,
+        type: "active",
+        cost: 25,
+        description: "Уменьшить максимальную прочность артефакта на 10 единиц",
+        countAnyTarget: 1,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [
+            RESTRICTION.ONLY_READY
+        ],
+        targetRestrictions: [TARGET_RESTRICTION.ANY_ALLY, TARGET_RESTRICTION.ANY_ENEMY, TARGET_RESTRICTION.ALIVE, TARGET_RESTRICTION.NO_AVATAR]
+    },
+    [SKILL.HARDENING]: {
+        id: SKILL.HARDENING,
+        type: "active",
+        cost: 25,
+        description: "Увеличить максимальную прочность артефакта на 10 единиц",
+        countAnyTarget: 1,
+        countTargetEnemy: 0,
+        countTargetAllies: 0,
+        restrictions: [
+            RESTRICTION.ONLY_READY
+        ],
+        targetRestrictions: [TARGET_RESTRICTION.ANY_ALLY, TARGET_RESTRICTION.ANY_ENEMY, TARGET_RESTRICTION.ALIVE, TARGET_RESTRICTION.NO_AVATAR]
+    },
+    [SKILL.AVATAR]: {
+        id: SKILL.AVATAR,
+        type: "active",
+        cost: 20,
+        description: "Применить способность",
+        countAnyTarget: 0,
+        countTargetEnemy: 0,
+        countTargetAllies: 1,
+        restrictions: [
+            RESTRICTION.ONLY_READY
+        ],
+        targetRestrictions: [TARGET_RESTRICTION.ANY_ALLY, TARGET_RESTRICTION.ALIVE]
     },
 }

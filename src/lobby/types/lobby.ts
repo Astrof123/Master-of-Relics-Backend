@@ -1,5 +1,5 @@
 export interface LobbyPlayer {
-    id: number,
+    id: string,
     nickname: string,
     isReady: boolean,
     isHost: boolean
@@ -9,7 +9,7 @@ export interface LobbyPlayer {
 export interface Lobby {
     id: string,
     name: string,
-    players: Record<number, LobbyPlayer>,
+    players: Record<string, LobbyPlayer>,
     state: LobbyStateType,
     isPrivate: boolean;
     code: string | null;
@@ -25,15 +25,15 @@ export interface Lobby {
 export interface LobbyInvitation {
     id: string;
     lobbyId: string,
-    addresseeId: number,
+    addresseeId: string,
     requesterNickname: string;
-    requesterId: number;
+    requesterId: string;
 }
 
 export interface FriendForInvite {
     isOnline: boolean;
     friendNickname: string;
-    friendId: number;
+    friendId: string;
     status: InviteStatus;
 }
 

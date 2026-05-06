@@ -7,7 +7,7 @@ export type AnimationType = typeof ANIMATION[keyof typeof ANIMATION];
 
 
 export interface AnimationData {
-    playerId: number;
+    playerId: string;
     artifactGameId: string;
     animation: AnimationType;
     value: number;

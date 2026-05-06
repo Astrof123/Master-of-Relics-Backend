@@ -21,6 +21,7 @@ export enum LOBBY_ERROR_CODE {
     PLAYER_IS_HOST = 2003,
     PLAYER_NOT_HOST = 2004,
     PLAYER_ALREADY_READY = 2005,
+    PLAYER_BANNED = 2006,
 }
 
 export const LOBBY_ERROR_MESSAGE: Record<LOBBY_ERROR_CODE, string> = {    
@@ -42,6 +43,7 @@ export const LOBBY_ERROR_MESSAGE: Record<LOBBY_ERROR_CODE, string> = {
     [LOBBY_ERROR_CODE.PLAYER_IS_HOST]: "Вы являетесь хостом лобби",
     [LOBBY_ERROR_CODE.PLAYER_NOT_HOST]: "Вы не являетесь хостом лобби",
     [LOBBY_ERROR_CODE.PLAYER_ALREADY_READY]: "Вы уже готовы",
+    [LOBBY_ERROR_CODE.PLAYER_BANNED]: "Игрок забанен",
 };
 
 export class LobbyException extends CustomException {

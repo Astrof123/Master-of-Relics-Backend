@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Card } from './entities/card.entity';
 import { UserCollection } from './entities/collection.entity';
 import { DataSource, Repository } from 'typeorm';
-import { DEFAULT_CONNECTION } from './constants/default_collection';
+import { DEFAULT_COLLECTION } from './constants/default_collection';
 import { CollectionResponseDto } from './dto/collection-response.dto';
 import { CardAlreadyExistException, CardNotForSaleException, CardNotFoundException, NotEnoughGoldException } from './exceptions/collection.exception';
 import { UsersService } from 'src/users/users.service';
@@ -23,8 +23,8 @@ export class CollectionService {
         private usersService: UsersService
     ) {}
 
-    async createForNewUser(userId: number): Promise<void> {
-        for (const artifact of DEFAULT_CONNECTION) {
+    async createForNewUser(userId: string): Promise<void> {
+        for (const artifact of DEFAULT_COLLECTION) {
             const card = await this.cardRepository.findOne({ where: { innerCardId: artifact }})
             
             if (card == null) {
@@ -40,7 +40,7 @@ export class CollectionService {
         }
     }
 
-    async getUserCollection(userId: number): Promise<CollectionResponseDto> {
+    async getUserCollection(userId: string): Promise<CollectionResponseDto> {
         await this.usersService.findOne(userId);
 
         const collectionCards = await this.collectionRepository.find({ where: { userId }});
@@ -50,6 +50,10 @@ export class CollectionService {
         }
 
         for (const card of allCards) {
+            if (!card.isForSale) {
+                continue;
+            }
+
             let skillCost: number | null = null;
             if (ARTIFACTS[card.innerCardId].skills && ARTIFACTS[card.innerCardId].skills!.length > 0) {
                 const skill = ARTIFACTS[card.innerCardId].skills![0];
@@ -64,13 +68,14 @@ export class CollectionService {
                 hasCard: collectionCards.find(c => c.cardId == card.id) ? true : false,
                 maxHp: ARTIFACTS[card.innerCardId].hp,
                 skillCost: skillCost,
+                type: ARTIFACTS[card.innerCardId].type
             })
         }
 
         return response;
     }
 
-    async buyCard(userId: number, cardId: number): Promise<void> {
+    async buyCard(userId: string, cardId: number): Promise<void> {
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
@@ -131,7 +136,7 @@ export class CollectionService {
         }
     }
 
-    async giveGold(userId: number, amount: number): Promise<void> {
+    async giveGold(userId: string, amount: number): Promise<void> {
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();

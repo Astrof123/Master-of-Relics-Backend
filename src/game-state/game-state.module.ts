@@ -7,10 +7,20 @@ import { RedisModule } from 'src/redis/redis.module';
 import { DraftService } from 'src/draft/draft.service';
 import { DraftModule } from 'src/draft/draft.module';
 import { ActionModule } from 'src/action/action.module';
+import { CollectionModule } from 'src/collection/collection.module';
+import { GameEffectsService } from 'src/game-mechanics/game-effects.service';
+import { GameMechanicsModule } from 'src/game-mechanics/game-mechanics.module';
 
 @Module({
   providers: [GameStateService, GameStateGateway, GameTimerService],
-  imports: [forwardRef(() => LobbyModule), RedisModule, forwardRef(() => DraftModule), ActionModule],
+  imports: [
+    forwardRef(() => LobbyModule), 
+    forwardRef(() => RedisModule), 
+    forwardRef(() => DraftModule), 
+    forwardRef(() => ActionModule),
+    CollectionModule,
+    GameMechanicsModule
+  ],
   exports: [GameStateService, GameTimerService]
 })
 export class GameStateModule {}

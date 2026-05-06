@@ -24,6 +24,7 @@ import { GameTimerService } from 'src/game-state/game-timer.service';
 import { TIMER_TYPE } from 'src/game-state/types/timer';
 import { Artifact } from 'src/artifact/types/artifact';
 import { randomInt } from 'crypto';
+import { ArtifactService } from 'src/artifact/artifact.service';
 
 
 @Injectable()
@@ -32,7 +33,8 @@ export class DraftService {
         private readonly gameStateService: GameStateService,
         private readonly redisService: RedisService,
         private readonly phaseService: PhaseService,
-        private readonly gameTimerService: GameTimerService
+        private readonly gameTimerService: GameTimerService,
+        private readonly artifactService: ArtifactService
     ) {}
 
     private async checkPickedArtifact(artifactId: string, gameState: GameForLogic) {
@@ -47,7 +49,7 @@ export class DraftService {
         }
     }
 
-    async pickArtifact(data: PickArtifactData, userId: number) {
+    async pickArtifact(data: PickArtifactData, userId: string) {
         const key = this.gameStateService.getKeyGame(data.gameId);
         const gameState = await this.gameStateService.getGameForLogicById(data.gameId, userId);
         
@@ -69,7 +71,7 @@ export class DraftService {
         await this.redisService.setJson<string>(key, path, data.artifactId);
     }
 
-    async toggleReadyDraft(gameId: string, userId: number) {
+    async toggleReadyDraft(gameId: string, userId: string) {
         const key = this.gameStateService.getKeyGame(gameId);
         let retries = 0;
         
@@ -131,7 +133,7 @@ export class DraftService {
         }
     }
 
-    async autoFinishDraft(gameId: string, userId: number) {
+    async autoFinishDraft(gameId: string, userId: string) {
         const key = this.gameStateService.getKeyGame(gameId);
         let retries = 0;
         
@@ -205,49 +207,6 @@ export class DraftService {
         }
     }
 
-    createArtifact(player: Player, pickedArtifact: Artifact) {
-        const playerArtifacts = player.artifacts;
-
-        const artifactGameId = uuidv4();
-
-        const artifactEffects: EffectType[] = [];
-
-        ARTIFACTS[pickedArtifact].defaultEffects.forEach((effect) => {
-            artifactEffects.push({
-                id: effect,
-                name: EFFECTS[effect].name,
-                duration: EFFECTS[effect].duration,
-                type: EFFECTS[effect].type,
-                number: EFFECTS[effect].number,
-            })
-        })
-
-        let artifactSkillCost: number | null = null;
-        if (ARTIFACTS[pickedArtifact].skills && ARTIFACTS[pickedArtifact].skills.length > 0) {
-            const skill = ARTIFACTS[pickedArtifact].skills[0];
-            artifactSkillCost = SKILLS[skill].cost;
-        }
-
-        const artifactPlayer: ArtifactGameState = {
-            id: artifactGameId,
-            artifactId: pickedArtifact,
-            face: ARTIFACTS[pickedArtifact].faces[0],
-            state: ARTIFACT_STATE.READY_TO_USE,
-            skillCost: artifactSkillCost,
-            currentHp: ARTIFACTS[pickedArtifact].hp,
-            maxHp: ARTIFACTS[pickedArtifact].hp,
-            position: Object.values(playerArtifacts).length % MAX_COUNT_ARTIFACTS_ON_LINE,
-            line: Object.values(playerArtifacts).length < MAX_COUNT_ARTIFACTS_ON_LINE ? LINE.BACK : LINE.FRONT,
-            effects: artifactEffects,
-            availableActions: null,
-            extraData: {
-                lastStateBeforeRoot: ARTIFACT_STATE.READY_TO_USE
-            }
-        };
-
-        return artifactPlayer;
-    }
-
     private applyFinishDraftIfNeeded(gameState: GameForLogic): boolean {
         const isReadyEnemy = gameState.enemy.isReady;
         const pickedArtifactPlayer = gameState.player.draft.pickedArtifact;
@@ -260,8 +219,8 @@ export class DraftService {
         }
 
         if (gameState.player.isReady && isReadyEnemy && pickedArtifactPlayer && pickedArtifactEnemy) {
-            const artifactPlayer = this.createArtifact(gameState.player, pickedArtifactPlayer);
-            const artifactEnemy = this.createArtifact(gameState.enemy, pickedArtifactEnemy);
+            const artifactPlayer = this.artifactService.createArtifactState(gameState.player.artifacts, pickedArtifactPlayer);
+            const artifactEnemy = this.artifactService.createArtifactState(gameState.enemy.artifacts, pickedArtifactEnemy);
 
             gameState.player.artifacts[artifactPlayer.id] = artifactPlayer;
             gameState.enemy.artifacts[artifactEnemy.id] = artifactEnemy;

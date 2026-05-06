@@ -24,6 +24,6 @@ const ACTION_HANDLER_PROVIDERS = [
         },
     ],
     exports: [SpellService, SpellStrategyFactory],
-    imports: [forwardRef(() => ActionModule), GameMechanicsModule]
+    imports: [forwardRef(() => ActionModule), forwardRef(() => GameMechanicsModule) ]
 })
 export class SpellModule {}

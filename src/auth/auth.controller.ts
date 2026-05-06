@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { TokenService } from './jwt/token.service';
 import { RegisterDto } from './dto/register.dto';
@@ -27,7 +27,7 @@ export class AuthController {
 
     @Post('register')
     async register(
-        @Body() registerDto: RegisterDto,
+        @Body(ValidationPipe) registerDto: RegisterDto,
         @Res({ passthrough: true }) response: express.Response,
     ): Promise<Omit<TokensDto, 'refreshToken'>> {
         const result = await this.authService.register(registerDto);
@@ -41,7 +41,7 @@ export class AuthController {
     @Post('login')
     @HttpCode(HttpStatus.OK)
     async login(
-        @Body() loginDto: LoginDto,
+        @Body(ValidationPipe) loginDto: LoginDto,
         @Res({ passthrough: true }) response: express.Response,
     ): Promise<Omit<TokensDto, 'refreshToken'>> {
         const result = await this.authService.login(loginDto);

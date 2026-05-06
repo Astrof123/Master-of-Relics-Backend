@@ -1,6 +1,6 @@
 import { GameForLogic } from "src/game-state/types/game-for-logic";
 import { SkillStrategy } from "../types/strategy";
-import { ARTIFACT_STATE, ArtifactGameState, LINE } from "src/game-state/types/game";
+import { ARTIFACT_STATE, ArtifactGameState, LINE, Player } from "src/game-state/types/game";
 import { UseSkillData } from "src/action/types/action-evens-data";
 import { ANIMATION, AnimationData } from "src/action/types/animation";
 import { Injectable } from "@nestjs/common";
@@ -24,20 +24,21 @@ export class EatDarkManaStrategy implements SkillStrategy {
         return SKILL.EAT_DARK_MANA;
     }
 
-    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
-        const heal = this.combatService.calculateHeal(gameState.player, artifact.id, 15);
+    execute(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
+        const heal = this.combatService.calculateHeal(artifact, 15);
 
-        this.resourceService.decreaseResource(gameState.player, RESOURCE.DARK_MANA, 10, logParts)
+        this.resourceService.decreaseResource(player, RESOURCE.DARK_MANA, 10, logParts)
 
-        if (heal !== 0) {
-            this.combatService.applyHealing(gameState.player, artifact.id, heal, logParts);
-            animations.push({
-                playerId: gameState.player.id,
-                artifactGameId: artifact.id,
-                animation: ANIMATION.HEAL,
-                value: heal
-            })
-        }
+        this.combatService.applyHealing(artifact, heal, logParts);
+        animations.push({
+            playerId: player.id,
+            artifactGameId: artifact.id,
+            animation: ANIMATION.HEAL,
+            value: heal
+        })
+    }
+
+    death(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, logParts: string[]) {
         
     }
 }

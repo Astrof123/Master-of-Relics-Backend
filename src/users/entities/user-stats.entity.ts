@@ -40,7 +40,7 @@ export class UserStats {
     @JoinColumn({ name: 'userId' })
     user!: User;
 
-    @ApiProperty({ example: 1 })
+    @ApiProperty()
     @Column()
-    userId!: number;
+    userId!: string;
 }

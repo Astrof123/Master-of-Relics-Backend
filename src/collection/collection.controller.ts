@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import type AuthenticatedRequest from 'src/shared/types/authenticated-request';
@@ -25,7 +25,7 @@ export class CollectionController {
     @ApiOperation({ summary: 'Купить карту' })
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
-    async buyCard(@Req() request: AuthenticatedRequest, @Body() buyCardDto: BuyCardDto): Promise<CollectionResponseDto> {
+    async buyCard(@Req() request: AuthenticatedRequest, @Body(ValidationPipe) buyCardDto: BuyCardDto): Promise<CollectionResponseDto> {
         const userId = request.user.userId;
         
         await this.collectionService.buyCard(userId, buyCardDto.cardId);

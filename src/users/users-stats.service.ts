@@ -11,7 +11,7 @@ export class UsersStatsService {
         private userStatsRepository: Repository<UserStats>,
     ) {}
 
-    async setWin(userId: number) {
+    async setWin(userId: string) {
         const userStats = await this.userStatsRepository.findOne({
             where: { userId }
         })
@@ -27,7 +27,7 @@ export class UsersStatsService {
         await this.userStatsRepository.save(userStats);
     }
 
-    async setLose(userId: number) {
+    async setLose(userId: string) {
         const userStats = await this.userStatsRepository.findOne({
             where: { userId }
         })

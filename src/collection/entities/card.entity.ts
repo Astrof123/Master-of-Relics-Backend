@@ -10,6 +10,7 @@ import {
 import { Exclude } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserCollection } from './collection.entity';
+import { DeckCard } from './deck-card.entity';
 
 
 @Entity('cards')
@@ -41,4 +42,7 @@ export class Card {
 
     @OneToMany(() => UserCollection, (userCollection) => userCollection.card)
     collections!: UserCollection[];
+
+    @OneToMany(() => DeckCard, (deckCard) => deckCard.card)
+    deck_cards!: DeckCard[];
 }

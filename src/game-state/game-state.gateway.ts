@@ -116,9 +116,9 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
         const players = Object.keys(gameState.players);
         
         for (const userId of players) {
-            const player = gameState.players[Number(userId)];
+            const player = gameState.players[userId];
             if (!player.isReady) {
-                await this.draftService.autoFinishDraft(gameId, Number(userId));
+                await this.draftService.autoFinishDraft(gameId, userId);
             }
         }
     }
@@ -130,9 +130,9 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
         const players = Object.keys(gameState.players);
         
         for (const userId of players) {
-            const player = gameState.players[Number(userId)];
+            const player = gameState.players[userId];
             if (!player.isReady) {
-                await this.actionService.autoToggleReadyMovement(gameId, Number(userId));
+                await this.actionService.autoToggleReadyMovement(gameId, userId);
             }
         }
     }
@@ -144,14 +144,14 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
         const players = Object.keys(gameState.players);
         
         for (const userId of players) {
-            const player = gameState.players[Number(userId)];
+            const player = gameState.players[userId];
             if (gameState.currentTurn === player.id) {
 
-                const skippedTurn = await this.actionService.autoEndTurn(gameId, Number(userId));
+                const skippedTurn = await this.actionService.autoEndTurn(gameId, userId);
 
                 if (skippedTurn) {
                     if (player.extraData.skippedMoves + 1 >= MAX_SKIP_TURN) {
-                        await this.actionService.autoGiveUp(gameState.id, Number(userId));
+                        await this.actionService.autoGiveUp(gameState.id, userId);
                     }
                     else {
                         const notification: GameNotificationData = {

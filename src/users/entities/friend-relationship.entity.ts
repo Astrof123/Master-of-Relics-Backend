@@ -28,9 +28,9 @@ export class FriendRelationShip {
     @JoinColumn({ name: 'requesterId' })
     requester!: User;
 
-    @ApiProperty({ example: 1 })
+    @ApiProperty()
     @Column()
-    requesterId!: number;
+    requesterId!: string;
 
     @ApiProperty({ type: () => User })
     @ManyToOne(() => User, (user) => user.addressee, {
@@ -39,9 +39,9 @@ export class FriendRelationShip {
     @JoinColumn({ name: 'addresseeId' })
     addressee!: User;
 
-    @ApiProperty({ example: 1 })
+    @ApiProperty()
     @Column()
-    addresseeId!: number;
+    addresseeId!: string;
 
     @ApiProperty({ example: "friend" })
     @Column()
@@ -54,5 +54,5 @@ export class FriendRelationShip {
     @ApiProperty()
     @DeleteDateColumn()
     @Exclude()
-    deletedAt!: Date;
+    deletedAt?: Date;
 }

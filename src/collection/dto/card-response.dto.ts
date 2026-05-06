@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
+import type { ArtifactType } from 'src/artifact/types/artifact';
 
 export class CardResponseDto {
     @Expose()
@@ -29,4 +30,12 @@ export class CardResponseDto {
     @Expose()
     @ApiProperty()
     skillCost!: number | null;
+
+    @Expose()
+    @ApiProperty()
+    type!: ArtifactType;
+
+    @Expose()
+    @ApiProperty()
+    position?: number;
 }

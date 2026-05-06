@@ -22,7 +22,7 @@ import { SpellModule } from 'src/spell/spell.module';
     ],
     imports: [
         forwardRef(() => GameStateModule), 
-        GameMechanicsModule, 
+        forwardRef(() => GameMechanicsModule), 
         forwardRef(() => PhaseModule), 
         forwardRef(() => ArtifactModule),
         forwardRef(() => SpellModule)

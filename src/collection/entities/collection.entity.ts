@@ -28,9 +28,9 @@ export class UserCollection {
     @JoinColumn({ name: 'userId' })
     user!: User;
 
-    @ApiProperty({ example: 1 })
+    @ApiProperty()
     @Column()
-    userId!: number;
+    userId!: string;
 
     @ApiProperty({ type: () => Card })
     @ManyToOne(() => Card, (card) => card.collections, {

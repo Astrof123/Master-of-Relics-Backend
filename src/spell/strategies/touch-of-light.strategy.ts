@@ -24,21 +24,19 @@ export class TouchOfLightStrategy implements SpellStrategy {
         if (data.targets[0].length > 0) {
             const allyArtifact = gameState.player.artifacts[data.targets[0][0]];
             
-            const heal = this.combatService.calculateHeal(gameState.player, allyArtifact.id, 20);
-            if (heal !== 0) {
-                this.combatService.applyHealing(gameState.player, allyArtifact.id, heal, logParts);
-                animations.push({
-                    playerId: gameState.player.id,
-                    artifactGameId: allyArtifact.id,
-                    animation: ANIMATION.HEAL,
-                    value: heal
-                })
-            }
+            const heal = this.combatService.calculateHeal(allyArtifact, 20);
+            this.combatService.applyHealing(allyArtifact, heal, logParts);
+            animations.push({
+                playerId: gameState.player.id,
+                artifactGameId: allyArtifact.id,
+                animation: ANIMATION.HEAL,
+                value: heal
+            })
         }
         else if (data.targets[1].length > 0) {
             const enemyArtifact = gameState.enemy.artifacts[data.targets[1][0]];
-            const damage = this.combatService.calculateDamage(gameState.player, 10, DAMAGE.MAGIC);
-            this.combatService.applyDamage(gameState.enemy, enemyArtifact.id, damage, DAMAGE.MAGIC, logParts);
+            const damage = this.combatService.calculateDamage(enemyArtifact, 10, DAMAGE.MAGIC);
+            this.combatService.applyDamage(gameState, gameState.enemy, enemyArtifact, damage, DAMAGE.MAGIC, logParts);
 
             animations.push({
                 playerId: gameState.enemy.id,

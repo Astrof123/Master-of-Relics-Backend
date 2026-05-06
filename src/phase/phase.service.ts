@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { randomInt } from 'crypto';
 import { LOG_TYPE } from 'src/action/types/log';
 import { ArtifactService } from 'src/artifact/artifact.service';
@@ -6,6 +6,7 @@ import { CollectionService } from 'src/collection/collection.service';
 import { ArtifactStateService } from 'src/game-mechanics/artifact-state.service';
 import { DRAW_PRIZE, LOSER_PRIZE, WINNER_PRIZE } from 'src/game-mechanics/constants/settings';
 import { DiceService } from 'src/game-mechanics/dice.service';
+import { GameEffectsService } from 'src/game-mechanics/game-effects.service';
 import { ResourceService } from 'src/game-mechanics/resource.service';
 import { GameTimerService } from 'src/game-state/game-timer.service';
 import { ARTIFACT_STATE, LogState } from 'src/game-state/types/game';
@@ -20,15 +21,26 @@ import { UsersStatsService } from 'src/users/users-stats.service';
 @Injectable()
 export class PhaseService {
     constructor(
+        @Inject(forwardRef(() => ResourceService))
         private readonly resourceService: ResourceService,
+        @Inject(forwardRef(() => ArtifactStateService))
         private readonly artifactStateService: ArtifactStateService,
+        @Inject(forwardRef(() => DiceService))
         private readonly diceService: DiceService,
+        @Inject(forwardRef(() => ArtifactService))
         private readonly artifactService: ArtifactService,
+        @Inject(forwardRef(() => SpellService))
         private readonly spellService: SpellService,
+        @Inject(forwardRef(() => CollectionService))
         private readonly collectionService: CollectionService,
+        @Inject(forwardRef(() => LobbyService))
         private readonly lobbyService: LobbyService,
+        @Inject(forwardRef(() => GameTimerService))
         private readonly gameTimerService: GameTimerService,
-        private readonly usersStatsService: UsersStatsService
+        @Inject(forwardRef(() => UsersStatsService))
+        private readonly usersStatsService: UsersStatsService,
+        @Inject(forwardRef(() => GameEffectsService))
+        private readonly gameEffectsService: GameEffectsService
     ) {}
     
     async newRound(gameState: GameForLogic) {
@@ -40,8 +52,10 @@ export class PhaseService {
 
         gameState.player.isReady = false;
         gameState.enemy.isReady = false;
+        gameState.constants.isNewRound = true;
 
         this.resourceService.addResourceNewRound(gameState);
+        this.gameEffectsService.checkNewRoundEffects(gameState);
         this.artifactStateService.updateStateNewRound(gameState);
         this.diceService.updateDicesNewRound(gameState);
         gameState.currentTurn = this.setFirstPlayer(gameState);
@@ -78,6 +92,8 @@ export class PhaseService {
         return gameState;
     }
 
+
+
     async checkEndGame(gameState: GameForLogic): Promise<boolean> {
         let hasPlayerNotBreaken = false;
         Object.values(gameState.player.artifacts).forEach(artifact => {
@@ -111,7 +127,7 @@ export class PhaseService {
         return false;
     }
 
-    async setEndGame(gameState: GameForLogic, winner: number | null) {
+    async setEndGame(gameState: GameForLogic, winner: string | null) {
         const logItem: LogState = {
             text: `Игра окончена.`,
             type: LOG_TYPE.SYSTEM
@@ -155,23 +171,38 @@ export class PhaseService {
         if (isForEnemy) {
             this.artifactService.calculateAvailableActions(gameState, gameState.enemy, gameState.player);
             this.spellService.calculateSpellActions(gameState, gameState.enemy, gameState.player);
+            this.gameEffectsService.calculateNewStateEffects(gameState, gameState.enemy, gameState.player);
         }
         else {
             this.artifactService.calculateAvailableActions(gameState, gameState.player, gameState.enemy);
             this.spellService.calculateSpellActions(gameState, gameState.player, gameState.enemy);
+            this.gameEffectsService.calculateNewStateEffects(gameState, gameState.player, gameState.enemy);
         }
-        
-        gameState.player.temporaryArtifacts = JSON.parse(JSON.stringify(gameState.player.artifacts));
-        gameState.enemy.temporaryArtifacts = JSON.parse(JSON.stringify(gameState.enemy.artifacts));
         
         return gameState;
     }
 
-    setFirstPlayer(gameState: GameForLogic): number {
-        if (Object.keys(gameState.player.artifacts).length > Object.keys(gameState.enemy.artifacts).length) {
+    setFirstPlayer(gameState: GameForLogic): string {
+        let playerCountArtifacts = 0;
+        for (const artifact of Object.values(gameState.player.artifacts)) {
+            if (artifact.state === ARTIFACT_STATE.BREAKEN) {
+                continue;
+            }
+            playerCountArtifacts += 1;
+        }
+
+        let enemyCountArtifacts = 0;
+        for (const artifact of Object.values(gameState.enemy.artifacts)) {
+            if (artifact.state === ARTIFACT_STATE.BREAKEN) {
+                continue;
+            }
+            enemyCountArtifacts += 1;
+        }
+
+        if (playerCountArtifacts > enemyCountArtifacts) {
             return gameState.enemy.id;
         }
-        else if (Object.keys(gameState.player.artifacts).length < Object.keys(gameState.enemy.artifacts).length) {
+        else if (playerCountArtifacts < enemyCountArtifacts) {
             return gameState.player.id;
         }
 

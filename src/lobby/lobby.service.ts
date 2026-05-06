@@ -41,8 +41,7 @@ export class LobbyService {
         await this.redisService.setJson<LobbyStateType>(key, LOBBYPATH.getStatePath(), newState, this.LOBBY_TTL);
     }
 
-    async createLobby(lobbyData: CreateLobbyData, userId: number): Promise<string> {
-        
+    async createLobby(lobbyData: CreateLobbyData, userId: string): Promise<string> {
         if (!lobbyData.name || lobbyData.name.length < 3 || lobbyData.name.length > 20) {
             throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_INCORRECT_NAME);
         }
@@ -51,6 +50,10 @@ export class LobbyService {
         const key = this.getLobbyKey(lobbyId);
         
         const user = await this.usersService.findOne(userId);
+
+        if (user.bannedUntil) {
+            throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_BANNED);
+        }
 
         const existingLobby = await this.getLobbyByUserId(userId);
         
@@ -102,7 +105,7 @@ export class LobbyService {
         return lobbyId;
     }
 
-    async updateOptionsLobby(lobbyOptions: UpdateOptionsLobbyData, userId: number): Promise<string> {
+    async updateOptionsLobby(lobbyOptions: UpdateOptionsLobbyData, userId: string): Promise<string> {
         const key = this.getLobbyKey(lobbyOptions.lobbyId);
         const lobby = await this.getLobbyById(lobbyOptions.lobbyId);
 
@@ -142,7 +145,7 @@ export class LobbyService {
         return lobby.id;
     }
 
-    async joinLobby(lobbyId: string, userId: number): Promise<void> {
+    async joinLobby(lobbyId: string, userId: string): Promise<void> {
         const key = this.getLobbyKey(lobbyId);
 
         const lobbyByUserId = await this.getLobbyByUserId(userId);
@@ -171,6 +174,10 @@ export class LobbyService {
 
         const user = await this.usersService.findOne(userId);
 
+        if (user.bannedUntil) {
+            throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_BANNED);
+        }
+
         const newPlayer: LobbyPlayer = {
             id: userId,
             nickname: user.nickname,
@@ -181,7 +188,7 @@ export class LobbyService {
         await this.redisService.setJson(key, LOBBYPATH.getPlayerPath(userId), newPlayer);
     }
 
-    async leaveLobby(lobbyId: string, userId: number): Promise<void> {
+    async leaveLobby(lobbyId: string, userId: string): Promise<void> {
         const key = this.getLobbyKey(lobbyId);
         const lobby = await this.getLobbyById(lobbyId);
 
@@ -211,7 +218,7 @@ export class LobbyService {
         }
     }
 
-    async toggleReadyLobby(lobbyId: string, userId: number): Promise<void> {
+    async toggleReadyLobby(lobbyId: string, userId: string): Promise<void> {
         const key = this.getLobbyKey(lobbyId);
         const lobby = await this.getLobbyById(lobbyId);
 
@@ -242,7 +249,7 @@ export class LobbyService {
         );
     }
 
-    async getAllLobbies(userId: number): Promise<Lobby[]> {
+    async getAllLobbies(userId: string): Promise<Lobby[]> {
         const lobbyIds = await this.getAllLobbyIds();
         
         const lobbyPromises = lobbyIds.map(id => 
@@ -294,7 +301,7 @@ export class LobbyService {
         return filteredLobbies.find(l => l.code === code && Object.keys(l.players).length === 1) ?? null;
     }
 
-    async getLobbyByUserId(userId: number): Promise<Lobby|null> {
+    async getLobbyByUserId(userId: string): Promise<Lobby|null> {
         const lobbyIds = await this.getAllLobbyIds();
         
         const lobbyPromises = lobbyIds.map(id => 
@@ -320,7 +327,7 @@ export class LobbyService {
         await this.redisService.removeFromSortedSet(this.getLobbyIndexesKey(), lobbyId);
     }
 
-    async inviteFriend(data: InviteFriendData, currentUserId: number) {
+    async inviteFriend(data: InviteFriendData, currentUserId: string) {
         const lobby = await this.getLobbyById(data.lobbyId);
 
         if (!lobby) {
@@ -349,7 +356,7 @@ export class LobbyService {
         );
     }
 
-    async getInvitations(currentUserId: number) {
+    async getInvitations(currentUserId: string) {
         let invitations = await this.redisService.getSetMembers(`user:${currentUserId}:invitations`);
         const playerInvitations: LobbyInvitation[] = []
 
@@ -365,7 +372,7 @@ export class LobbyService {
         return playerInvitations;
     }
 
-    async getFriendsForInvite(currentUserId: number): Promise<FriendForInvite[]> {
+    async getFriendsForInvite(currentUserId: string): Promise<FriendForInvite[]> {
         const friends = await this.usersService.getFriends(currentUserId);
 
         const friendsForInvite: FriendForInvite[] = []; 
@@ -392,7 +399,7 @@ export class LobbyService {
         return friendsForInvite;
     }
 
-    async joinLobbyByInvitation(invitationId: string, currentUserId: number) {
+    async joinLobbyByInvitation(invitationId: string, currentUserId: string) {
         let invitations = await this.redisService.getSetMembers(`user:${currentUserId}:invitations`);
         const parsedInvitations: LobbyInvitation[] = invitations.map(invitation => JSON.parse(invitation));
         const invitation = parsedInvitations.find(inv => inv.id === invitationId);

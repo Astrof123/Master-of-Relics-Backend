@@ -104,6 +104,10 @@ export class LogHelper {
         return `Переместил ${artifactName} на позицию ${position + 1} ${lineName} линии`
     }
 
+    public static getDestroyArtifactLog(artifactName: string) {
+        return `Уничтожен ${artifactName}`;
+    }
+
     public static getAppliedStateLog(artifactName: string, state: ArtifactState) {
         let stateName = "";
 
@@ -122,6 +126,9 @@ export class LogHelper {
         else if (state === ARTIFACT_STATE.STUNNED) {
             stateName = "Оглушен";
         }
+        else if (state === ARTIFACT_STATE.DREAM) {
+            stateName = "Сон";
+        }
 
         return `Перевел ${artifactName} в состояние "${stateName}"`
     }
@@ -133,4 +140,17 @@ export class LogHelper {
     public static getAppliedEffectLog(effect: EffectType, artifactName: string) {
         return `Применил эффект ${effect.name} на артефакт "${artifactName}"`
     }
+
+    public static getRemoveEffectLog(effect: EffectType, artifactName: string) {
+        return `Убран эффект ${effect.name} с артефакта "${artifactName}"`
+    }
+
+    public static getRemoveHeroEffectLog(effect: EffectType, playerName: string) {
+        return `Убран эффект ${effect.name} с игрока "${playerName}"`
+    }
+
+    public static getAppliedHeroEffectLog(effect: EffectType, playerName: string) {
+        return `Применил эффект ${effect.name} на игрока "${playerName}"`
+    }
+    
 }

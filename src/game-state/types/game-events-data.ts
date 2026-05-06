@@ -1,5 +1,5 @@
 export interface GameNotificationData {
-    receiverId: number;
+    receiverId: string;
     text: string;
     level: NotificationLevel
 }

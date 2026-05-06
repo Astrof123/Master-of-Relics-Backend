@@ -1,14 +1,14 @@
 export interface Friend {
     id: number;
     nickname: string;
-    friendId: number;
+    friendId: string;
     isOnline: boolean;
 }
 
 export interface OfferFriendship {
     id: number;
     nickname: string;
-    requesterId: number;
+    requesterId: string;
 }
 
 export const RELATIONSHIP  = {

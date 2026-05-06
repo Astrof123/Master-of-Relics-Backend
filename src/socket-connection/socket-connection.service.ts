@@ -9,7 +9,7 @@ export class SocketConnectionService {
 
     private readonly CONNECT_TTL = 60 * 60 * 24;
 
-    async setPlayerOnline(userId: number) {
+    async setPlayerOnline(userId: string) {
         await this.redisService.addToSet(
             "online:index",
             userId.toString(),
@@ -17,7 +17,7 @@ export class SocketConnectionService {
         )
     }
 
-    async setPlayerOffline(userId: number) {
+    async setPlayerOffline(userId: string) {
         await this.redisService.removeFromSet(
             "online:index",
             userId.toString()

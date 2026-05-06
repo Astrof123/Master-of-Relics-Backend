@@ -18,3 +18,15 @@ export class InvalidTokenException extends CustomHttpException {
         super('Вы не авторизованы', HttpStatus.UNAUTHORIZED);
     }
 }
+
+export class InvalidInviteCodeException extends CustomHttpException {
+    constructor() {
+        super('Инвайт-код не найден', HttpStatus.BAD_REQUEST);
+    }
+}
+
+export class UsedInviteCodeException extends CustomHttpException {
+    constructor() {
+        super('Инвайт-код уже использован', HttpStatus.BAD_REQUEST);
+    }
+}

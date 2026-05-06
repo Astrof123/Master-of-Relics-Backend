@@ -6,7 +6,7 @@ import type { Stats } from '../types/stats';
 export class UserProfileResponseDto {
     @Expose()
     @ApiProperty()
-    id!: number;
+    id!: string;
 
     @Expose()
     @ApiProperty()
@@ -22,11 +22,15 @@ export class UserProfileResponseDto {
 
     @Expose()
     @ApiProperty()
-    relationshipInitiator!: number | null;
+    relationshipInitiator!: string | null;
 
     @Expose()
     @ApiProperty()
     isReported!: boolean; 
+
+    @Expose()
+    @ApiProperty()
+    isBanned!: boolean; 
 
     @Expose()
     @ApiProperty()

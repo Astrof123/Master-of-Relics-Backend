@@ -16,11 +16,14 @@ import { RestrictionService } from './restriction.service';
 import { SPELLS } from 'src/spell/constants/spells';
 import { SPELLTYPE } from 'src/spell/types/spell';
 import { SpellHelper } from 'src/spell/spell.helper';
+import { EFFECT } from 'src/game-mechanics/types/effect';
+import { GameEffectsService } from 'src/game-mechanics/game-effects.service';
 
 @Injectable()
 export class ActionValidatorService {
     constructor(
-        private readonly restrictionService: RestrictionService
+        private readonly restrictionService: RestrictionService,
+        private readonly gameEffectsService: GameEffectsService
     ) {}
 
     private generalValidator(gameState: GameForLogic) {
@@ -130,14 +133,18 @@ export class ActionValidatorService {
             }
         }
 
-        if (SKILLS[data.skillId].cost > gameState.player.resources[RESOURCE.RAGE]) {
+        if (SKILLS[data.skillId].cost && SKILLS[data.skillId].cost! > gameState.player.resources[RESOURCE.RAGE]) {
             throw new ActionException(ACTION_ERROR_CODE.NOT_ENOUGH_RESOURCES);
         }
     
-        if (!this.restrictionService.checkGeneralRestrictions(gameState.player, gameState.enemy, SKILLS[data.skillId].restrictions)) {
+        if (!this.restrictionService.checkGeneralRestrictions(
+            gameState.player, 
+            gameState.enemy,
+            SKILLS[data.skillId].restrictions
+        )) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
-        if (!this.restrictionService.checkArtifactRestrictions(SKILLS[data.skillId].restrictions, artifact)) {
+        if (!this.restrictionService.checkArtifactRestrictions(SKILLS[data.skillId].restrictions, gameState.player, artifact)) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
 
@@ -194,7 +201,7 @@ export class ActionValidatorService {
         if (!this.restrictionService.checkGeneralRestrictions(gameState.player, gameState.enemy, SPELLS[data.spellId].restrictions)) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
-        if (!this.restrictionService.checkSpellRestrictions(SPELLS[data.spellId].restrictions)) {
+        if (!this.restrictionService.checkSpellRestrictions(gameState.enemy, SPELLS[data.spellId].restrictions)) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
 
@@ -254,10 +261,19 @@ export class ActionValidatorService {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
 
-        if (!this.restrictionService.checkArtifactRestrictions(EXTRA_ACTIONS[data.type].restrictions, artifact)) {
+        if (!this.restrictionService.checkArtifactRestrictions(EXTRA_ACTIONS[data.type].restrictions, gameState.player, artifact)) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
-        const cost = EXTRA_ACTIONS[data.type].cost;
+        let cost = EXTRA_ACTIONS[data.type].cost;
+        if (this.gameEffectsService.countEffect(artifact, EFFECT.GLIMPSE) > 0) {
+            if (data.type === EXTRA_ACTION.MOVE) {
+                cost = 0;
+            }
+            else if (data.type === EXTRA_ACTION.RETURN_TO_BATTLE) {
+                cost = 15;
+            }
+        }
+
         const resourceType = EXTRA_ACTIONS[data.type].resourceType;
 
         if (gameState.player.resources[resourceType] - cost < 0) {
@@ -272,7 +288,7 @@ export class ActionValidatorService {
     }
 
     toggleReadyMovementValidator(gameState: GameForLogic, data: ToggleReadyMovementData) {
-        const EXCLUDED_FIELDS: (keyof ArtifactGameState)[] = ['line', 'position'];
+        const EXCLUDED_FIELDS: (keyof ArtifactGameState)[] = ['line', 'position', "availableActions"];
 
         if (gameState.end !== null) {
             throw new ActionException(ACTION_ERROR_CODE.PHASE_NOT_BATTLE);
@@ -286,13 +302,14 @@ export class ActionValidatorService {
             throw new ActionException(ACTION_ERROR_CODE.MINIPHASE_NOT_BATTLE);
         }
 
+
         if (Object.values(data.artifactsWithNewPosition).length !== Object.values(gameState.player.artifacts).length) {
             throw new ActionException(ACTION_ERROR_CODE.INVALID_DATA);
         }
         
         const countArtifactsFront = Object.values(data.artifactsWithNewPosition).filter(a => a.line === LINE.FRONT).length;
         const countArtifactsBack = Object.values(data.artifactsWithNewPosition).filter(a => a.line === LINE.BACK).length;
-        
+
         if (countArtifactsFront > MAX_COUNT_ARTIFACTS_ON_LINE || countArtifactsBack > MAX_COUNT_ARTIFACTS_ON_LINE) {
             throw new ActionException(ACTION_ERROR_CODE.INVALID_DATA);
         }

@@ -28,6 +28,10 @@ export interface SpellDataType {
 export const SPELL  = {
     PIERCING_BOLT: 'piercing_bolt',
     TOUCH_OF_LIGHT: 'touch_of_light',
+    METEOR_SHOWER: 'meteor_shower',
+    VOLCANO: 'volcano',
+    FURY: 'fury',
+    THUNDER_STORM: 'thunder_storm',
 };
 
 export type Spell  = typeof SPELL [keyof typeof SPELL];

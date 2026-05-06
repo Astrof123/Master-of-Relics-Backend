@@ -72,15 +72,5 @@ export class GameTimerService {
         }
 
         const activeTimer = await this.gameStateService.getActiveTimer(gameId);
-        
-        // const timerInfo = await this.gameStateService.getTimerInfo(gameId, activeTimer);
-        
-        // if (this.server) {
-        //     this.server.to(`game-${gameId}`).emit('timer:sync', {
-        //         gameId,
-        //         timerType: activeTimer,
-        //         ...timerInfo,
-        //     });
-        // }
     }
 }

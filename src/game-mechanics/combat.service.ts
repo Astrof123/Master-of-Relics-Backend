@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { GameForClient } from 'src/game-state/types/game-for-client';
 import { RedisService } from 'src/redis/redis.service';
 import { RESOURCE, ResourceType } from './types/resource';
@@ -11,41 +11,87 @@ import { GameForLogic } from 'src/game-state/types/game-for-logic';
 import { EFFECTS } from 'src/game-mechanics/constants/effects';
 import { FACE, Face } from './types/face';
 import { FACES } from './constants/faces';
-import { DAMAGE, DamageType } from './types/combat';
+import { DAMAGE, Damages, DamageType } from './types/combat';
 import { ArtifactStateService } from './artifact-state.service';
 import { LogHelper } from 'src/action/helpers/logHelper';
 import { ARTIFACTS } from 'src/artifact/constants/artifacts';
+import { SkillsStrategyFactory } from 'src/artifact/skills.factory';
+import { GameEffectsService } from './game-effects.service';
+import { EFFECT } from './types/effect';
+import { ArtifactService } from 'src/artifact/artifact.service';
 
 @Injectable()
 export class CombatService {
     constructor (
-        private readonly artifactStateService: ArtifactStateService
+        private readonly artifactStateService: ArtifactStateService,
+        @Inject(forwardRef(() => SkillsStrategyFactory))
+        private readonly skillsFactory: SkillsStrategyFactory,
+        private readonly gameEffectsService: GameEffectsService,
+        private readonly artifactService: ArtifactService
     ) {}
 
-    applyDamage(enemy: Player, attackedArtifactGameId: string, amount: number, damageType: DamageType, logParts: string[]) {
-        const newHp = enemy.artifacts[attackedArtifactGameId].currentHp - amount;
+    applyDamage(gameState: GameForLogic, enemy: Player, attackedArtifact: ArtifactGameState, amount: number, damageType: DamageType, logParts: string[]) {
+        const newHp = attackedArtifact.currentHp - amount;
 
-        enemy.artifacts[attackedArtifactGameId].currentHp = newHp > 0 ? newHp : 0;
+        attackedArtifact.currentHp = newHp > 0 ? newHp : 0;
 
         if (newHp <= 0) {
-            this.artifactStateService.applyState(enemy, attackedArtifactGameId, ARTIFACT_STATE.BREAKEN, logParts);
+            if (this.gameEffectsService.countEffect(attackedArtifact, EFFECT.COPY) > 0 || 
+                this.gameEffectsService.countEffect(attackedArtifact, EFFECT.LIVE_FOR_ROUND) > 0
+            ) {
+                this.artifactService.destroyArtifact(gameState.enemy, attackedArtifact, logParts);
+            }
+            else {
+                this.artifactStateService.applyState(attackedArtifact, ARTIFACT_STATE.BREAKEN, logParts);
+            }
+            const artifactId = attackedArtifact.artifactId;
+
+            ARTIFACTS[artifactId].skills?.forEach(skill => {
+                const strategy = this.skillsFactory.getStrategy(skill);
+                strategy.death(
+                    gameState,
+                    gameState.enemy,
+                    enemy.artifacts[attackedArtifact.id], 
+                    []
+                ); 
+            });
         }
 
-        logParts.push(LogHelper.getHitLog(amount, damageType, ARTIFACTS[enemy.artifacts[attackedArtifactGameId].artifactId].name))
+        if (this.gameEffectsService.countEffect(attackedArtifact, EFFECT.ONE_ATTACK_SHIELD) > 0) {
+            this.gameEffectsService.removeEffect(attackedArtifact, EFFECTS[EFFECT.ONE_ATTACK_SHIELD], [])
+        }
+
+        if (attackedArtifact.state === ARTIFACT_STATE.DREAM) {
+            const state = attackedArtifact.extraData.lastStateBeforeRoot;
+            this.artifactStateService.applyState(attackedArtifact, state, []);
+        }
+
+        logParts.push(LogHelper.getHitLog(amount, damageType, ARTIFACTS[attackedArtifact.artifactId].name))
     }
 
-    applyHealing(player: Player, healedArtifactGameId: string, amount: number, logParts: string[]) {
-        const currentHp = player.artifacts[healedArtifactGameId].currentHp + amount;
-        const maxHp = player.artifacts[healedArtifactGameId].maxHp;
+    applyHealing(healedArtifact: ArtifactGameState, amount: number, logParts: string[]) {
+        if (healedArtifact.state === ARTIFACT_STATE.BREAKEN) {
+            return;
+        }
 
-        player.artifacts[healedArtifactGameId].currentHp = currentHp > maxHp ? maxHp : currentHp;
-        logParts.push(LogHelper.getHealLog(amount, ARTIFACTS[player.artifacts[healedArtifactGameId].artifactId].name))
+        const currentHp = healedArtifact.currentHp + amount;
+        const maxHp = healedArtifact.maxHp;
+
+        healedArtifact.currentHp = currentHp > maxHp ? maxHp : currentHp;
+
+        if (healedArtifact.state === ARTIFACT_STATE.DREAM) {
+            const state = healedArtifact.extraData.lastStateBeforeRoot;
+            console.log(state);
+            this.artifactStateService.applyState(healedArtifact, state, []);
+        }
+
+        logParts.push(LogHelper.getHealLog(amount, ARTIFACTS[healedArtifact.artifactId].name))
     }
 
-    calculateFaceHeal(player: Player, healedArtifactGameId: string, healerArtifactGameId: string): number {
-        const face = player.artifacts[healerArtifactGameId].face;
+    calculateFaceHeal(healedArtifact: ArtifactGameState, healerArtifact: ArtifactGameState): number {
+        const face = healerArtifact.face;
         let healAmount = FACES[face].heal;
-        let remainder = player.artifacts[healedArtifactGameId].maxHp - (healAmount + player.artifacts[healedArtifactGameId].currentHp)
+        let remainder = healedArtifact.maxHp - (healAmount + healedArtifact.currentHp)
 
         if (remainder < 0) {
             return healAmount + remainder;
@@ -54,14 +100,21 @@ export class CombatService {
         return healAmount;
     }
 
-    calculateFaceDamage(player: Player, attackerArtifactGameId: string, damageType: DamageType): number {
-        const face = player.artifacts[attackerArtifactGameId].face;
+    calculateFaceDamage(
+        player: Player, 
+        enemy: Player, 
+        attackerArtifact: ArtifactGameState,
+        attackedArtifact: ArtifactGameState,
+        damageType: DamageType
+    ): number {
+        const face = attackerArtifact.face;
+
         let damage = 0;
 
         if (damageType === DAMAGE.MELEE) {
             damage += FACES[face].sword;
 
-            if (player.artifacts[attackerArtifactGameId].line === LINE.FRONT) {
+            if (attackerArtifact.line === LINE.FRONT) {
                 damage += 10;
             }
         }
@@ -70,20 +123,63 @@ export class CombatService {
             damage += FACES[face].target;
         }
 
+        const damages: Damages = {
+            [DAMAGE.MAGIC]: 0,
+            [DAMAGE.MELEE]: 0,
+            [DAMAGE.RANGED]: 0,
+        } 
+
+        damages[damageType] = damage;
+        damages[DAMAGE.MAGIC]! += 5 * this.gameEffectsService.countEffect(attackerArtifact, EFFECT.UPGRADE);
+
+        if (this.gameEffectsService.countEffect(attackerArtifact, EFFECT.BERSERK) > 0) {
+            const extraDamage = attackerArtifact.maxHp - attackerArtifact.currentHp;
+            damages[DAMAGE.MELEE]! += extraDamage > 0 ? extraDamage : 0;
+        }
+
+        if (this.gameEffectsService.countEffect(attackerArtifact, EFFECT.HUNT) > 0) {
+            let extraDamage = 0;
+            for (const artifact of Object.values(player.artifacts)) {
+                extraDamage += artifact.maxHp - artifact.currentHp > 0 ? 4 : 0;
+            }
+            for (const artifact of Object.values(enemy.artifacts)) {
+                extraDamage += artifact.maxHp - artifact.currentHp > 0 ? 4 : 0;
+            }
+            damages[DAMAGE.RANGED]! += extraDamage;
+        }
+
+        let fullDamage = damages[DAMAGE.MAGIC]! + damages[DAMAGE.MELEE]! + damages[DAMAGE.RANGED]!
+        
+        fullDamage = this.calculateGeneralDamage(attackedArtifact, fullDamage);
+
+        return fullDamage;
+    }
+
+    calculateGeneralDamage(attackedArtifact: ArtifactGameState, damage: number) {
+        if (this.gameEffectsService.countEffect(attackedArtifact, EFFECT.ONE_ATTACK_SHIELD) > 0) {
+            return 0;
+        }
+
         return damage;
     }
 
-    calculateDamage(player: Player, amount: number, damageType: DamageType): number {
+    calculateDamage(attackedArtifact: ArtifactGameState, amount: number, damageType: DamageType): number {
         let damage = amount;
 
+        damage = this.calculateGeneralDamage(attackedArtifact, damage);
+
         return damage;
     }
 
-    calculateHeal(player: Player, healedArtifactGameId: string, amount: number): number {
-        let remainder = player.artifacts[healedArtifactGameId].maxHp - (amount + player.artifacts[healedArtifactGameId].currentHp)
+    calculateHeal(healedArtifact: ArtifactGameState, amount: number): number {
+        let remainder = healedArtifact.maxHp - (amount + healedArtifact.currentHp)
 
         if (remainder < 0) {
             return amount + remainder;
+        }
+
+        if (healedArtifact.state === ARTIFACT_STATE.BREAKEN) {
+            return 0;
         }
 
         return amount;

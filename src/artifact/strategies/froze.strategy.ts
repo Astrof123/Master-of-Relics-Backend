@@ -1,6 +1,6 @@
 import { GameForLogic } from "src/game-state/types/game-for-logic";
 import { SkillStrategy } from "../types/strategy";
-import { ARTIFACT_STATE, ArtifactGameState, LINE } from "src/game-state/types/game";
+import { ARTIFACT_STATE, ArtifactGameState, LINE, Player } from "src/game-state/types/game";
 import { UseSkillData } from "src/action/types/action-evens-data";
 import { ANIMATION, AnimationData } from "src/action/types/animation";
 import { Injectable } from "@nestjs/common";
@@ -22,17 +22,22 @@ export class FrozeStrategy implements SkillStrategy {
         return SKILL.FROZE;
     }
 
-    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
-        const enemyArtifact = gameState.enemy.artifacts[data.targets[1][0]];
-        this.artifactStateService.applyState(gameState.enemy, enemyArtifact.id, ARTIFACT_STATE.ROOTED, logParts);
-        const damage = this.combatService.calculateDamage(gameState.player, 5, DAMAGE.RANGED);
-        this.combatService.applyDamage(gameState.enemy, enemyArtifact.id, damage, DAMAGE.RANGED, logParts);
+    execute(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
+        const enemy = gameState.enemy.id === player.id ? player : gameState.enemy;
+        const enemyArtifact = enemy.artifacts[data.targets[1][0]];
+        this.artifactStateService.applyState(enemyArtifact, ARTIFACT_STATE.ROOTED, logParts);
+        const damage = this.combatService.calculateDamage(enemyArtifact, 5, DAMAGE.RANGED);
+        this.combatService.applyDamage(gameState, enemy, enemyArtifact, damage, DAMAGE.RANGED, logParts);
 
         animations.push({
-            playerId: gameState.enemy.id,
+            playerId: enemy.id,
             artifactGameId: enemyArtifact.id!,
             animation: ANIMATION.HIT,
             value: damage
         })
+    }
+
+    death(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, logParts: string[]) {
+        
     }
 }

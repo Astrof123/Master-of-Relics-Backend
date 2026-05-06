@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
@@ -36,6 +36,7 @@ import redisConfig from './config/redis.config';
             load: [jwtConfig, databaseConfig, redisConfig]
         }),
         PassportModule.register({ defaultStrategy: 'jwt' }),
+        RedisModule,
         DatabaseModule,
         UsersModule,
         AuthModule,
@@ -51,11 +52,10 @@ import redisConfig from './config/redis.config';
             }),
         }),
         InviteCodeModule,
-        RedisModule,
+        ArtifactModule,
+        GameStateModule,
         LobbyModule,
         SocketConnectionModule,
-        GameStateModule,
-        ArtifactModule,
         DraftModule,
         PhaseModule,
         GameMechanicsModule,

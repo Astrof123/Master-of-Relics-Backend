@@ -1,7 +1,7 @@
 export const LOBBYPATH  = {
-    getHostPath: (userId: number) => `.players.${userId}.isHost`,
+    getHostPath: (userId: string) => `.players.${userId}.isHost`,
     getPlayersPath: () => `.players`,
-    getPlayerReadyPath: (userId: number) => `.players.${userId}.isReady`,
+    getPlayerReadyPath: (userId: string) => `.players.${userId}.isReady`,
     getStatePath: () => `.state`,
-    getPlayerPath: (userId: number) => `.players.${userId}`
+    getPlayerPath: (userId: string) => `.players.${userId}`
 };

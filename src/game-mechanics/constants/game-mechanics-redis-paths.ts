@@ -1,7 +1,7 @@
 import { RESOURCE, ResourceType } from "../types/resource";
 
 export const GAME_MECHANICS_PATH = {
-    getResourcePath: (userId: number, resource: ResourceType) => {
+    getResourcePath: (userId: string, resource: ResourceType) => {
         const resourceDict = {
             [RESOURCE.AGILITY]: ".agility",
             [RESOURCE.RAGE]: ".rage",
@@ -12,8 +12,8 @@ export const GAME_MECHANICS_PATH = {
 
         return `.players.${userId}.resources.${resourceDict[resource]}`
     },
-    getArtifactsPath: (userId: number) => `.players.${userId}.artifacts`,
-    getArtifactPath: (userId: number, artifactId: number) => `.players.${userId}.artifacts.${artifactId}`,
-    getArtifactStatePath: (userId: number, artifactId: number) => `.players.${userId}.artifacts.${artifactId}.state`,
-    getMovePointsPath: (userId: number) => `.players.${userId}.movePoints`,
+    getArtifactsPath: (userId: string) => `.players.${userId}.artifacts`,
+    getArtifactPath: (userId: string, artifactId: number) => `.players.${userId}.artifacts.${artifactId}`,
+    getArtifactStatePath: (userId: string, artifactId: number) => `.players.${userId}.artifacts.${artifactId}.state`,
+    getMovePointsPath: (userId: string) => `.players.${userId}.movePoints`,
 };

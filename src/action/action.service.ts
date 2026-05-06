@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { EndRoundData, EndTurnData, ExtraActionData, ToggleReadyMovementData, UseFaceData, UseSkillData, UseSpellData } from './types/action-evens-data';
 import { GameStateService } from 'src/game-state/game-state.service';
 import { GAME_ERROR_CODE, GameException } from 'src/game-state/types/game-exceptions';
@@ -24,16 +24,20 @@ import { MAX_SKIP_TURN } from 'src/game-mechanics/constants/settings';
 @Injectable()
 export class ActionService {
     constructor(
+        @Inject(forwardRef(() => GameStateService))
         private readonly gameStateService: GameStateService,
         private readonly actionValidatorService: ActionValidatorService,
         private readonly actionResolverService: ActionResolverService,
+        @Inject(forwardRef(() => PhaseService))
         private readonly phaseService: PhaseService,
         private readonly redisService: RedisService,
+        @Inject(forwardRef(() => GameTimerService))
         private readonly gameTimerService: GameTimerService,
+        @Inject(forwardRef(() => ResourceService))
         private readonly resourceService: ResourceService
     ) {}
 
-    async useFace(data: UseFaceData, userId: number, animations: AnimationData[]) {
+    async useFace(data: UseFaceData, userId: string, animations: AnimationData[]) {
         const key = this.gameStateService.getKeyGame(data.gameId);
         const gameState = await this.gameStateService.getGameForLogicById(data.gameId, userId);
 
@@ -54,7 +58,7 @@ export class ActionService {
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async useSkill(data: UseSkillData, userId: number, animations: AnimationData[]) {
+    async useSkill(data: UseSkillData, userId: string, animations: AnimationData[]) {
         const key = this.gameStateService.getKeyGame(data.gameId);
         const gameState = await this.gameStateService.getGameForLogicById(data.gameId, userId);
 
@@ -75,7 +79,7 @@ export class ActionService {
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async useSpell(data: UseSpellData, userId: number, animations: AnimationData[]) {
+    async useSpell(data: UseSpellData, userId: string, animations: AnimationData[]) {
         const key = this.gameStateService.getKeyGame(data.gameId);
         const gameState = await this.gameStateService.getGameForLogicById(data.gameId, userId);
 
@@ -90,7 +94,7 @@ export class ActionService {
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async endTurn(gameId: string, userId: number) {
+    async endTurn(gameId: string, userId: string) {
         const key = this.gameStateService.getKeyGame(gameId);
         const gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
         
@@ -107,7 +111,7 @@ export class ActionService {
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async giveUp(gameId: string, userId: number) {
+    async giveUp(gameId: string, userId: string) {
         const key = this.gameStateService.getKeyGame(gameId);
         const gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
         
@@ -121,7 +125,7 @@ export class ActionService {
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async autoGiveUp(gameId: string, userId: number) {
+    async autoGiveUp(gameId: string, userId: string) {
         const key = this.gameStateService.getKeyGame(gameId);
         const gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
         
@@ -132,7 +136,7 @@ export class ActionService {
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async offerDraw(gameId: string, userId: number) {
+    async offerDraw(gameId: string, userId: string) {
         const key = this.gameStateService.getKeyGame(gameId);
         const gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
         
@@ -146,7 +150,7 @@ export class ActionService {
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async cancelDraw(gameId: string, userId: number) {
+    async cancelDraw(gameId: string, userId: string) {
         const key = this.gameStateService.getKeyGame(gameId);
         const gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
         
@@ -160,7 +164,7 @@ export class ActionService {
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async endRound(gameId: string, userId: number) {
+    async endRound(gameId: string, userId: string) {
         const key = this.gameStateService.getKeyGame(gameId);
         const gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
         
@@ -174,7 +178,7 @@ export class ActionService {
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async extraAction(data: ExtraActionData, userId: number, animations: AnimationData[]) {
+    async extraAction(data: ExtraActionData, userId: string, animations: AnimationData[]) {
         const key = this.gameStateService.getKeyGame(data.gameId);
         const gameState = await this.gameStateService.getGameForLogicById(data.gameId, userId);
         
@@ -195,7 +199,7 @@ export class ActionService {
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async toggleReadyMovement(data: ToggleReadyMovementData, userId: number): Promise<void> {
+    async toggleReadyMovement(data: ToggleReadyMovementData, userId: string): Promise<void> {
         const key = this.gameStateService.getKeyGame(data.gameId);
         const maxRetries = 5;
         let retries = 0;
@@ -245,6 +249,7 @@ export class ActionService {
                     if (error instanceof GameException) {
                         throw error;
                     }
+                    console.log(error)
                     throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
                 }
             }
@@ -255,7 +260,7 @@ export class ActionService {
         }
     }
 
-    async autoToggleReadyMovement(gameId: string, userId: number): Promise<void> {
+    async autoToggleReadyMovement(gameId: string, userId: string): Promise<void> {
         const key = this.gameStateService.getKeyGame(gameId);
         const maxRetries = 5;
         let retries = 0;
@@ -316,7 +321,7 @@ export class ActionService {
         }
     }
 
-    async autoEndTurn(gameId: string, userId: number): Promise<boolean> {
+    async autoEndTurn(gameId: string, userId: string): Promise<boolean> {
         const key = this.gameStateService.getKeyGame(gameId);
         const maxRetries = 5;
         let retries = 0;

@@ -7,10 +7,14 @@ import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { TokensDto } from './dto/tokens.dto';
 import { LoginDto } from './dto/login.dto';
-import { InvalidCredentialsException, UserAlreadyExistsException } from './exceptions/auth.exception';
+import { InvalidCredentialsException, InvalidInviteCodeException, UsedInviteCodeException, UserAlreadyExistsException } from './exceptions/auth.exception';
 import { CustomHttpException } from 'src/common/custom-http.exception';
 import { CollectionService } from 'src/collection/collection.service';
 import { UserStats } from 'src/users/entities/user-stats.entity';
+import { InviteCode } from 'src/invite-code/entities/invite-code.entity';
+import { INVITE_CODE_STATUS } from 'src/invite-code/types/invite-code';
+import { validate as isValidUUID } from 'uuid';
+import { DeckService } from 'src/collection/deck.service';
 
 @Injectable()
 export class AuthService {
@@ -19,10 +23,17 @@ export class AuthService {
         private usersRepository: Repository<User>,
         @InjectRepository(UserStats)
         private userStatsRepository: Repository<UserStats>,
+        @InjectRepository(InviteCode)
+        private inviteCodeRepository: Repository<InviteCode>,
         private tokenService: TokenService,
-        private collectionService: CollectionService
+        private collectionService: CollectionService,
+        private readonly deckService: DeckService
     ) {}
 
+    private generateFriendCode(): string {
+        const num = Math.floor(Math.random() * 10000000000);
+        return num.toString().padStart(10, '0');
+    }
 
     async register(registerDto: RegisterDto): Promise<TokensDto> {
         const { nickname, login, password } = registerDto;
@@ -31,17 +42,42 @@ export class AuthService {
             const existingUser = await this.usersRepository.findOne({ 
                 where: { login } 
             });
-            
+
             if (existingUser) {
                 throw new UserAlreadyExistsException();
             }
 
+            if (!isValidUUID(registerDto.inviteCode)) {
+                throw new InvalidInviteCodeException();
+            }
+
+            const inviteCode = await this.inviteCodeRepository.findOne({ 
+                where: { id: registerDto.inviteCode } 
+            });
+            
+            if (!inviteCode) {
+                throw new InvalidInviteCodeException();
+            }
+
+            if (inviteCode.userId) {
+                throw new UsedInviteCodeException();
+            }
+
             const hashedPassword = await bcrypt.hash(password, 10);
+
+            let exists = true;
+            let code: string = "4235235233";
+
+            while (exists) {
+                code = this.generateFriendCode();
+                exists = await this.usersRepository.exists({ where: { friendCode: code } });
+            }
 
             const user = this.usersRepository.create({
                 nickname,
                 login,
                 password: hashedPassword,
+                friendCode: code
             });
             await this.usersRepository.save(user);
 
@@ -50,7 +86,13 @@ export class AuthService {
             });
             await this.userStatsRepository.save(userStats);
 
+            inviteCode.userId = user.id;
+            inviteCode.usedAt = new Date();
+            inviteCode.status = INVITE_CODE_STATUS.USED;
+            await this.inviteCodeRepository.save(inviteCode);
+
             await this.collectionService.createForNewUser(user.id);
+            await this.deckService.createForNewUser(user.id);
 
             const tokens = await this.tokenService.generateTokens({
                 sub: user.id

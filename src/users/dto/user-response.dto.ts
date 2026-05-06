@@ -4,7 +4,7 @@ import { Expose } from 'class-transformer';
 export class UserResponseDto {
     @Expose()
     @ApiProperty()
-    id!: number;
+    id!: string;
 
     @Expose()
     @ApiProperty()
@@ -13,4 +13,24 @@ export class UserResponseDto {
     @Expose()
     @ApiProperty()
     gold!: number;
+
+    @Expose()
+    @ApiProperty()
+    isAdmin!: boolean;
+
+    @Expose()
+    @ApiProperty()
+    friendCode!: boolean;
+
+    @Expose()
+    @ApiProperty()
+    isSuperAdmin!: boolean;
+
+    @Expose()
+    @ApiProperty()
+    bannedUntil!: Date | null;
+
+    @Expose()
+    @ApiProperty()
+    banReason!: string | null;
 }

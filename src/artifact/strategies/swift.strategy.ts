@@ -1,6 +1,6 @@
 import { GameForLogic } from "src/game-state/types/game-for-logic";
 import { SkillStrategy } from "../types/strategy";
-import { ARTIFACT_STATE, ArtifactGameState, LINE } from "src/game-state/types/game";
+import { ARTIFACT_STATE, ArtifactGameState, LINE, Player } from "src/game-state/types/game";
 import { UseSkillData } from "src/action/types/action-evens-data";
 import { ANIMATION, AnimationData } from "src/action/types/animation";
 import { Injectable } from "@nestjs/common";
@@ -26,15 +26,13 @@ export class SwiftStrategy implements SkillStrategy {
         return SKILL.SWIFT;
     }
 
-    execute(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
-        this.resourceService.addResource(gameState.player, RESOURCE.AGILITY, 45, logParts);
+    execute(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
+        this.resourceService.addResource(player, RESOURCE.AGILITY, 35, logParts);
 
-        this.gameEffectsService.applyEffect(gameState.player, artifact.id, {
-            id: EFFECT.USED_SKILL_CHARGES,
-            name: EFFECTS[EFFECT.USED_SKILL_CHARGES].name,
-            duration: EFFECTS[EFFECT.USED_SKILL_CHARGES].duration,
-            number: EFFECTS[EFFECT.USED_SKILL_CHARGES].number,
-            type: "negative",
-        }, [])
+        this.gameEffectsService.applyEffect(artifact, EFFECTS[EFFECT.USED_SKILL_CHARGES], [])
+    }
+
+    death(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, logParts: string[]) {
+        
     }
 }

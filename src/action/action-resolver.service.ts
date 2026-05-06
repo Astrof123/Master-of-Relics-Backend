@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { GameForLogic } from 'src/game-state/types/game-for-logic';
 import { ARTIFACT_STATE, ArtifactGameState, LogState } from 'src/game-state/types/game';
 import { ExtraActionData, ToggleReadyMovementData, UseFaceData, UseSkillData, UseSpellData } from './types/action-evens-data';
@@ -25,18 +25,31 @@ import { LogHelper } from './helpers/logHelper';
 import { LOG_TYPE } from './types/log';
 import { GameTimerService } from 'src/game-state/game-timer.service';
 import { TIMER_TYPE } from 'src/game-state/types/timer';
+import { GameEffectsService } from 'src/game-mechanics/game-effects.service';
+import { EFFECTS } from 'src/game-mechanics/constants/effects';
+import { EFFECT } from 'src/game-mechanics/types/effect';
+import { EXTRA_ACTION } from './types/action';
 
 @Injectable()
 export class ActionResolverService {
     constructor(
+        @Inject(forwardRef(() => ResourceService))  // ← Добавить
         private readonly resourceService: ResourceService,
+        @Inject(forwardRef(() => CombatService))    // ← Добавить
         private readonly combatService: CombatService,
+        @Inject(forwardRef(() => ArtifactStateService))  // ← Добавить
         private readonly artifactStateService: ArtifactStateService,
+        @Inject(forwardRef(() => PhaseService))
         private readonly phaseService: PhaseService,
+        @Inject(forwardRef(() => SkillsStrategyFactory))  // ← Добавить
         private readonly skillsFactory: SkillsStrategyFactory,
+        @Inject(forwardRef(() => SpellStrategyFactory))   // ← Добавить
         private readonly spellsFactory: SpellStrategyFactory,
         private readonly extraActionService: ExtraActionService,
-        private readonly gameTimerService: GameTimerService
+        @Inject(forwardRef(() => GameTimerService))
+        private readonly gameTimerService: GameTimerService,
+        @Inject(forwardRef(() => GameEffectsService))     // ← Добавить
+        private readonly gameEffectsService: GameEffectsService
     ) {}
 
     useFaceResolve(gameState: GameForLogic, artifact: ArtifactGameState, data: UseFaceData, animations: AnimationData[]) {
@@ -75,14 +88,21 @@ export class ActionResolverService {
         }
         
         const face = artifact.availableActions.face;
+        const usedArtifact = gameState.player.artifacts[data.artifactGameId];
         
         if (face.attackTargets !== null && face.attackTargets.length > 0 && data.attackTarget !== undefined) {
             const damageType = faceData.sword > 0 ? DAMAGE.MELEE : DAMAGE.RANGED;
-            const attackedArtifact = gameState.enemy.artifacts[data.attackTarget!];
-            const attackedArtifactName = ARTIFACTS[attackedArtifact.artifactId].name;
-            const damage = this.combatService.calculateFaceDamage(gameState.player, data.artifactGameId, damageType);
             
-            this.combatService.applyDamage(gameState.enemy, data.attackTarget!, damage, damageType, logParts);
+            const attackedArtifact = gameState.enemy.artifacts[data.attackTarget!];
+            const damage = this.combatService.calculateFaceDamage(
+                gameState.player, 
+                gameState.enemy, 
+                usedArtifact,
+                attackedArtifact!,
+                damageType
+            );
+            
+            this.combatService.applyDamage(gameState, gameState.enemy, attackedArtifact, damage, damageType, logParts);
             
             animations.push({
                 playerId: gameState.enemy.id,
@@ -93,11 +113,10 @@ export class ActionResolverService {
         }
 
         if (face.healTargets !== null && face.healTargets.length > 0 && data.healTarget !== undefined) {
-            const heal = this.combatService.calculateFaceHeal(gameState.player, data.healTarget!, data.artifactGameId);
             const healedArtifact = gameState.player.artifacts[data.healTarget!];
-            const healedArtifactName = ARTIFACTS[healedArtifact.artifactId].name;
+            const heal = this.combatService.calculateFaceHeal(healedArtifact, usedArtifact);
             
-            this.combatService.applyHealing(gameState.player, data.healTarget!, heal, logParts);            
+            this.combatService.applyHealing(healedArtifact, heal, logParts);            
             animations.push({
                 playerId: gameState.player.id,
                 artifactGameId: data.healTarget!,
@@ -113,7 +132,7 @@ export class ActionResolverService {
 
         gameState.logs.push(logItem);
         gameState.player.movePoints -= 1;
-        this.artifactStateService.applyState(gameState.player, data.artifactGameId, ARTIFACT_STATE.COOLDOWN, []);
+        this.artifactStateService.applyState(usedArtifact, ARTIFACT_STATE.COOLDOWN, []);
     }
 
     async endTurnResolve(gameState: GameForLogic) {
@@ -188,10 +207,10 @@ export class ActionResolverService {
         const artifactName = ARTIFACTS[artifact.artifactId].name;
         const logParts: string[] = [`${gameState.player.name} использовал способность артефакта "${artifactName}"`];
 
-        strategy.execute(gameState, artifact, data, animations, logParts);
+        strategy.execute(gameState, gameState.player, artifact, data, animations, logParts);
     
         gameState.player.movePoints -= 1;
-        gameState.player.resources[RESOURCE.RAGE] -= SKILLS[data.skillId].cost;
+        this.resourceService.decreaseResource(gameState.player, RESOURCE.RAGE, artifact.skillCost!, logParts);
 
         const logItem: LogState = {
             text: logParts.join('. ') + '.',
@@ -209,7 +228,24 @@ export class ActionResolverService {
         gameState.player.movePoints -= 1;
         
         let neededResource = SpellHelper.getResource(spell.type);
-        this.resourceService.decreaseResource(gameState.player, neededResource, SPELLS[data.spellId].cost, logParts);
+
+        let cost = gameState.player.spells[SPELLS[data.spellId].type][data.spellId].cost;
+        if (this.gameEffectsService.countHeroEffect(gameState.player, EFFECT.FREE_SPELL) > 0) {
+            cost = 0;
+            this.gameEffectsService.removeHeroEffect(
+                gameState.player, 
+                EFFECTS[EFFECT.FREE_SPELL], 
+                logParts
+            )
+        }
+
+        this.resourceService.decreaseResource(
+            gameState.player, 
+            neededResource,
+            cost,
+            logParts
+        );
+
         gameState.player.spells[spell.type][spell.id].cooldown = true;
 
         const logItem: LogState = {
@@ -247,7 +283,16 @@ export class ActionResolverService {
         const logParts: string[] = [`${gameState.player.name} использовал "${EXTRA_ACTIONS[data.type].name}"`];
         handler(gameState, artifact, data, animations, logParts);
         
-        const cost = EXTRA_ACTIONS[data.type].cost;
+        let cost = EXTRA_ACTIONS[data.type].cost;
+        if (this.gameEffectsService.countEffect(artifact, EFFECT.GLIMPSE) > 0) {
+            if (data.type === EXTRA_ACTION.MOVE) {
+                cost = 0;
+            }
+            else if (data.type === EXTRA_ACTION.RETURN_TO_BATTLE) {
+                cost = 15;
+            }
+        }
+
         const resourceType = EXTRA_ACTIONS[data.type].resourceType;
         this.resourceService.decreaseResource(gameState.player, resourceType, cost, logParts);
 
@@ -271,6 +316,7 @@ export class ActionResolverService {
         gameState.logs.push(logItem);
 
         const bothReady = gameState.enemy.isReady && gameState.player.isReady;
+        console.log(bothReady)
         
         if (bothReady) {
             gameState.miniPhase = MINIPHASE.BATTLE;

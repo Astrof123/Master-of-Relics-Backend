@@ -5,7 +5,7 @@ export interface GameForLogic {
     id: string;
     phase: Phase;
     name: string;
-    currentTurn: number;
+    currentTurn: string;
     logs: LogState[];
     player: Player;
     enemy: Player;

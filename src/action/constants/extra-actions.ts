@@ -6,7 +6,7 @@ export const EXTRA_ACTIONS: Record<ExtraAction, ExtraActionDataType> = {
     [EXTRA_ACTION.THROW_DICE]: {
         id: EXTRA_ACTION.THROW_DICE,
         name: "Перекинуть кубик",
-        cost: 8,
+        cost: 5,
         resourceType: RESOURCE.AGILITY,
         getDescription: (cost: number) => `Перекинуть кубик за ${cost} ловкости`,
         restrictions: [RESTRICTION.ONLY_READY]

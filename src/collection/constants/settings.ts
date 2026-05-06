@@ -1,0 +1,1 @@
+export const MAX_COUNT_DECK_CARDS = 14;
