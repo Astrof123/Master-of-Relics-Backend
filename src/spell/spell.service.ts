@@ -56,7 +56,7 @@ export class SpellService {
         const spellData = SPELLS[spell.id];
         const neededResource = SpellHelper.getResource(spellData.type);
 
-        if (player.resources[neededResource] >= spellData.cost && !spell.cooldown) {
+        if (player.resources[neededResource] >= spell.cost && !spell.cooldown) {
             if (this.restrictionService.checkGeneralRestrictions(player, enemy, spellData.restrictions)) {
                 if (this.restrictionService.checkSpellRestrictions(enemy, spellData.restrictions)) {
                     return true;

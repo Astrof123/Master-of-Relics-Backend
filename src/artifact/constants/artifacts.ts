@@ -6,23 +6,6 @@ import { EFFECT } from "src/game-mechanics/types/effect";
 
 
 export const ARTIFACTS: Record<string, ArtifactDataType> = {
-    // [ARTIFACT.INTIMIDATOR]: {
-    //     id: ARTIFACT.INTIMIDATOR,
-    //     name: "Intimidator",
-    //     faces: [
-    //         FACE.THREE_SWORD,
-    //         FACE.THREE_SWORD,
-    //         FACE.THREE_SWORD,
-    //         FACE.TWO_SWORD,
-    //         FACE.TWO_SWORD,
-    //         FACE.TWO_SWORD
-    //     ],
-    //     hp: 105,
-    //     skills: [SKILL.FEAR],
-    //     defaultEffects: [],
-    //     isForSale: true,
-    //     price: 100
-    // },
     [ARTIFACT.ARCANE_SHIELD]: {
         id: ARTIFACT.ARCANE_SHIELD,
         name: "Arcane Shield",
@@ -197,7 +180,7 @@ export const ARTIFACTS: Record<string, ArtifactDataType> = {
             FACE.THREE_HEART
         ],
         hp: 75,
-        skills: [SKILL.REFRESH_SPELLS],
+        skills: [SKILL.FREE_SPELL],
         defaultEffects: [],
         isForSale: true,
         price: 100,
@@ -555,6 +538,25 @@ export const ARTIFACTS: Record<string, ArtifactDataType> = {
         isForSale: true,
         price: 100,
         type: ARTIFACT_TYPE.RAGE_MAGE
+    },
+    [ARTIFACT.DESTRUCTION_SHARD]: {
+        id: ARTIFACT.DESTRUCTION_SHARD,
+        name: "Destruction Shard",
+        faces: [
+            FACE.RAGE,
+            FACE.RAGE,
+            FACE.RAGE,
+            FACE.RAGE,
+            FACE.RAGE,
+            FACE.RAGE
+        ],
+        hp: 45,
+        skills: [
+        ],
+        defaultEffects: [EFFECT.LIVE_FOR_ROUND],
+        isForSale: false,
+        price: 100,
+        type: ARTIFACT_TYPE.MAGE
     },
 }
 

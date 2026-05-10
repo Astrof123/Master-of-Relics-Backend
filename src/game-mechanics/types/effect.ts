@@ -48,6 +48,10 @@ export const EFFECT  = {
     EXHAUSTION: 'exhaustion',
     ARTIFACT_SILENCE: 'artifact_silence',
     AVATAR: 'avatar',
+    VAMPIRISM: 'vampirism',
+    RUST: 'rust',
+    DIVINE_GUARD: 'divine_guard',
+    SHARP: 'sharp',
 };
 
 export type Effect  = typeof EFFECT [keyof typeof EFFECT];

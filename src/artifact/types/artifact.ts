@@ -50,6 +50,7 @@ export const ARTIFACT = {
     DIVINE_STAFF: 'divine_staff',
     REAPER: 'reaper',
     BONE_KNIFE: 'bone_knife',
+    DESTRUCTION_SHARD: 'destruction_shard',
 };
 
 export type Artifact  = typeof ARTIFACT [keyof typeof ARTIFACT];

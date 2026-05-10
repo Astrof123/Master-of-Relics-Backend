@@ -19,6 +19,7 @@ import { SkillsStrategyFactory } from 'src/artifact/skills.factory';
 import { GameEffectsService } from './game-effects.service';
 import { EFFECT } from './types/effect';
 import { ArtifactService } from 'src/artifact/artifact.service';
+import { ANIMATION } from 'src/action/types/animation';
 
 @Injectable()
 export class CombatService {
@@ -30,7 +31,7 @@ export class CombatService {
         private readonly artifactService: ArtifactService
     ) {}
 
-    applyDamage(gameState: GameForLogic, enemy: Player, attackedArtifact: ArtifactGameState, amount: number, damageType: DamageType, logParts: string[]) {
+    applyDamage(gameState: GameForLogic, enemy: Player, attackerArtifact: ArtifactGameState | null, attackedArtifact: ArtifactGameState, amount: number, damageType: DamageType, logParts: string[]) {
         const newHp = attackedArtifact.currentHp - amount;
 
         attackedArtifact.currentHp = newHp > 0 ? newHp : 0;
@@ -66,6 +67,12 @@ export class CombatService {
             this.artifactStateService.applyState(attackedArtifact, state, []);
         }
 
+        if (attackerArtifact && this.gameEffectsService.countEffect(attackerArtifact, EFFECT.VAMPIRISM) > 0) {
+            this.gameEffectsService.removeEffect(attackerArtifact, EFFECTS[EFFECT.VAMPIRISM], []);
+            const heal = this.calculateHeal(attackerArtifact, amount);
+            this.applyHealing(attackerArtifact, heal, logParts);            
+        }
+
         logParts.push(LogHelper.getHitLog(amount, damageType, ARTIFACTS[attackedArtifact.artifactId].name))
     }
 
@@ -81,7 +88,6 @@ export class CombatService {
 
         if (healedArtifact.state === ARTIFACT_STATE.DREAM) {
             const state = healedArtifact.extraData.lastStateBeforeRoot;
-            console.log(state);
             this.artifactStateService.applyState(healedArtifact, state, []);
         }
 
@@ -137,6 +143,9 @@ export class CombatService {
             damages[DAMAGE.MELEE]! += extraDamage > 0 ? extraDamage : 0;
         }
 
+        const countSharp = this.gameEffectsService.countEffect(attackerArtifact, EFFECT.SHARP);
+        damages[damageType]! += 8 * countSharp;
+
         if (this.gameEffectsService.countEffect(attackerArtifact, EFFECT.HUNT) > 0) {
             let extraDamage = 0;
             for (const artifact of Object.values(player.artifacts)) {
@@ -160,7 +169,15 @@ export class CombatService {
             return 0;
         }
 
-        return damage;
+        if (this.gameEffectsService.countEffect(attackedArtifact, EFFECT.RUST) > 0) {
+            damage *= 1.5;
+            damage = damage | 0;
+        }
+
+        const countDivineGuard = this.gameEffectsService.countEffect(attackedArtifact, EFFECT.DIVINE_GUARD);
+        damage -= 15 * countDivineGuard;
+
+        return damage < 0 ? 0 : damage;
     }
 
     calculateDamage(attackedArtifact: ArtifactGameState, amount: number, damageType: DamageType): number {

@@ -102,6 +102,28 @@ export class GameEffectsService {
                 }
             }
         }
+
+        for (const [key, artifact] of Object.entries(enemy.artifacts)) {
+            if (artifact.state === ARTIFACT_STATE.BREAKEN) {
+                continue;
+            }
+
+            if (ARTIFACTS[artifact.artifactId].skills !== null) {
+                for (const skill of ARTIFACTS[artifact.artifactId].skills!) {
+                    if (SKILLS[skill].restrictions.includes(RESTRICTION.PROCESS_ONLY_IN_NEW_STATE)) {
+                        const data: UseSkillData = {
+                            skillId: skill,
+                            gameId: gameState.id,
+                            artifactGameId: artifact.id,
+                            targets: [[], []]
+                        }
+
+                        const strategy = this.skillsFactory.getStrategy(skill);
+                        strategy.execute(gameState, enemy, artifact, data, [], []);
+                    }
+                }
+            }
+        }
     }
 
     async checkNewRoundEffects(gameState: GameForLogic) {

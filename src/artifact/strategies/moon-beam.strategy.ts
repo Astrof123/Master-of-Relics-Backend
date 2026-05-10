@@ -26,7 +26,7 @@ export class MoonBeamStrategy implements SkillStrategy {
         const enemy = gameState.enemy.id === player.id ? player : gameState.enemy;
         const enemyArtifact = enemy.artifacts[data.targets[1][0]];
         const damage = this.combatService.calculateDamage(enemyArtifact, 15, DAMAGE.RANGED);
-        this.combatService.applyDamage(gameState, enemy, enemyArtifact, damage, DAMAGE.RANGED, logParts);
+        this.combatService.applyDamage(gameState, enemy, artifact, enemyArtifact, damage, DAMAGE.RANGED, logParts);
 
         animations.push({
             playerId: enemy.id,

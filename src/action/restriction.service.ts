@@ -178,6 +178,24 @@ export class RestrictionService {
                 }
             })
         }
+        if (restrictions.includes(TARGET_RESTRICTION.MELEE_ENEMY)) {
+            let haveDefenders = false;
+
+            Object.values(enemy.artifacts).forEach((artifact) => {
+                if (artifact.line === LINE.FRONT && artifact.state !== ARTIFACT_STATE.BREAKEN && artifact.state !== ARTIFACT_STATE.DESTROYED) {
+                    haveDefenders = true;
+                    enemies.push(artifact.id);
+                }
+            })
+
+            if (!haveDefenders) {
+                Object.values(enemy.artifacts).forEach((artifact) => {
+                    if (artifact.line === LINE.BACK) {
+                        enemies.push(artifact.id);
+                    }
+                })                
+            }
+        }
         if (restrictions.includes(TARGET_RESTRICTION.ONLY_BACK_LINE_ENEMY)) {
             Object.values(enemy.artifacts).forEach((artifact) => {
                 if (artifact.line === LINE.BACK) {

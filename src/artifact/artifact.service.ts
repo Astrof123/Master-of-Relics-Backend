@@ -24,9 +24,9 @@ import { ArtifactStateService } from 'src/game-mechanics/artifact-state.service'
 @Injectable()
 export class ArtifactService {
     constructor(
-        @Inject(forwardRef(() => ExtraActionService))  // ← Добавить
+        @Inject(forwardRef(() => ExtraActionService))
         private readonly extraActionService: ExtraActionService,
-        @Inject(forwardRef(() => RestrictionService))  // ← Добавить
+        @Inject(forwardRef(() => RestrictionService))
         private readonly restrictionService: RestrictionService,
         @Inject(forwardRef(() => GameEffectsService))
         private readonly gameEffectsService: GameEffectsService,
@@ -61,9 +61,8 @@ export class ArtifactService {
 
         let isAttack = false;
         let isHeal = false;
-        console.log(artifact.face);
         if (FACES[artifact.face].sword !== 0) {
-            targetRestrictions.push(TARGET_RESTRICTION.ONLY_FRONT_LINE_ENEMY);
+            targetRestrictions.push(TARGET_RESTRICTION.MELEE_ENEMY);
             isAttack = true;
         }
         else if (FACES[artifact.face].target !== 0) {
@@ -176,8 +175,8 @@ export class ArtifactService {
     spawnArtifact(
         artifactInsert: ArtifactGameState, 
         position: SpawnPosition, 
-        spawnerPosition: number,
-        spawnerLine: Line, 
+        spawnerPosition: number | null,
+        spawnerLine: Line | null, 
         artifacts: Record<string, ArtifactGameState>, 
         logParts: string[]
     ) {
@@ -192,7 +191,7 @@ export class ArtifactService {
             positionInsert = Object.values(artifacts).filter(a => a.line === LINE.BACK).length;
             line = LINE.BACK
         } 
-        else if (position === SPAWN_POSITION.NEAR) {
+        else if (position === SPAWN_POSITION.NEAR && spawnerLine && spawnerPosition) {
             if (spawnerPosition === 0) {
                 positionInsert = 1;
             }

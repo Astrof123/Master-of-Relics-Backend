@@ -98,13 +98,25 @@ export class GameStateService {
 
         const defaultSpells = {
             [SPELLTYPE.LIGHT]: {
-                [SPELL.TOUCH_OF_LIGHT]: SpellHelper.getDefaultSpellState(SPELL.TOUCH_OF_LIGHT)
+                [SPELL.TOUCH_OF_LIGHT]: SpellHelper.getDefaultSpellState(SPELL.TOUCH_OF_LIGHT),
+                [SPELL.DIVINE_GUARD]: SpellHelper.getDefaultSpellState(SPELL.DIVINE_GUARD),
+                [SPELL.RESURRECTION]: SpellHelper.getDefaultSpellState(SPELL.RESURRECTION),
+                [SPELL.INSPIRATION]: SpellHelper.getDefaultSpellState(SPELL.INSPIRATION),
+                [SPELL.SHARPENING]: SpellHelper.getDefaultSpellState(SPELL.SHARPENING)
             },
             [SPELLTYPE.DARK]: {
-
+                [SPELL.BETRAYAL]: SpellHelper.getDefaultSpellState(SPELL.BETRAYAL),
+                [SPELL.VAMPIRISM]: SpellHelper.getDefaultSpellState(SPELL.VAMPIRISM),
+                [SPELL.COLD_TOUCH]: SpellHelper.getDefaultSpellState(SPELL.COLD_TOUCH),
+                [SPELL.RUST]: SpellHelper.getDefaultSpellState(SPELL.RUST),
+                [SPELL.WEAKNESS]: SpellHelper.getDefaultSpellState(SPELL.WEAKNESS)
             },
             [SPELLTYPE.DESTRUCTION]: {
-                [SPELL.PIERCING_BOLT]: SpellHelper.getDefaultSpellState(SPELL.PIERCING_BOLT)
+                [SPELL.PIERCING_BOLT]: SpellHelper.getDefaultSpellState(SPELL.PIERCING_BOLT),
+                [SPELL.METEOR_SHOWER]: SpellHelper.getDefaultSpellState(SPELL.METEOR_SHOWER),
+                [SPELL.VOLCANO]: SpellHelper.getDefaultSpellState(SPELL.VOLCANO),
+                [SPELL.FURY]: SpellHelper.getDefaultSpellState(SPELL.FURY),
+                [SPELL.THUNDER_STORM]: SpellHelper.getDefaultSpellState(SPELL.THUNDER_STORM)
             }
         }
 

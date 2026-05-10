@@ -33,6 +33,7 @@ export const TARGET_RESTRICTION = {
     ANY_ALLY: "any_ally",
     ALIVE: "alive",
     BREAKEN: "breaken",
+    MELEE_ENEMY: "melee_enemy",
     ONLY_FRONT_LINE_ENEMY: "only_front_line_enemy",
     ONLY_BACK_LINE_ENEMY: "only_back_line_enemy",
     NEED_HEAL_ALLY: "need_heal_ally",

@@ -21,7 +21,6 @@ async function bootstrap() {
     console.log('🃏 Card Synchronization Script');
     console.log('===============================');
     
-    // Проверка окружения
     if (process.env.NODE_ENV === 'production') {
         console.log('⚠️  WARNING: You are running this in PRODUCTION mode!');
         const confirmed = await askConfirmation('Are you sure you want to sync cards? (yes/no): ');

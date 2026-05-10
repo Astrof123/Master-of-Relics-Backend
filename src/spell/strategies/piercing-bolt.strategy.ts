@@ -1,6 +1,6 @@
 import { GameForLogic } from "src/game-state/types/game-for-logic";
 import { SpellStrategy } from "../types/strategy";
-import { ARTIFACT_STATE, ArtifactGameState, LINE } from "src/game-state/types/game";
+import { ARTIFACT_STATE, ArtifactGameState, LINE, Player } from "src/game-state/types/game";
 import { UseSkillData, UseSpellData } from "src/action/types/action-evens-data";
 import { ANIMATION, AnimationData } from "src/action/types/animation";
 import { Injectable } from "@nestjs/common";
@@ -19,13 +19,14 @@ export class PiercingBoltStrategy implements SpellStrategy {
         return SPELL.PIERCING_BOLT;
     }
 
-    execute(gameState: GameForLogic, data: UseSpellData, animations: AnimationData[], logParts: string[]) {
-        const enemyArtifact = gameState.enemy.artifacts[data.targets[1][0]];
+    execute(gameState: GameForLogic, player: Player, data: UseSpellData, animations: AnimationData[], logParts: string[]) {
+        const enemy = gameState.enemy.id === player.id ? player : gameState.enemy;
+        const enemyArtifact = enemy.artifacts[data.targets[1][0]];
         const damage = this.combatService.calculateDamage(enemyArtifact, 15, DAMAGE.MAGIC);
-        this.combatService.applyDamage(gameState, gameState.enemy, enemyArtifact, damage, DAMAGE.MAGIC, logParts);
+        this.combatService.applyDamage(gameState, enemy, null, enemyArtifact, damage, DAMAGE.MAGIC, logParts);
 
         animations.push({
-            playerId: gameState.enemy.id,
+            playerId: enemy.id,
             artifactGameId: enemyArtifact.id!,
             animation: ANIMATION.HIT,
             value: damage

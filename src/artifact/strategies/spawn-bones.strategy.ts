@@ -40,11 +40,6 @@ export class SpawnBonesStrategy implements SkillStrategy {
             logParts
         );
 
-        // this.gameEffectsService.applyEffect(
-        //     firstBone,
-        //     EFFECTS[EFFECT.LIVE_FOR_ROUND], 
-        //     []
-        // )
 
         const secondBone: ArtifactGameState = this.artifactService.createArtifactState(
             player.artifacts,
@@ -62,11 +57,6 @@ export class SpawnBonesStrategy implements SkillStrategy {
             logParts
         );
 
-        // this.gameEffectsService.applyEffect(
-        //     secondBone,
-        //     EFFECTS[EFFECT.LIVE_FOR_ROUND], 
-        //     []
-        // )
     }
 
     death(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, logParts: string[]) {

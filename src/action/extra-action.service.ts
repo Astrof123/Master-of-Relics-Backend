@@ -38,7 +38,7 @@ export class ExtraActionService {
         private readonly restrictionService: RestrictionService,
         @Inject(forwardRef(() => ArtifactService))
         private readonly artifactService: ArtifactService,
-        @Inject(forwardRef(() => GameEffectsService))  // ← ДОБАВИТЬ forwardRef
+        @Inject(forwardRef(() => GameEffectsService))
         private readonly gameEffectsService: GameEffectsService
     ) {
         this.handlers = {

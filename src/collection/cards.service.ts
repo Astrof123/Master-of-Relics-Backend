@@ -57,13 +57,11 @@ export class CardsService implements OnModuleInit {
         await this.removeOrphanedCards();
     }
 
-    // Проверка, нужно ли обновлять карту
     private checkIfNeedsUpdate(existingCard: Card, definition: ArtifactDataType): boolean {
         return existingCard.price !== definition.price ||
                existingCard.isForSale !== definition.isForSale
     }
 
-    // Преобразование определения в entity
     private mapDefinitionToEntity(definition: ArtifactDataType): Partial<Card> {
         return {
             innerCardId: definition.id,
@@ -72,7 +70,6 @@ export class CardsService implements OnModuleInit {
         };
     }
 
-    // Удаление карт, которых больше нет в определениях
     private async removeOrphanedCards(): Promise<void> {
         const definedIds = Object.values(ARTIFACTS).map(card => card.id);
 

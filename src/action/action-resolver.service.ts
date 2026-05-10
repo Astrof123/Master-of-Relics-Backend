@@ -33,22 +33,22 @@ import { EXTRA_ACTION } from './types/action';
 @Injectable()
 export class ActionResolverService {
     constructor(
-        @Inject(forwardRef(() => ResourceService))  // ← Добавить
+        @Inject(forwardRef(() => ResourceService))
         private readonly resourceService: ResourceService,
-        @Inject(forwardRef(() => CombatService))    // ← Добавить
+        @Inject(forwardRef(() => CombatService))
         private readonly combatService: CombatService,
-        @Inject(forwardRef(() => ArtifactStateService))  // ← Добавить
+        @Inject(forwardRef(() => ArtifactStateService))
         private readonly artifactStateService: ArtifactStateService,
         @Inject(forwardRef(() => PhaseService))
         private readonly phaseService: PhaseService,
-        @Inject(forwardRef(() => SkillsStrategyFactory))  // ← Добавить
+        @Inject(forwardRef(() => SkillsStrategyFactory))
         private readonly skillsFactory: SkillsStrategyFactory,
-        @Inject(forwardRef(() => SpellStrategyFactory))   // ← Добавить
+        @Inject(forwardRef(() => SpellStrategyFactory))
         private readonly spellsFactory: SpellStrategyFactory,
         private readonly extraActionService: ExtraActionService,
         @Inject(forwardRef(() => GameTimerService))
         private readonly gameTimerService: GameTimerService,
-        @Inject(forwardRef(() => GameEffectsService))     // ← Добавить
+        @Inject(forwardRef(() => GameEffectsService)) 
         private readonly gameEffectsService: GameEffectsService
     ) {}
 
@@ -102,7 +102,7 @@ export class ActionResolverService {
                 damageType
             );
             
-            this.combatService.applyDamage(gameState, gameState.enemy, attackedArtifact, damage, damageType, logParts);
+            this.combatService.applyDamage(gameState, gameState.enemy, usedArtifact, attackedArtifact, damage, damageType, logParts);
             
             animations.push({
                 playerId: gameState.enemy.id,
@@ -223,7 +223,7 @@ export class ActionResolverService {
         const spell = SPELLS[data.spellId];
         const strategy = this.spellsFactory.getStrategy(data.spellId);
         const logParts: string[] = [`${gameState.player.name} использовал заклинание "${spell.name}"`];
-        strategy.execute(gameState, data, animations, logParts);
+        strategy.execute(gameState, gameState.player, data, animations, logParts);
 
         gameState.player.movePoints -= 1;
         

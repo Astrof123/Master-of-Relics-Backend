@@ -33,15 +33,6 @@ export class LobbyGateway implements OnGatewayDisconnect  {
 
 
     async handleDisconnect(client: Socket) {
-        // const userId = client.data.userId;
-        // const lobby = await this.lobbyService.getLobbyByUserId(userId);
-        
-        // if (lobby) {
-        //     await this.lobbyService.leaveLobby(lobby.id, userId);
-
-        //     const lobbies = await this.lobbyService.getAllLobbies();
-        //     this.server.to(LOBBY_ROOMS_NAME.HALL).emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATE, lobbies)
-        // }
     }
     
     @UseGuards(WebSocketAuthGuard)

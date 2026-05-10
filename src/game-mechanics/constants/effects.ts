@@ -3,7 +3,7 @@ import { DISPELL_TYPE, EFFECT, Effect, EFFECT_DURATION, EffectType } from "../ty
 export const EFFECTS: Record<Effect, EffectType> = {
     [EFFECT.SINGLE_CHARGE]: {
         id: EFFECT.SINGLE_CHARGE,
-        name: "Один заряд",
+        name: "Single Charge",
         duration: EFFECT_DURATION.ALWAYS,
         type: 'negative',
         number: null,
@@ -11,7 +11,7 @@ export const EFFECTS: Record<Effect, EffectType> = {
     },
     [EFFECT.USED_SKILL_CHARGES]: {
         id: EFFECT.USED_SKILL_CHARGES,
-        name: "Заряд использован",
+        name: "Used One Charge",
         duration: EFFECT_DURATION.CURRENT_ROUND,
         type: 'negative',
         number: null,
@@ -123,7 +123,7 @@ export const EFFECTS: Record<Effect, EffectType> = {
     },
     [EFFECT.BLINDLESS]: {
         id: EFFECT.BLINDLESS,
-        name: "Слепота",
+        name: "Blindness",
         duration: EFFECT_DURATION.CURRENT_ROUND,
         type: "negative",
         number: null,
@@ -131,7 +131,7 @@ export const EFFECTS: Record<Effect, EffectType> = {
     },
     [EFFECT.EXHAUSTION]: {
         id: EFFECT.EXHAUSTION,
-        name: "Истощение",
+        name: "Exhaustion",
         duration: EFFECT_DURATION.CURRENT_ROUND,
         type: "negative",
         number: null,
@@ -139,7 +139,7 @@ export const EFFECTS: Record<Effect, EffectType> = {
     },
     [EFFECT.ARTIFACT_SILENCE]: {
         id: EFFECT.ARTIFACT_SILENCE,
-        name: "Заглушение",
+        name: "Silence",
         duration: EFFECT_DURATION.CURRENT_ROUND,
         type: "negative",
         number: null,
@@ -147,11 +147,42 @@ export const EFFECTS: Record<Effect, EffectType> = {
     },
     [EFFECT.AVATAR]: {
         id: EFFECT.AVATAR,
-        name: "Неуязвимость к магии и способностям",
+        name: "Avatar",
         duration: EFFECT_DURATION.CURRENT_ROUND,
         type: "positive",
         number: null,
         dispellType: DISPELL_TYPE.NORMAL
     },
-
+    [EFFECT.VAMPIRISM]: {
+        id: EFFECT.VAMPIRISM,
+        name: "Vampirism",
+        duration: EFFECT_DURATION.CURRENT_ROUND,
+        type: "positive",
+        number: null,
+        dispellType: DISPELL_TYPE.NORMAL
+    },
+    [EFFECT.RUST]: {
+        id: EFFECT.RUST,
+        name: "Rust",
+        duration: EFFECT_DURATION.CURRENT_ROUND,
+        type: "negative",
+        number: null,
+        dispellType: DISPELL_TYPE.NORMAL
+    },
+    [EFFECT.DIVINE_GUARD]: {
+        id: EFFECT.DIVINE_GUARD,
+        name: "Divine Guard",
+        duration: EFFECT_DURATION.CURRENT_ROUND,
+        type: "positive",
+        number: null,
+        dispellType: DISPELL_TYPE.NORMAL
+    },
+    [EFFECT.SHARP]: {
+        id: EFFECT.SHARP,
+        name: "Sharp",
+        duration: EFFECT_DURATION.CURRENT_ROUND,
+        type: "positive",
+        number: null,
+        dispellType: DISPELL_TYPE.NORMAL
+    },
 }
