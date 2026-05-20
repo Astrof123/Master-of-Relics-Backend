@@ -62,15 +62,18 @@ export class ArtifactService {
         let isAttack = false;
         let isHeal = false;
         if (FACES[artifact.face].sword !== 0) {
+            targetRestrictions.push(TARGET_RESTRICTION.ALIVE);
             targetRestrictions.push(TARGET_RESTRICTION.MELEE_ENEMY);
             isAttack = true;
         }
         else if (FACES[artifact.face].target !== 0) {
+            targetRestrictions.push(TARGET_RESTRICTION.ALIVE);
             targetRestrictions.push(TARGET_RESTRICTION.ANY_ENEMY);
             isAttack = true;
         }
 
         if (FACES[artifact.face].heal !== 0) {
+            targetRestrictions.push(TARGET_RESTRICTION.ALIVE);
             targetRestrictions.push(TARGET_RESTRICTION.ANY_ALLY, TARGET_RESTRICTION.NEED_HEAL_ALLY);
             isHeal = true;
         }
@@ -267,5 +270,28 @@ export class ArtifactService {
         this.moveArtifact(countArtifactOnSameLine - 1, artifact, artifact.line, player.artifacts, []);
         this.artifactStateService.applyState(artifact, ARTIFACT_STATE.DESTROYED, []);
         logParts.push(LogHelper.getDestroyArtifactLog(ARTIFACTS[artifact.artifactId].name));
+    }
+
+    generateNewTemporaryForBot(enemy: Player) {
+        const temporaryArtifacts: Record<string, ArtifactGameState> = {};
+        for (const art of Object.values(enemy.artifacts)) {
+            const randomLine = randomInt(0, 2);
+            const artCopy: ArtifactGameState = JSON.parse(JSON.stringify(art));
+            const backArtifactsCount = Object.values(temporaryArtifacts).filter(a => a.line === LINE.BACK).length;
+            const frontArtifactsCount = Object.values(temporaryArtifacts).filter(a => a.line === LINE.FRONT).length;
+
+            if (randomLine === 0 && backArtifactsCount < MAX_COUNT_ARTIFACTS_ON_LINE) {
+                artCopy.line = LINE.BACK;
+                artCopy.position = backArtifactsCount;
+            }
+            else {
+                artCopy.line = LINE.FRONT;
+                artCopy.position = frontArtifactsCount;
+            }
+
+            temporaryArtifacts[art.id] = artCopy;
+        }
+
+        return temporaryArtifacts;
     }
 }

@@ -9,7 +9,7 @@ import { DiceService } from 'src/game-mechanics/dice.service';
 import { GameEffectsService } from 'src/game-mechanics/game-effects.service';
 import { ResourceService } from 'src/game-mechanics/resource.service';
 import { GameTimerService } from 'src/game-state/game-timer.service';
-import { ARTIFACT_STATE, LogState } from 'src/game-state/types/game';
+import { ARTIFACT_STATE, LogState, Player } from 'src/game-state/types/game';
 import { GameForLogic } from 'src/game-state/types/game-for-logic';
 import { MINIPHASE, PHASE } from 'src/game-state/types/phase';
 import { TIMER_TYPE } from 'src/game-state/types/timer';
@@ -77,10 +77,10 @@ export class PhaseService {
         gameState.miniPhase = MINIPHASE.MOVEMENT;
 
         if (gameState.currentTurn === gameState.player.id) {
-            await this.calculateNewState(gameState, false);
+            await this.calculateNewState(gameState, gameState.player);
         }
         else {
-            await this.calculateNewState(gameState, true);
+            await this.calculateNewState(gameState, gameState.enemy);
         }
 
         await this.gameTimerService.stopAllTimers(gameState.id);
@@ -128,38 +128,47 @@ export class PhaseService {
     }
 
     async setEndGame(gameState: GameForLogic, winner: string | null) {
-        const logItem: LogState = {
-            text: `Игра окончена.`,
-            type: LOG_TYPE.SYSTEM
-        }
-        
-        gameState.logs.push(logItem);
-
         gameState.player.offerDraw = false;
         gameState.enemy.offerDraw = false;
 
-        gameState.end = {
-            winner: winner,
-            winner_prize: winner ? WINNER_PRIZE : 0,
-            loser_prize: winner ? LOSER_PRIZE : 0,
-            draw_prize: !winner ? DRAW_PRIZE : 0,
+
+        if (gameState.enemy.isBot) {
+            gameState.end = {
+                winner: winner,
+                winner_prize: 0,
+                loser_prize: 0,
+                draw_prize: 0,
+            }     
+        }
+        else {
+            gameState.end = {
+                winner: winner,
+                winner_prize: winner ? WINNER_PRIZE : 0,
+                loser_prize: winner ? LOSER_PRIZE : 0,
+                draw_prize: !winner ? DRAW_PRIZE : 0,
+            }
         }
         
-        await this.collectionService.giveGold(
-            gameState.player.id,  
-            winner == gameState.player.id ? WINNER_PRIZE : !winner ? DRAW_PRIZE : LOSER_PRIZE
-        );
-        await this.collectionService.giveGold(
-            gameState.enemy.id,  
-            winner == gameState.enemy.id ? WINNER_PRIZE : !winner ? DRAW_PRIZE : LOSER_PRIZE
-        );
+        if (!gameState.enemy.isBot) {
+            await this.collectionService.giveGold(
+                gameState.player.id,  
+                winner == gameState.player.id ? WINNER_PRIZE : !winner ? DRAW_PRIZE : LOSER_PRIZE
+            );
+            await this.collectionService.giveGold(
+                gameState.enemy.id,  
+                winner == gameState.enemy.id ? WINNER_PRIZE : !winner ? DRAW_PRIZE : LOSER_PRIZE
+            );
+            
+            await this.usersStatsService.setWin(winner == gameState.player.id ? gameState.player.id : gameState.enemy.id);
+            await this.usersStatsService.setLose(winner == gameState.player.id ? gameState.enemy.id : gameState.player.id);
+        }
 
-        await this.usersStatsService.setWin(winner == gameState.player.id ? gameState.player.id : gameState.enemy.id);
-        await this.usersStatsService.setLose(winner == gameState.player.id ? gameState.enemy.id : gameState.player.id);
         await this.lobbyService.changeLobbyState(gameState.id, LOBBY_STATE_TYPE.END)
     }
 
-    async calculateNewState(gameState: GameForLogic, isForEnemy: boolean, skipCheckEnd = false) {
+    async calculateNewState(gameState: GameForLogic, player: Player, skipCheckEnd = false) {
+        const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
+        
         if (!skipCheckEnd) {
             const isEnd = await this.checkEndGame(gameState);
 
@@ -168,21 +177,18 @@ export class PhaseService {
             }
         }
 
-        if (isForEnemy) {
-            this.artifactService.calculateAvailableActions(gameState, gameState.enemy, gameState.player);
-            this.spellService.calculateSpellActions(gameState, gameState.enemy, gameState.player);
-            this.gameEffectsService.calculateNewStateEffects(gameState, gameState.enemy, gameState.player);
-        }
-        else {
-            this.artifactService.calculateAvailableActions(gameState, gameState.player, gameState.enemy);
-            this.spellService.calculateSpellActions(gameState, gameState.player, gameState.enemy);
-            this.gameEffectsService.calculateNewStateEffects(gameState, gameState.player, gameState.enemy);
-        }
+        this.artifactService.calculateAvailableActions(gameState, player, enemy);
+        this.spellService.calculateSpellActions(gameState, player, enemy);
+        this.gameEffectsService.calculateNewStateEffects(gameState, player, enemy);
         
         return gameState;
     }
 
     setFirstPlayer(gameState: GameForLogic): string {
+        if (gameState.enemy.isBot) {
+            return gameState.player.id;
+        }
+
         let playerCountArtifacts = 0;
         for (const artifact of Object.values(gameState.player.artifacts)) {
             if (artifact.state === ARTIFACT_STATE.BREAKEN) {

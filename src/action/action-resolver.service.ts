@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { GameForLogic } from 'src/game-state/types/game-for-logic';
-import { ARTIFACT_STATE, ArtifactGameState, LogState } from 'src/game-state/types/game';
+import { ARTIFACT_STATE, ArtifactGameState, LogState, Player } from 'src/game-state/types/game';
 import { ExtraActionData, ToggleReadyMovementData, UseFaceData, UseSkillData, UseSpellData } from './types/action-evens-data';
 import { COMMON_ERROR_CODE, CommonException } from 'src/common/utils/error-handler';
 import { MINIPHASE } from 'src/game-state/types/phase';
@@ -29,6 +29,8 @@ import { GameEffectsService } from 'src/game-mechanics/game-effects.service';
 import { EFFECTS } from 'src/game-mechanics/constants/effects';
 import { EFFECT } from 'src/game-mechanics/types/effect';
 import { EXTRA_ACTION } from './types/action';
+import { ArtifactService } from 'src/artifact/artifact.service';
+import { BotService } from './bot.service';
 
 @Injectable()
 export class ActionResolverService {
@@ -49,33 +51,37 @@ export class ActionResolverService {
         @Inject(forwardRef(() => GameTimerService))
         private readonly gameTimerService: GameTimerService,
         @Inject(forwardRef(() => GameEffectsService)) 
-        private readonly gameEffectsService: GameEffectsService
+        private readonly gameEffectsService: GameEffectsService,
+        @Inject(forwardRef(() => ArtifactService))
+        private readonly artifactService: ArtifactService
     ) {}
 
-    useFaceResolve(gameState: GameForLogic, artifact: ArtifactGameState, data: UseFaceData, animations: AnimationData[]) {
+    useFaceResolve(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, data: UseFaceData, animations: AnimationData[]) {
+        const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
+        
         const faceData = FACES[artifact.face];
         const artifactName = ARTIFACTS[artifact.artifactId].name;
-        const logParts: string[] = [`${gameState.player.name} использовал грань артефакта "${artifactName}"`];
+        const logParts: string[] = [`${player.name} использовал грань артефакта "${artifactName}"`];
         
         const restoredResources: string[] = [];
         if (faceData.agility !== 0) {
-            this.resourceService.addResource(gameState.player, RESOURCE.AGILITY, faceData.agility, []);
+            this.resourceService.addResource(player, RESOURCE.AGILITY, faceData.agility, []);
             restoredResources.push(LogHelper.getRestoreAgilityLog(faceData.agility));
         }
         if (faceData.rage !== 0) {
-            this.resourceService.addResource(gameState.player, RESOURCE.RAGE, faceData.rage, []);
+            this.resourceService.addResource(player, RESOURCE.RAGE, faceData.rage, []);
             restoredResources.push(LogHelper.getRestoreRageLog(faceData.rage));
         }
         if (faceData.light_mana !== 0) {
-            this.resourceService.addResource(gameState.player, RESOURCE.LIGHT_MANA, faceData.light_mana, []);
+            this.resourceService.addResource(player, RESOURCE.LIGHT_MANA, faceData.light_mana, []);
             restoredResources.push(LogHelper.getRestoreLightManaLog(faceData.light_mana));
         }
         if (faceData.dark_mana !== 0) {
-            this.resourceService.addResource(gameState.player, RESOURCE.DARK_MANA, faceData.dark_mana, []);
+            this.resourceService.addResource(player, RESOURCE.DARK_MANA, faceData.dark_mana, []);
             restoredResources.push(LogHelper.getRestoreDarkManaLog(faceData.dark_mana));
         }
         if (faceData.destruction_mana !== 0) {
-            this.resourceService.addResource(gameState.player, RESOURCE.DESTRUCTION_MANA, faceData.destruction_mana, []);
+            this.resourceService.addResource(player, RESOURCE.DESTRUCTION_MANA, faceData.destruction_mana, []);
             restoredResources.push(LogHelper.getRestoreDestructionManaLog(faceData.destruction_mana));
         }
         
@@ -88,24 +94,24 @@ export class ActionResolverService {
         }
         
         const face = artifact.availableActions.face;
-        const usedArtifact = gameState.player.artifacts[data.artifactGameId];
+        const usedArtifact = player.artifacts[data.artifactGameId];
         
         if (face.attackTargets !== null && face.attackTargets.length > 0 && data.attackTarget !== undefined) {
             const damageType = faceData.sword > 0 ? DAMAGE.MELEE : DAMAGE.RANGED;
             
-            const attackedArtifact = gameState.enemy.artifacts[data.attackTarget!];
+            const attackedArtifact = enemy.artifacts[data.attackTarget!];
             const damage = this.combatService.calculateFaceDamage(
-                gameState.player, 
-                gameState.enemy, 
+                player, 
+                enemy, 
                 usedArtifact,
                 attackedArtifact!,
                 damageType
             );
             
-            this.combatService.applyDamage(gameState, gameState.enemy, usedArtifact, attackedArtifact, damage, damageType, logParts);
+            this.combatService.applyDamage(gameState, enemy, usedArtifact, attackedArtifact, damage, damageType, logParts);
             
             animations.push({
-                playerId: gameState.enemy.id,
+                playerId: enemy.id,
                 artifactGameId: data.attackTarget!,
                 animation: ANIMATION.HIT,
                 value: damage
@@ -113,12 +119,12 @@ export class ActionResolverService {
         }
 
         if (face.healTargets !== null && face.healTargets.length > 0 && data.healTarget !== undefined) {
-            const healedArtifact = gameState.player.artifacts[data.healTarget!];
+            const healedArtifact = player.artifacts[data.healTarget!];
             const heal = this.combatService.calculateFaceHeal(healedArtifact, usedArtifact);
             
             this.combatService.applyHealing(healedArtifact, heal, logParts);            
             animations.push({
-                playerId: gameState.player.id,
+                playerId: player.id,
                 artifactGameId: data.healTarget!,
                 animation: ANIMATION.HEAL,
                 value: heal
@@ -131,27 +137,29 @@ export class ActionResolverService {
         }
 
         gameState.logs.push(logItem);
-        gameState.player.movePoints -= 1;
+        player.movePoints -= 1;
         this.artifactStateService.applyState(usedArtifact, ARTIFACT_STATE.COOLDOWN, []);
     }
 
-    async endTurnResolve(gameState: GameForLogic) {
+    async endTurnResolve(gameState: GameForLogic, player: Player) {
+        const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
+        
         const logItem: LogState = {
-            text: `${gameState.player.name} закончил ход.`,
+            text: `${player.name} закончил ход.`,
             type: LOG_TYPE.SYSTEM
         }
 
         gameState.logs.push(logItem);
 
-        if (gameState.enemy.isReady) {
-            gameState.currentTurn = gameState.player.id;
-            gameState.player.movePoints = this.resourceService.calculateNewTurnMovePoints(gameState.enemy);
-            await this.phaseService.calculateNewState(gameState, false);
+        if (enemy.isReady) {
+            gameState.currentTurn = player.id;
+            player.movePoints = this.resourceService.calculateNewTurnMovePoints(player);
+            await this.phaseService.calculateNewState(gameState, player);
         }
         else {
-            gameState.currentTurn = gameState.enemy.id;
-            gameState.enemy.movePoints = this.resourceService.calculateNewTurnMovePoints(gameState.enemy);
-            await this.phaseService.calculateNewState(gameState, true);
+            gameState.currentTurn = enemy.id;
+            enemy.movePoints = this.resourceService.calculateNewTurnMovePoints(enemy);
+            await this.phaseService.calculateNewState(gameState, enemy);
         }
     }
 
@@ -202,15 +210,15 @@ export class ActionResolverService {
         }
     }
 
-    useSkillResolve(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[]) {
+    useSkillResolve(gameState: GameForLogic, player: Player,  artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[]) {
         const strategy = this.skillsFactory.getStrategy(data.skillId);
         const artifactName = ARTIFACTS[artifact.artifactId].name;
-        const logParts: string[] = [`${gameState.player.name} использовал способность артефакта "${artifactName}"`];
+        const logParts: string[] = [`${player.name} использовал способность артефакта "${artifactName}"`];
 
-        strategy.execute(gameState, gameState.player, artifact, data, animations, logParts);
+        strategy.execute(gameState, player, artifact, data, animations, logParts);
     
-        gameState.player.movePoints -= 1;
-        this.resourceService.decreaseResource(gameState.player, RESOURCE.RAGE, artifact.skillCost!, logParts);
+        player.movePoints -= 1;
+        this.resourceService.decreaseResource(player, RESOURCE.RAGE, artifact.skillCost!, logParts);
 
         const logItem: LogState = {
             text: logParts.join('. ') + '.',
@@ -255,16 +263,17 @@ export class ActionResolverService {
         gameState.logs.push(logItem);
     }
 
-    async endRoundResolve(gameState: GameForLogic) {
-        await this.endTurnResolve(gameState);
-        gameState.player.isReady = true;
+    async endRoundResolve(gameState: GameForLogic, player: Player) {
+        const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
+        await this.endTurnResolve(gameState, player);
+        player.isReady = true;
         const logItem: LogState = {
-            text: `${gameState.player.name} закончил раунд.`,
+            text: `${player.name} закончил раунд.`,
             type: LOG_TYPE.SYSTEM
         }
         gameState.logs.push(logItem);
 
-        if (gameState.enemy.isReady) {
+        if (enemy.isReady || enemy.isBot) {
             await this.phaseService.newRound(gameState);
         }
 
@@ -315,20 +324,24 @@ export class ActionResolverService {
         }
         gameState.logs.push(logItem);
 
-        const bothReady = gameState.enemy.isReady && gameState.player.isReady;
-        console.log(bothReady)
+        const bothReady = (gameState.enemy.isReady || gameState.enemy.isBot) && gameState.player.isReady;
         
         if (bothReady) {
             gameState.miniPhase = MINIPHASE.BATTLE;
             gameState.player.artifacts = data.artifactsWithNewPosition;
-            gameState.enemy.artifacts = gameState.enemy.temporaryArtifacts!;
+            if (gameState.enemy.isBot) {
+                gameState.enemy.artifacts = this.artifactService.generateNewTemporaryForBot(gameState.enemy);
+            }
+            else {
+                gameState.enemy.artifacts = gameState.enemy.temporaryArtifacts!;
+            }
             gameState.enemy.isReady = false;
             gameState.player.isReady = false;
             if (gameState.currentTurn === gameState.player.id) {
-                await this.phaseService.calculateNewState(gameState, false);
+                await this.phaseService.calculateNewState(gameState, gameState.player);
             }
             else {
-                await this.phaseService.calculateNewState(gameState, true);
+                await this.phaseService.calculateNewState(gameState, gameState.enemy);
             }
             const logItem: LogState = {
                 text: "Фаза перестановки окончена.",
@@ -361,10 +374,10 @@ export class ActionResolverService {
             gameState.enemy.isReady = false;
             gameState.player.isReady = false;
             if (gameState.currentTurn === gameState.player.id) {
-                await this.phaseService.calculateNewState(gameState, false);
+                await this.phaseService.calculateNewState(gameState, gameState.player);
             }
             else {
-                await this.phaseService.calculateNewState(gameState, true);
+                await this.phaseService.calculateNewState(gameState, gameState.enemy);
             }
             const logItem: LogState = {
                 text: "Фаза перестановки окончена.",

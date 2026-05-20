@@ -124,6 +124,7 @@ export class GameStateService {
             id: lobby.players[userId].id,
             name: lobby.players[userId].nickname,
             connection: CONNECTIONGAME.OFFLINE,
+            isBot: false,
             hero: "Empty",
             resources: {
                 rage: 0,
@@ -152,6 +153,7 @@ export class GameStateService {
             id: lobby.players[enemyKey].id,
             name: lobby.players[enemyKey].nickname,
             connection: CONNECTIONGAME.OFFLINE,
+            isBot: false,
             hero: "Empty",
             resources: {
                 rage: 0,
@@ -209,6 +211,156 @@ export class GameStateService {
         if (lobby.options.timerDraft) {
             await this.gameTimerService.startTimer(lobby.id, TIMER_TYPE.DRAFT, lobby.options.timerDraft);
         }
+
+        return lobbyId;
+    }
+
+    async createGameSessionWithBotState(lobbyId: string, userId: string): Promise<string> {
+        const lobby = await this.lobbyService.getLobbyById(lobbyId);
+
+        if (!lobby) {
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_NOT_FOUND);
+        }
+
+        if (lobby.state !== LOBBY_STATE_TYPE.WAITING) {
+            throw new LobbyException(LOBBY_ERROR_CODE.LOBBY_ALREADY_STARTED);
+        }
+
+        if (!lobby.players[userId]) {
+            throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_NOT_IN_LOBBY);
+        }
+
+        if (!lobby.players[userId].isHost) {
+            throw new LobbyException(LOBBY_ERROR_CODE.PLAYER_NOT_HOST);
+        }
+
+        const key = this.getKeyGame(lobbyId);
+
+        const playerDecks = await this.deckService.getUserDecks(lobby.players[userId].id);
+        const playerActiveDeck = playerDecks.decks.find(deck => deck.isActive)!;
+
+        const playerFinalDeck: DeckArtifact[] = [];
+        const enemyFinalDeck: DeckArtifact[] = await this.deckService.getBotGameDeck();
+
+        for (const card of playerActiveDeck.cards) {
+            playerFinalDeck.push({
+                artifactId: ARTIFACTS[card.innerCardId].id,
+                maxHp: ARTIFACTS[card.innerCardId].hp,
+                skillCost: ARTIFACTS[card.innerCardId].skills === null ? 0 : SKILLS[ARTIFACTS[card.innerCardId].skills![0]].cost
+            })
+        }
+
+        const defaultSpells = {
+            [SPELLTYPE.LIGHT]: {
+                [SPELL.TOUCH_OF_LIGHT]: SpellHelper.getDefaultSpellState(SPELL.TOUCH_OF_LIGHT),
+                [SPELL.DIVINE_GUARD]: SpellHelper.getDefaultSpellState(SPELL.DIVINE_GUARD),
+                [SPELL.RESURRECTION]: SpellHelper.getDefaultSpellState(SPELL.RESURRECTION),
+                [SPELL.INSPIRATION]: SpellHelper.getDefaultSpellState(SPELL.INSPIRATION),
+                [SPELL.SHARPENING]: SpellHelper.getDefaultSpellState(SPELL.SHARPENING)
+            },
+            [SPELLTYPE.DARK]: {
+                [SPELL.BETRAYAL]: SpellHelper.getDefaultSpellState(SPELL.BETRAYAL),
+                [SPELL.VAMPIRISM]: SpellHelper.getDefaultSpellState(SPELL.VAMPIRISM),
+                [SPELL.COLD_TOUCH]: SpellHelper.getDefaultSpellState(SPELL.COLD_TOUCH),
+                [SPELL.RUST]: SpellHelper.getDefaultSpellState(SPELL.RUST),
+                [SPELL.WEAKNESS]: SpellHelper.getDefaultSpellState(SPELL.WEAKNESS)
+            },
+            [SPELLTYPE.DESTRUCTION]: {
+                [SPELL.PIERCING_BOLT]: SpellHelper.getDefaultSpellState(SPELL.PIERCING_BOLT),
+                [SPELL.METEOR_SHOWER]: SpellHelper.getDefaultSpellState(SPELL.METEOR_SHOWER),
+                [SPELL.VOLCANO]: SpellHelper.getDefaultSpellState(SPELL.VOLCANO),
+                [SPELL.FURY]: SpellHelper.getDefaultSpellState(SPELL.FURY),
+                [SPELL.THUNDER_STORM]: SpellHelper.getDefaultSpellState(SPELL.THUNDER_STORM)
+            }
+        }
+
+        const player1: Player = {
+            id: lobby.players[userId].id,
+            name: lobby.players[userId].nickname,
+            connection: CONNECTIONGAME.OFFLINE,
+            hero: "Empty",
+            isBot: false,
+            resources: {
+                rage: 0,
+                agility: 0,
+                light_mana: 0,
+                dark_mana: 0,
+                destruction_mana: 0
+            },
+            artifacts: {},
+            spells: defaultSpells,
+            effects: [],
+            isReady: false,
+            movePoints: 0,
+            draft: {
+                pickedArtifact: null,
+                deck: playerFinalDeck
+            },
+            temporaryArtifacts: {},
+            offerDraw: false,
+            extraData: {
+                skippedMoves: 0
+            }
+        }
+        
+        const player2: Player = {
+            id: "bot",
+            name: "Bot",
+            isBot: true,
+            connection: CONNECTIONGAME.OFFLINE,
+            hero: "Empty",
+            resources: {
+                rage: 0,
+                agility: 0,
+                light_mana: 0,
+                dark_mana: 0,
+                destruction_mana: 0
+            },
+            artifacts: {},
+            spells: defaultSpells,
+            effects: [],
+            isReady: false,
+            movePoints: 0,
+            draft: {
+                pickedArtifact: null,
+                deck: enemyFinalDeck
+            },
+            temporaryArtifacts: {},
+            offerDraw: false,
+            extraData: {
+                skippedMoves: 0
+            }
+        }
+
+        await this.redisService.setJson<Game>(key, ".", {
+            id: lobby.id,
+            phase: PHASE.DRAFT,
+            name: lobby.name,
+            currentTurn: lobby.players[userId].id,
+            logs: [],
+            players: {
+                [lobby.players[userId].id]: player1,
+                ["bot"]: player2,
+            },
+            end: null,
+            miniPhase: MINIPHASE.MOVEMENT,
+            constants: {
+                timerDraft: null,
+                timerMovement: null,
+                timerTurn: null,
+                maxCountArtifactsOnLine: MAX_COUNT_ARTIFACTS_ON_LINE,
+                isNewRound: false
+            }
+        }, this.GAME_TTL)
+
+        await this.redisService.setJson<LobbyStateType>(`lobby:${lobbyId}`, LOBBYPATH.getStatePath(), LOBBY_STATE_TYPE.PLAYING, this.GAME_TTL);
+
+        await this.redisService.addToSortedSet(
+            'games:index',
+            Date.now(),
+            lobbyId,
+            this.GAME_TTL
+        );
 
         return lobbyId;
     }
@@ -326,7 +478,6 @@ export class GameStateService {
             miniPhase: gameState.miniPhase,
             constants: gameState.constants
         }
-
 
         await this.redisService.setJson<Game>(
             key, 

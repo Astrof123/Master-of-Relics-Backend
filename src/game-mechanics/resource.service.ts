@@ -1,17 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { GameForClient } from 'src/game-state/types/game-for-client';
-import { RedisService } from 'src/redis/redis.service';
 import { RESOURCE, ResourceType } from './types/resource';
-import { ArtifactGameState, Player } from 'src/game-state/types/game';
-import { GameStateService } from 'src/game-state/game-state.service';
-import { GAME_MECHANICS_PATH } from './constants/game-mechanics-redis-paths';
+import { Player } from 'src/game-state/types/game';
 import { MAX_AMOUNT_RESOURCES } from './constants/settings';
-import { COMMON_ERROR_CODE, CommonException } from 'src/common/utils/error-handler';
 import { GameForLogic } from 'src/game-state/types/game-for-logic';
-import { EFFECTS } from 'src/game-mechanics/constants/effects';
 import { EFFECT } from './types/effect';
-import { EXTRA_ACTION } from 'src/action/types/action';
-import { EXTRA_ACTIONS } from 'src/action/constants/extra-actions';
 import { LogHelper } from 'src/action/helpers/logHelper';
 
 @Injectable()

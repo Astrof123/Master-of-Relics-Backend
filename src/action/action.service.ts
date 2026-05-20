@@ -20,6 +20,7 @@ import { RESOURCE } from 'src/game-mechanics/types/resource';
 import { ResourceService } from 'src/game-mechanics/resource.service';
 import { LOG_TYPE } from './types/log';
 import { MAX_SKIP_TURN } from 'src/game-mechanics/constants/settings';
+import { BotService } from './bot.service';
 
 @Injectable()
 export class ActionService {
@@ -34,7 +35,8 @@ export class ActionService {
         @Inject(forwardRef(() => GameTimerService))
         private readonly gameTimerService: GameTimerService,
         @Inject(forwardRef(() => ResourceService))
-        private readonly resourceService: ResourceService
+        private readonly resourceService: ResourceService,
+        private readonly botService: BotService
     ) {}
 
     async useFace(data: UseFaceData, userId: string, animations: AnimationData[]) {
@@ -52,9 +54,9 @@ export class ActionService {
         }
 
         this.actionValidatorService.useFaceValidator(gameState, artifact, data);
-        this.actionResolverService.useFaceResolve(gameState, artifact, data, animations);
+        this.actionResolverService.useFaceResolve(gameState, gameState.player, artifact, data, animations);
 
-        await this.phaseService.calculateNewState(gameState, false);
+        await this.phaseService.calculateNewState(gameState, gameState.player);
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
@@ -73,9 +75,9 @@ export class ActionService {
         }
 
         this.actionValidatorService.useSkillValidator(gameState, artifact, data);
-        this.actionResolverService.useSkillResolve(gameState, artifact, data, animations);
+        this.actionResolverService.useSkillResolve(gameState, gameState.player, artifact, data, animations);
 
-        await this.phaseService.calculateNewState(gameState, false);
+        await this.phaseService.calculateNewState(gameState, gameState.player);
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
@@ -90,11 +92,11 @@ export class ActionService {
         this.actionValidatorService.useSpellValidator(gameState, data);
         this.actionResolverService.useSpellResolve(gameState, data, animations);
 
-        await this.phaseService.calculateNewState(gameState, false);
+        await this.phaseService.calculateNewState(gameState, gameState.player);
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
-    async endTurn(gameId: string, userId: string) {
+    async endTurn(gameId: string, userId: string, animations: AnimationData[]) {
         const key = this.gameStateService.getKeyGame(gameId);
         const gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
         
@@ -103,11 +105,16 @@ export class ActionService {
         }
 
         this.actionValidatorService.endTurnValidator(gameState);
-        await this.actionResolverService.endTurnResolve(gameState);
+        await this.actionResolverService.endTurnResolve(gameState, gameState.player);
         await this.gameTimerService.stopAllTimers(gameState.id);
         if (gameState.constants.timerTurn !== null) {
             await this.gameTimerService.startTimer(gameState.id, TIMER_TYPE.TURN, gameState.constants.timerTurn);
         }
+        
+        if (gameState.enemy.isBot) {
+            await this.botService.doRandomAction(gameState, animations);
+        }
+
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
@@ -173,7 +180,7 @@ export class ActionService {
         }
 
         this.actionValidatorService.endRoundValidator(gameState);
-        await this.actionResolverService.endRoundResolve(gameState);
+        await this.actionResolverService.endRoundResolve(gameState, gameState.player);
 
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
@@ -195,7 +202,7 @@ export class ActionService {
         this.actionValidatorService.extraActionValidator(gameState, artifact, data);
         this.actionResolverService.extraActionResolve(gameState, artifact, data, animations);
 
-        await this.phaseService.calculateNewState(gameState, false);
+        await this.phaseService.calculateNewState(gameState, gameState.player);
         await this.gameStateService.saveGameForLogic(gameState, key);
     }
 
@@ -249,7 +256,6 @@ export class ActionService {
                     if (error instanceof GameException) {
                         throw error;
                     }
-                    console.log(error)
                     throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
                 }
             }
@@ -332,7 +338,6 @@ export class ActionService {
             
             try {
                 const gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
-                debugger
                 if (!gameState) {
                     await this.redisService.unwatch();
                     throw new GameException(GAME_ERROR_CODE.GAME_NOT_FOUND);
@@ -373,7 +378,7 @@ export class ActionService {
                     gameState.logs.push({ text: logParts.join('. ') + '.', type: LOG_TYPE.SYSTEM})
                 }
 
-                await this.actionResolverService.endTurnResolve(gameState);
+                await this.actionResolverService.endTurnResolve(gameState, gameState.player);
                 gameState.player.extraData.skippedMoves += 1;
 
                 const multi = this.redisService.multi();

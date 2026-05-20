@@ -208,9 +208,15 @@ export class DraftService {
     }
 
     private applyFinishDraftIfNeeded(gameState: GameForLogic): boolean {
-        const isReadyEnemy = gameState.enemy.isReady;
+        let isReadyEnemy = gameState.enemy.isReady;
         const pickedArtifactPlayer = gameState.player.draft.pickedArtifact;
-        const pickedArtifactEnemy = gameState.enemy.draft.pickedArtifact;
+
+        let pickedArtifactEnemy = gameState.enemy.draft.pickedArtifact;
+        if (gameState.enemy.isBot) {
+            const artifactNum = Object.values(gameState.player.artifacts).length;
+            pickedArtifactEnemy = gameState.enemy.draft.deck[artifactNum].artifactId;
+            isReadyEnemy = true;
+        }
         const playerArtifacts = gameState.player.artifacts;
         const enemyArtifacts = gameState.enemy.artifacts;
 

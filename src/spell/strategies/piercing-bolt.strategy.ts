@@ -20,7 +20,7 @@ export class PiercingBoltStrategy implements SpellStrategy {
     }
 
     execute(gameState: GameForLogic, player: Player, data: UseSpellData, animations: AnimationData[], logParts: string[]) {
-        const enemy = gameState.enemy.id === player.id ? player : gameState.enemy;
+        const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
         const enemyArtifact = enemy.artifacts[data.targets[1][0]];
         const damage = this.combatService.calculateDamage(enemyArtifact, 15, DAMAGE.MAGIC);
         this.combatService.applyDamage(gameState, enemy, null, enemyArtifact, damage, DAMAGE.MAGIC, logParts);

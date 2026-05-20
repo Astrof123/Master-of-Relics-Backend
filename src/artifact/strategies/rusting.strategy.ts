@@ -29,7 +29,7 @@ export class RustingStrategy implements SkillStrategy {
             allyArtifact.currentHp = allyArtifact.currentHp > allyArtifact.maxHp ? allyArtifact.maxHp : allyArtifact.currentHp;
         }
         else if (data.targets[1].length > 0) {
-            const enemy = gameState.enemy.id === player.id ? player : gameState.enemy;
+            const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
             const enemyArtifact = enemy.artifacts[data.targets[1][0]];
             enemyArtifact.maxHp -= 10;
             enemyArtifact.currentHp = enemyArtifact.currentHp > enemyArtifact.maxHp ? enemyArtifact.maxHp : enemyArtifact.currentHp;

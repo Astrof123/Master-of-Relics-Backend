@@ -20,6 +20,9 @@ import { DeckNotFoundException, InvalidNewDeckException } from './exceptions/dec
 import { ChangeActiveDeckDto } from './dto/change-active-deck.dto';
 import { ChangeDeckCardsDto } from './dto/change-deck-cards.dto';
 import { MAX_COUNT_DECK_CARDS } from './constants/settings';
+import { CardResponseDto } from './dto/card-response.dto';
+import { ROBOT_DECK } from './constants/bot_deck';
+import { DeckArtifact } from 'src/game-state/types/game';
 
 @Injectable()
 export class DeckService {
@@ -134,6 +137,20 @@ export class DeckService {
         }
 
         return response;
+    }
+
+    async getBotGameDeck(): Promise<DeckArtifact[]> {
+        const finalDeck: DeckArtifact[] = [];
+
+        for (const deckCard of ROBOT_DECK) {
+            finalDeck.push({
+                artifactId: ARTIFACTS[deckCard].id,
+                maxHp: ARTIFACTS[deckCard].hp,
+                skillCost: ARTIFACTS[deckCard].skills === null ? 0 : SKILLS[ARTIFACTS[deckCard].skills![0]].cost
+            })
+        }
+
+        return finalDeck;
     }
 
     async changeActiveDeck(userId: string, data: ChangeActiveDeckDto): Promise<void> {

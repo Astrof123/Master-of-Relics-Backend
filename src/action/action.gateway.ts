@@ -114,9 +114,14 @@ export class ActionGateway  {
     async handleEndTurn(client: Socket, gameId: string, callback: Function): Promise<void> {
         try {
             const userId = client.data.userId;
-            await this.actionService.endTurn(gameId, userId);
+            const animations: AnimationData[] = [];
+            await this.actionService.endTurn(gameId, userId, animations);
 
             this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
+
+            animations.forEach(animation => {
+                this.server.to(`game-${gameId}`).emit(ACTION_EVENT_NAME.ANIMATION, animation)
+            });
 
             if (callback) {
                 callback({

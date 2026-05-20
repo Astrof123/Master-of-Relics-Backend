@@ -21,7 +21,7 @@ export class StealLightManaStrategy implements SkillStrategy {
     }
 
     execute(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
-        const enemy = gameState.enemy.id === player.id ? player : gameState.enemy;
+        const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
         this.resourceService.decreaseResource(enemy, RESOURCE.LIGHT_MANA, 10, logParts);
         this.resourceService.addResource(player, RESOURCE.LIGHT_MANA, 10, logParts);
     }

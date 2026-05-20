@@ -50,3 +50,4 @@ export const DEFAULT_DECK3: Artifact[] = [
     ARTIFACT.VOIDER,
     ARTIFACT.CONCEALER,
 ]
+

@@ -216,6 +216,35 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
     @UseGuards(WebSocketAuthGuard)
+    @SubscribeMessage(GAME_EVENT_NAME.CREATE_GAME_WITH_BOT)
+    async handleCreateGameWithBot(client: Socket, lobbyId: string, callback: Function): Promise<void> {
+        try {
+            const userId = client.data.userId;
+
+            const gameId = await this.gameStateService.createGameSessionWithBotState(lobbyId, userId);
+            client.to(`lobby-${gameId}`).emit(LOBBY_EVENT_NAME.GAME_STARTED, gameId);
+
+            this.server.to(LOBBY_ROOMS_NAME.HALL).emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED)
+
+            const currentLobby = await this.lobbyService.getLobbyById(lobbyId);
+            this.server.to(`lobby-${lobbyId}`).emit(LOBBY_EVENT_NAME.LOBBY_UPDATE, currentLobby)
+
+            if (callback) {
+                callback({
+                    success: true,
+                    data: {
+                        gameId: gameId
+                    },
+                    message: "Вы успешно начали матч с ботом"
+                });
+            }
+        } 
+        catch (error) {
+            handleError(error, callback);
+        }
+    }
+
+    @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(GAME_EVENT_NAME.JOIN_GAME)
     async handleJoinGame(client: Socket, gameId: string, callback: Function): Promise<void> {
         try {

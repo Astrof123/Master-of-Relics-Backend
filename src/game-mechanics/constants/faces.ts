@@ -314,7 +314,7 @@ export const FACES: Record<Face, FaceDataType> = {
         heal: 0
     },
     [FACE.ONE_RAGE_ONE_TARGET]: {
-        id: FACE.TWO_DARK_MANA_ONE_RAGE,
+        id: FACE.ONE_RAGE_ONE_TARGET,
         description: "Восстановить 10 единиц ярости и нанести 10 единиц дальнего урона вражескому артефакту",
         target: 10,
         sword: 0,
@@ -326,7 +326,7 @@ export const FACES: Record<Face, FaceDataType> = {
         heal: 0
     },
     [FACE.ONE_SWORD_ONE_DARK_MANA]: {
-        id: FACE.TWO_DARK_MANA_ONE_RAGE,
+        id: FACE.ONE_SWORD_ONE_DARK_MANA,
         description: "Восстановить 10 единиц маны тьмы и нанести 10 единиц ближнего урона вражескому артефакту",
         target: 0,
         sword: 10,
@@ -410,7 +410,7 @@ export const FACES: Record<Face, FaceDataType> = {
         heal: 0
     },
     [FACE.TWO_LIGHT_MANA_ONE_TARGET]: {
-        id: FACE.ONE_TARGET_ONE_AGILITY,
+        id: FACE.TWO_LIGHT_MANA_ONE_TARGET,
         description: "Восстановить 20 единиц маны света и нанести 10 единиц дальнего урона вражескому артефакту",
         target: 10,
         sword: 0,
@@ -422,7 +422,7 @@ export const FACES: Record<Face, FaceDataType> = {
         heal: 0
     },
     [FACE.TWO_TARGET_ONE_LIGHT_MANA]: {
-        id: FACE.ONE_TARGET_ONE_AGILITY,
+        id: FACE.TWO_TARGET_ONE_LIGHT_MANA,
         description: "Восстановить 10 единиц маны света и нанести 20 единиц дальнего урона вражескому артефакту",
         target: 20,
         sword: 0,
@@ -491,6 +491,42 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
+        heal: 0
+    },
+    [FACE.ONE_DARK_ONE_DESTRUCTION_MANA ]: {
+        id: FACE.ONE_DARK_ONE_DESTRUCTION_MANA,
+        description: "Восстановить 10 маны тьмы и 10 маны разрушения",
+        target: 0,
+        sword: 0,
+        agility: 0,
+        rage: 0,
+        light_mana: 0,
+        dark_mana: 10,
+        destruction_mana: 10,
+        heal: 0
+    },
+    [FACE.ONE_DARK_ONE_LIGHT_MANA]: {
+        id: FACE.ONE_DARK_ONE_LIGHT_MANA,
+        description: "Восстановить 10 маны тьмы и 10 маны света",
+        target: 0,
+        sword: 0,
+        agility: 0,
+        rage: 0,
+        light_mana: 10,
+        dark_mana: 10,
+        destruction_mana: 0,
+        heal: 0
+    },
+    [FACE.ONE_DESTRUCTION_ONE_LIGHT_MANA]: {
+        id: FACE.ONE_DESTRUCTION_ONE_LIGHT_MANA,
+        description: "Восстановить 10 маны разрушения и 10 маны света",
+        target: 0,
+        sword: 0,
+        agility: 0,
+        rage: 0,
+        light_mana: 10,
+        dark_mana: 0,
+        destruction_mana: 10,
         heal: 0
     },
 };

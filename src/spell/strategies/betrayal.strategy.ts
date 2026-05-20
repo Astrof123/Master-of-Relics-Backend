@@ -27,7 +27,7 @@ export class BetrayalStrategy implements SpellStrategy {
     }
 
     execute(gameState: GameForLogic, player: Player, data: UseSpellData, animations: AnimationData[], logParts: string[]) {
-        const enemy = gameState.enemy.id === player.id ? player : gameState.enemy;
+        const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
         const enemyArtifact = enemy.artifacts[data.targets[1][0]];
         const faceData = FACES[enemyArtifact.face];
         const damageType = faceData.sword > 0 ? DAMAGE.MELEE : DAMAGE.RANGED;

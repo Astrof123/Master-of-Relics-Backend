@@ -111,7 +111,8 @@ export interface Player {
     offerDraw: boolean;
     extraData: {
         skippedMoves: number;
-    }
+    },
+    isBot: boolean;
 }
 
 

@@ -22,7 +22,7 @@ export class TouchOfLightStrategy implements SpellStrategy {
     }
 
     execute(gameState: GameForLogic, player: Player, data: UseSpellData, animations: AnimationData[], logParts: string[]) {
-        const enemy = gameState.enemy.id === player.id ? player : gameState.enemy;
+        const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
         if (data.targets[0].length > 0) {
             const allyArtifact = player.artifacts[data.targets[0][0]];
             

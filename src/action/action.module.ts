@@ -10,6 +10,7 @@ import { ExtraActionService } from './extra-action.service';
 import { PhaseModule } from 'src/phase/phase.module';
 import { RestrictionService } from './restriction.service';
 import { SpellModule } from 'src/spell/spell.module';
+import { BotService } from './bot.service';
 
 @Module({
     providers: [
@@ -18,7 +19,8 @@ import { SpellModule } from 'src/spell/spell.module';
         ActionResolverService, 
         ActionService, 
         ExtraActionService,
-        RestrictionService
+        RestrictionService,
+        BotService
     ],
     imports: [
         forwardRef(() => GameStateModule), 

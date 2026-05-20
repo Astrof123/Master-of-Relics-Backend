@@ -33,7 +33,7 @@ export const EXTRA_ACTIONS: Record<ExtraAction, ExtraActionDataType> = {
         cost: 15,
         resourceType: RESOURCE.AGILITY,
         getDescription: (cost: number) => `Переместить за ${cost} ловкости`,
-        restrictions: []
+        restrictions: [RESTRICTION.ONLY_READY]
     },
     [EXTRA_ACTION.REMOVE_ROOT]: {
         id: EXTRA_ACTION.REMOVE_ROOT,
