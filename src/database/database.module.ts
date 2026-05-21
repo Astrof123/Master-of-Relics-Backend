@@ -23,9 +23,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                     migrationsDir: 'src/database/migrations',
                 },
 
-                ssl: configService.get('NODE_ENV') === 'production' 
-                ? { rejectUnauthorized: false } 
-                : false,
+                ssl: false,
             }),
         })
     ]
