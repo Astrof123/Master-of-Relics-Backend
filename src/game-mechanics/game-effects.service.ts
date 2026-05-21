@@ -77,7 +77,8 @@ export class GameEffectsService {
     }
 
     countEffect(artifactState: ArtifactGameState, effect: Effect) {
-        return artifactState.effects.filter(e => e.id === effect).length;
+        const check = artifactState.effects.filter(e => e.id === effect);
+        return check.length;
     }
 
     calculateNewStateEffects(gameState: GameForLogic, player: Player, enemy: Player) {

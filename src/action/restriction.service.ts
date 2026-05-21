@@ -161,11 +161,14 @@ export class RestrictionService {
         let allies: string[] = [];
         let enemies: string[] = [];
         
+        
         if (restrictions.includes(TARGET_RESTRICTION.ANY_ENEMY)) {
             Object.values(enemy.artifacts).forEach((artifact) => {
                 enemies.push(artifact.id);
             })
         }
+        
+
         if (restrictions.includes(TARGET_RESTRICTION.ANY_ALLY)) {
             Object.values(player.artifacts).forEach((artifact) => {
                 allies.push(artifact.id);
@@ -231,7 +234,7 @@ export class RestrictionService {
         }
 
         enemies = enemies.filter(e => this.gameEffectsService.countEffect(enemy.artifacts[e], EFFECT.INVISIBLE) === 0);
-
+        
         return [allies, enemies];
     }
 }

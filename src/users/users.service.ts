@@ -93,7 +93,10 @@ export class UsersService {
                 { requesterId: user.id, status: RELATIONSHIP.FRIEND},
                 { addresseeId: user.id, status: RELATIONSHIP.FRIEND}
             ],
-            relations: ['addressee', 'requester']
+            relations: {
+                addressee: true,
+                requester: true
+            }
         });
 
         const friendshipsDto: Friend[] = [];
@@ -155,7 +158,9 @@ export class UsersService {
         if (id == userId) {
             const offers = await this.friendRelationShipRepository.find({
                 where: { addresseeId: currentUser.id, status: RELATIONSHIP.OFFER },
-                relations: ['requester']
+                relations: {
+                    requester: true
+                }
             });
 
             offerFriendshipsDto = offers.map((offer) => {
