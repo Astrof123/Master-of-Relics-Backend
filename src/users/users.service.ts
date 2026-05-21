@@ -1,9 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, IsNull, Like, Not, Repository } from 'typeorm';
+import { Between, Not, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
-import * as bcrypt from 'bcrypt';
 import { FriendshipNotFoundException, InvalidFriendException, UserNotFoundException, UserStatsNotFoundException } from './exceptions/users.exception';
 import { UserProfileResponseDto } from './dto/user-profile-response.dto';
 import { UserStats } from './entities/user-stats.entity';
@@ -19,7 +17,6 @@ import { UnbanUserDto } from './dto/unban-user.dto';
 import { SetAdminDto } from './dto/set-admin.dto';
 import { GetUsersDto } from './dto/users.dto';
 import { validate as isValidUUID } from 'uuid';
-import { GetUsersResponseDto } from './dto/get-users-response.dto';
 
 @Injectable()
 export class UsersService {

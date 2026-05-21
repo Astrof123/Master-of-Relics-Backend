@@ -104,6 +104,19 @@ export class LogHelper {
         return `Переместил ${artifactName} на позицию ${position + 1} ${lineName} линии`
     }
 
+    public static getSpawnArtifactLog(artifactName: string, position: number, line: Line) {
+        let lineName = "";
+
+        if (line === LINE.FRONT) {
+            lineName = "передовой"
+        }
+        else if (line === LINE.BACK) {
+            lineName = "тыловой"
+        }
+
+        return `Создал ${artifactName} на позиции ${position + 1} ${lineName} линии`
+    }
+
     public static getDestroyArtifactLog(artifactName: string) {
         return `Уничтожен ${artifactName}`;
     }

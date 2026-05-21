@@ -50,7 +50,6 @@ export function handleError(error: unknown, callback?: Function): void {
             }
         };
 
-        console.error('Unhandled error:', error);
     } else if (error instanceof Error) {
         errorResponse = {
             success: false,
@@ -62,7 +61,6 @@ export function handleError(error: unknown, callback?: Function): void {
             }
         };
         
-        console.error('Unhandled error:', error);
     } else {
         errorResponse = {
             success: false,
@@ -73,7 +71,6 @@ export function handleError(error: unknown, callback?: Function): void {
             }
         };
 
-        console.error('Unhandled error:', error);
     }
     
     if (callback && typeof callback === 'function') {

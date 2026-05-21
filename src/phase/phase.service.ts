@@ -159,8 +159,14 @@ export class PhaseService {
                 winner == gameState.enemy.id ? WINNER_PRIZE : !winner ? DRAW_PRIZE : LOSER_PRIZE
             );
             
-            await this.usersStatsService.setWin(winner == gameState.player.id ? gameState.player.id : gameState.enemy.id);
-            await this.usersStatsService.setLose(winner == gameState.player.id ? gameState.enemy.id : gameState.player.id);
+            if (winner === null) {
+                await this.usersStatsService.setLose(gameState.player.id);
+                await this.usersStatsService.setLose(gameState.enemy.id);
+            }
+            else {
+                await this.usersStatsService.setWin(winner == gameState.player.id ? gameState.player.id : gameState.enemy.id);
+                await this.usersStatsService.setLose(winner == gameState.player.id ? gameState.enemy.id : gameState.player.id);
+            }
         }
 
         await this.lobbyService.changeLobbyState(gameState.id, LOBBY_STATE_TYPE.END)

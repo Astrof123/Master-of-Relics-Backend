@@ -51,6 +51,7 @@ export class ArtifactService {
                 let cost = artifact.skillCost;
                 const countDiscount = this.gameEffectsService.countHeroEffect(player, EFFECT.RAGE_DISCOUNT);
                 cost -= countDiscount >= 1 ? 5 : 0;
+                cost = cost > 0 ? cost : 0;
                 artifact.skillCost = cost;
             }
         }
@@ -219,7 +220,7 @@ export class ArtifactService {
         artifactInsert.line = line;
         artifacts[artifactInsert.id] = artifactInsert;
 
-        logParts.push(LogHelper.getMoveArtifactLog(ARTIFACTS[artifactInsert.artifactId].name, positionInsert, line));
+        logParts.push(LogHelper.getSpawnArtifactLog(ARTIFACTS[artifactInsert.artifactId].name, positionInsert, line));
     }
 
     createArtifactState(playerArtifacts: Record<string, ArtifactGameState>, artifactId: Artifact) {

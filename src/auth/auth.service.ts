@@ -104,11 +104,13 @@ export class AuthService {
             };
         }
         catch (error) {
-            if (error instanceof CustomHttpException) {
+            if (error instanceof UserAlreadyExistsException ||
+                error instanceof InvalidInviteCodeException ||
+                error instanceof UsedInviteCodeException ||
+                error instanceof CustomHttpException) {
                 throw error;
             }
             
-            console.error('Registration error:', error);
             throw new HttpException(
                 'Ошибка при регистрации пользователя',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -144,18 +146,17 @@ export class AuthService {
             };
         }
         catch (error) {
-            if (error instanceof CustomHttpException) {
+            if (error instanceof InvalidCredentialsException ||
+                error instanceof CustomHttpException) {
                 throw error;
             }
-            
-            console.error('Login error:', error);
+
             throw new HttpException(
                 'Ошибка на стороне сервера',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
     }
-
 
     async refreshTokens(refreshToken: string) {
         try {
@@ -183,11 +184,11 @@ export class AuthService {
             };
         }
         catch (error) {
-            if (error instanceof CustomHttpException) {
+            if (error instanceof UnauthorizedException ||
+                error instanceof CustomHttpException) {
                 throw error;
             }
             
-            console.error('Refresh token error:', error);
             throw new HttpException(
                 'Ошибка на стороне сервера',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -195,4 +196,3 @@ export class AuthService {
         }
     }
 }
-
