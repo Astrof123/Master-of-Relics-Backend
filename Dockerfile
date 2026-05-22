@@ -7,7 +7,6 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
-COPY typeorm.config.ts ./
 
 # Устанавливаем ВСЕ зависимости (включая devDependencies для сборки)
 RUN npm ci || npm install
@@ -28,17 +27,12 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Копируем собранное приложение
+# Копируем собранное приложение и только production зависимости
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
-COPY --from=builder --chown=nodejs:nodejs /app/typeorm.config.ts ./
-COPY --from=builder --chown=nodejs:nodejs /app/tsconfig*.json ./
 
-# Копируем миграции (исходники для TypeORM CLI)
-COPY --from=builder --chown=nodejs:nodejs /app/src/database/migrations ./src/database/migrations
-
-# Удаляем devDependencies (опционально, но для миграций нужен ts-node)
+# Удаляем devDependencies (опционально, для уменьшения размера)
 # RUN npm prune --production
 
 USER nodejs
@@ -48,5 +42,4 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Запускаем миграции и приложение
-CMD sh -c "npm run migration:run && node dist/main.js"
+CMD ["node", "dist/main.js"]

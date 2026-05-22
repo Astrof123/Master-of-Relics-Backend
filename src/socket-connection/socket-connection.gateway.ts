@@ -6,7 +6,11 @@ import { LOBBY_ROOMS_NAME } from "src/lobby/types/lobby-rooms-name";
 import { LOBBY_EVENT_NAME } from "src/lobby/types/lobby-events-name";
 
 @WebSocketGateway({
-    middleware: []
+    namespace: '/socket.io',
+    cors: {
+        origin: ['https://masterofrelics.ru', 'https://www.masterofrelics.ru'],
+        credentials: true,
+    },
 })
 export class SocketConnectionGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(

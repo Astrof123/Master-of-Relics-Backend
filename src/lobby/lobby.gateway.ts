@@ -20,7 +20,13 @@ import { GameStateService } from 'src/game-state/game-state.service';
 import { SocketConnectionService } from 'src/socket-connection/socket-connection.service';
 
 
-@WebSocketGateway()
+@WebSocketGateway({
+    namespace: '/socket.io',
+    cors: {
+        origin: ['https://masterofrelics.ru', 'https://www.masterofrelics.ru'],
+        credentials: true,
+    },
+})
 export class LobbyGateway implements OnGatewayDisconnect  {
     constructor(
         private readonly lobbyService: LobbyService,

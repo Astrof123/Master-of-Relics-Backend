@@ -17,7 +17,13 @@ import type { PickArtifactData } from './types/draft-evens-data';
 import { GAME_EVENT_NAME } from 'src/game-state/types/game-events-name';
 
 
-@WebSocketGateway()
+@WebSocketGateway({
+    namespace: '/socket.io',
+    cors: {
+        origin: ['https://masterofrelics.ru', 'https://www.masterofrelics.ru'],
+        credentials: true,
+    },
+})
 export class DraftGateway {
     constructor(
         private readonly draftService: DraftService
