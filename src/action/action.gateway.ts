@@ -15,13 +15,7 @@ import { GAME_EVENT_NAME } from 'src/game-state/types/game-events-name';
 import { AnimationData } from './types/animation';
 
 
-@WebSocketGateway({
-    namespace: '/socket.io',
-    cors: {
-        origin: ['https://masterofrelics.ru', 'https://www.masterofrelics.ru'],
-        credentials: true,
-    },
-})
+@WebSocketGateway()
 export class ActionGateway  {
     constructor(
         private readonly actionService: ActionService

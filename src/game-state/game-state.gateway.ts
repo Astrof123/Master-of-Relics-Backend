@@ -30,13 +30,7 @@ import { MAX_SKIP_TURN } from 'src/game-mechanics/constants/settings';
 import { LOG_TYPE } from 'src/action/types/log';
 
 
-@WebSocketGateway({
-    namespace: '/socket.io',
-    cors: {
-        origin: ['https://masterofrelics.ru', 'https://www.masterofrelics.ru'],
-        credentials: true,
-    },
-})
+@WebSocketGateway()
 export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
     private readonly logger = new Logger(GameStateGateway.name);
     private subscriber!: Redis;
