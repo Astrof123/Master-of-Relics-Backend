@@ -3,6 +3,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import { CardsService } from './collection/cards.service';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -44,7 +45,14 @@ async function bootstrap() {
         }
     });
 
-    
+    try {
+        console.log('🃏 Checking and syncing cards...');
+        const cardsService = app.get(CardsService);
+        await cardsService.syncCardsFromDefinitions();
+        console.log('✅ Cards synced successfully');
+    } catch (error) {
+        console.error('❌ Cards sync failed:', error);
+    }
 
     await app.listen(process.env.PORT ?? 3000);
 }

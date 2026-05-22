@@ -8,7 +8,7 @@ COPY package*.json ./
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
 
-# Устанавливаем ВСЕ зависимости (включая devDependencies для сборки)
+
 RUN npm ci || npm install
 
 # Копируем исходный код
@@ -27,13 +27,9 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Копируем собранное приложение и только production зависимости
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
-
-# Удаляем devDependencies (опционально, для уменьшения размера)
-# RUN npm prune --production
 
 USER nodejs
 
