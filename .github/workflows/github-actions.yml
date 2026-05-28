@@ -83,7 +83,7 @@ jobs:
   deploy:
     name: Deploy to Server
     runs-on: self-hosted
-    needs: build-check
+    needs: build
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     environment: production
     
