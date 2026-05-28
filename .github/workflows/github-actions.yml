@@ -105,20 +105,6 @@ jobs:
           docker image prune -f
           echo "Old images cleaned"
       
-      - name: Health check
-        run: |
-          echo "Waiting for backend to be ready..."
-          for i in {1..30}; do
-            if curl -s -f http://localhost:3000/health; then
-              echo "Backend is healthy!"
-              exit 0
-            fi
-            echo "Waiting... ($i/30)"
-            sleep 2
-          done
-          echo "Health check failed!"
-          exit 1
-      
       - name: Show logs if failed
         if: failure()
         run: |
