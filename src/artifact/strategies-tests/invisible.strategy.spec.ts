@@ -13,7 +13,6 @@ import { AnimationData } from '../../action/types/animation';
 import { SKILL } from '../types/skill';
 import { EFFECT } from '../../game-mechanics/types/effect';
 
-// Mock EFFECTS
 jest.mock('../../game-mechanics/constants/effects', () => ({
     EFFECTS: {
         invisible: { id: 'invisible', name: 'Invisible' },

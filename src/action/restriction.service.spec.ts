@@ -13,7 +13,7 @@ import { EFFECT } from '../game-mechanics/types/effect';
 import { MAX_COUNT_ARTIFACTS_ON_LINE } from '../game-mechanics/constants/settings';
 import { FACES } from '../game-mechanics/constants/faces';
 
-// Mock FACES
+
 jest.mock('../game-mechanics/constants/faces', () => ({
     FACES: {
         sword: { sword: 10, target: 0 },
@@ -403,7 +403,6 @@ describe('RestrictionService', () => {
             player = createMockPlayer();
             enemy = createMockPlayer('enemy-1');
             mockGameEffectsService.countEffect.mockReset();
-            // По умолчанию возвращаем 0 (нет эффектов)
             mockGameEffectsService.countEffect.mockReturnValue(0);
         });
 

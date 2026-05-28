@@ -1,7 +1,6 @@
 import { CustomException } from 'src/common/custom.exception';
 
 export enum DRAFT_ERROR_CODE {
-    // Ошибки драфта (4000-4999)
     ARTIFACT_NOT_FOUND = 4000,
     NOT_PICKED_ARTIFACT = 4001,
     PHASE_NOT_DRAFT = 4002,

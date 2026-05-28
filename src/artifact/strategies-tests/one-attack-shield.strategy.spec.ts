@@ -1,4 +1,3 @@
-// strategies-tests/one-attack-shield.strategy.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { OneAttackShieldStrategy } from '../strategies/one_attack_shield.strategy';
 import { GameEffectsService } from '../../game-mechanics/game-effects.service';
@@ -14,7 +13,6 @@ import { UseSkillData } from '../../action/types/action-evens-data';
 import { AnimationData } from '../../action/types/animation';
 import { SKILL } from '../types/skill';
 
-// Mock EFFECTS
 jest.mock('../../game-mechanics/constants/effects', () => ({
     EFFECTS: {
         one_attack_shield: {

@@ -1,4 +1,3 @@
-// socket-connection.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { SocketConnectionService } from './socket-connection.service';
 import { RedisService } from '../redis/redis.service';
@@ -45,7 +44,7 @@ describe('SocketConnectionService', () => {
             expect(redisService.addToSet).toHaveBeenCalledWith(
                 'online:index',
                 userId,
-                60 * 60 * 24, // CONNECT_TTL
+                60 * 60 * 24,
             );
         });
 
@@ -146,7 +145,6 @@ describe('SocketConnectionService', () => {
                 .mockResolvedValueOnce(['user-123'])
                 .mockResolvedValueOnce([]);
 
-            // Player goes online
             await service.setPlayerOnline(userId);
             expect(redisService.addToSet).toHaveBeenCalledWith(
                 'online:index',
@@ -154,18 +152,15 @@ describe('SocketConnectionService', () => {
                 expect.any(Number),
             );
 
-            // Check online players
             let onlinePlayers = await service.getOnlinePlayers();
             expect(onlinePlayers).toEqual(['user-123']);
 
-            // Player goes offline
             await service.setPlayerOffline(userId);
             expect(redisService.removeFromSet).toHaveBeenCalledWith(
                 'online:index',
                 userId,
             );
 
-            // Check online players again
             onlinePlayers = await service.getOnlinePlayers();
             expect(onlinePlayers).toEqual([]);
         });
@@ -178,7 +173,6 @@ describe('SocketConnectionService', () => {
             mockRedisService.addToSet.mockResolvedValue(undefined);
             mockRedisService.removeFromSet.mockResolvedValue(undefined);
 
-            // Simulate Redis state
             mockRedisService.getSetMembers
                 .mockResolvedValueOnce([user1])
                 .mockResolvedValueOnce([user1, user2])
@@ -187,7 +181,6 @@ describe('SocketConnectionService', () => {
                 .mockResolvedValueOnce([user3])
                 .mockResolvedValueOnce([]);
 
-            // Players join one by one
             await service.setPlayerOnline(user1);
             expect(await service.getOnlinePlayers()).toEqual([user1]);
 
@@ -201,7 +194,6 @@ describe('SocketConnectionService', () => {
                 user3,
             ]);
 
-            // Players leave one by one
             await service.setPlayerOffline(user1);
             expect(await service.getOnlinePlayers()).toEqual([user2, user3]);
 
@@ -256,7 +248,6 @@ describe('SocketConnectionService', () => {
 
     describe('TTL verification', () => {
         it('should use correct TTL value (24 hours)', () => {
-            // Access private property via reflection for testing
             const ttl = (service as any).CONNECT_TTL;
             expect(ttl).toBe(60 * 60 * 24);
         });

@@ -1,4 +1,4 @@
-// action.gateway.spec.ts
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { ActionGateway } from './action.gateway';
 import { ActionService } from './action.service';
@@ -15,7 +15,7 @@ import {
 import { AnimationData } from './types/animation';
 import { SKILL } from '../artifact/types/skill';
 
-// Mock Socket
+
 const createMockSocket = (userId: string = 'user-123'): any => ({
     data: { userId },
     join: jest.fn().mockResolvedValue(undefined),
@@ -276,7 +276,6 @@ describe('ActionGateway', () => {
 
             mockActionService.endTurn.mockImplementation(
                 async (gid, uid, anims) => {
-                    // Do nothing
                 },
             );
 
@@ -488,7 +487,6 @@ describe('ActionGateway', () => {
 
             mockActionService.extraAction.mockImplementation(
                 async (data, uid, anims) => {
-                    // Do nothing
                 },
             );
 

@@ -28,7 +28,7 @@ import { LOG_TYPE } from './types/log';
 import { SKILL } from '../artifact/types/skill';
 import { AnimationData } from './types/animation';
 
-// Mock dependencies
+
 jest.mock('../game-mechanics/constants/faces', () => ({
     FACES: {
         sword: { sword: 10, target: 0, heal: 0, description: 'Melee attack' },

@@ -1,4 +1,4 @@
-// strategies-tests/eat-light-mana.strategy.spec.ts
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { EatLightManaStrategy } from '../strategies/eat-light-mana.strategy';
 import { CombatService } from '../../game-mechanics/combat.service';

@@ -1,4 +1,4 @@
-// action-resolver.service.spec.ts
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { forwardRef } from '@nestjs/common';
 import { ActionResolverService } from './action-resolver.service';
@@ -37,7 +37,7 @@ import { SPELL } from '../spell/types/spell';
 import { FACES } from '../game-mechanics/constants/faces';
 import { GameForLogic } from 'src/game-state/types/game-for-logic';
 
-// Mock FACES
+
 jest.mock('../game-mechanics/constants/faces', () => ({
     FACES: {
         sword: {
@@ -65,7 +65,7 @@ jest.mock('../game-mechanics/constants/faces', () => ({
     },
 }));
 
-// Mock ARTIFACTS
+
 jest.mock('../artifact/constants/artifacts', () => ({
     ARTIFACTS: {
         arcane_shield: { id: 'arcane_shield', name: 'Arcane Shield' },
@@ -73,21 +73,21 @@ jest.mock('../artifact/constants/artifacts', () => ({
     },
 }));
 
-// Mock SKILLS
+
 jest.mock('../artifact/constants/skills', () => ({
     SKILLS: {
         fear: { cost: 15 },
     },
 }));
 
-// Mock SPELLS
+
 jest.mock('../spell/constants/spells', () => ({
     SPELLS: {
         piercing_bolt: { name: 'Piercing Bolt', type: 'destruction', cost: 15 },
     },
 }));
 
-// Mock SpellHelper
+
 jest.mock('../spell/spell.helper', () => ({
     SpellHelper: {
         getResource: jest.fn(() => 'destruction_mana'),

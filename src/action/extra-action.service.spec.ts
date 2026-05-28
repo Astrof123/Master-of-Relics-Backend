@@ -1,4 +1,4 @@
-// extra-action.service.spec.ts
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { forwardRef } from '@nestjs/common';
 import { ExtraActionService } from './extra-action.service';
@@ -22,7 +22,7 @@ import { RESOURCE } from '../game-mechanics/types/resource';
 import { EFFECT } from '../game-mechanics/types/effect';
 import { GameForLogic } from 'src/game-state/types/game-for-logic';
 
-// Mock EXTRA_ACTIONS
+
 jest.mock('./constants/extra-actions', () => ({
     EXTRA_ACTIONS: {
         throw_dice: {

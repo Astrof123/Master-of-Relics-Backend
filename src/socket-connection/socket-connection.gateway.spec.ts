@@ -1,4 +1,3 @@
-// socket-connection.gateway.spec.ts - исправленная версия
 import { Test, TestingModule } from '@nestjs/testing';
 import { SocketConnectionGateway } from './socket-connection.gateway';
 import { SocketConnectionService } from './socket-connection.service';
@@ -7,7 +6,6 @@ import { Server, Socket } from 'socket.io';
 import { LOBBY_ROOMS_NAME } from '../lobby/types/lobby-rooms-name';
 import { LOBBY_EVENT_NAME } from '../lobby/types/lobby-events-name';
 
-// Mock Socket
 const createMockSocket = (
     userId: string = 'user-123',
     id: string = 'socket-123',
@@ -62,7 +60,6 @@ describe('SocketConnectionGateway', () => {
         socketConnectionService = module.get(SocketConnectionService);
         webSocketAuthMiddleware = module.get(WebSocketAuthMiddleware);
 
-        // Создаем мок сервера
         mockServer = {
             to: jest.fn().mockReturnThis(),
             emit: jest.fn(),
@@ -215,7 +212,6 @@ describe('SocketConnectionGateway', () => {
             const socket2 = createMockSocket('user-2', 'socket-2');
             const socket3 = createMockSocket('user-3', 'socket-3');
 
-            // Настраиваем моки для каждого вызова
             mockSocketConnectionService.setPlayerOnline.mockResolvedValue(
                 undefined,
             );
@@ -250,7 +246,6 @@ describe('SocketConnectionGateway', () => {
             const socket1 = createMockSocket('user-1', 'socket-1');
             const socket2 = createMockSocket('user-2', 'socket-2');
 
-            // Настраиваем моки для каждого вызова
             mockSocketConnectionService.setPlayerOffline.mockResolvedValue(
                 undefined,
             );

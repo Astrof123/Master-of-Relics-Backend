@@ -8,7 +8,6 @@ import {
     COMMON_ERROR_CODE,
 } from '../common/utils/error-handler';
 
-// Mock strategies
 class MockFearStrategy implements SkillStrategy {
     getSkillType(): Skill {
         return SKILL.FEAR;
@@ -139,7 +138,7 @@ describe('SkillsStrategyFactory', () => {
         it('should handle duplicate strategies (last one wins)', async () => {
             const duplicateStrategies = [
                 new MockFearStrategy(),
-                new MockFearStrategy(), // Duplicate
+                new MockFearStrategy(),
             ];
 
             const module: TestingModule = await Test.createTestingModule({
@@ -157,7 +156,6 @@ describe('SkillsStrategyFactory', () => {
             );
             const strategies = (duplicateFactory as any).strategies;
 
-            // Map will overwrite with the last strategy
             expect(strategies.get(SKILL.FEAR)).toBe(duplicateStrategies[1]);
         });
     });

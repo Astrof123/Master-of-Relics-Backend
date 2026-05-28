@@ -1,4 +1,4 @@
-// strategies-tests/berserk.strategy.spec.ts
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { GameEffectsService } from '../../game-mechanics/game-effects.service';
 import { ResourceService } from '../../game-mechanics/resource.service';
@@ -15,7 +15,7 @@ import { EFFECT } from '../../game-mechanics/types/effect';
 import { SKILL } from '../types/skill';
 import { BerserkStrategy } from '../strategies/berserk.strategy';
 
-// Mock EFFECTS
+
 jest.mock('../../game-mechanics/constants/effects', () => ({
     EFFECTS: {
         berserk: { id: 'berserk', name: 'Berserk' },

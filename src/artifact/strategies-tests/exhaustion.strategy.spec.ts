@@ -1,4 +1,3 @@
-// strategies-tests/exhaustion.strategy.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExhaustionStrategy } from '../strategies/exhaustion.strategy';
 import { GameEffectsService } from '../../game-mechanics/game-effects.service';
@@ -14,7 +13,6 @@ import { AnimationData } from '../../action/types/animation';
 import { SKILL } from '../types/skill';
 import { EffectType } from '../../game-mechanics/types/effect';
 
-// Mock EFFECTS - используем строки вместо DISPELL_TYPE
 jest.mock('../../game-mechanics/constants/effects', () => ({
     EFFECTS: {
         exhaustion: {

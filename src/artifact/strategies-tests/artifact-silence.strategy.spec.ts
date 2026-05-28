@@ -1,4 +1,4 @@
-// strategies-tests/artifact-silence.strategy.spec.ts
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { GameEffectsService } from '../../game-mechanics/game-effects.service';
 import {
@@ -13,7 +13,7 @@ import { AnimationData } from '../../action/types/animation';
 import { SKILL } from '../types/skill';
 import { ArtifactSilenceStrategy } from '../strategies/artifact-silence.strategy';
 
-// Mock EFFECTS
+
 jest.mock('../../game-mechanics/constants/effects', () => ({
     EFFECTS: {
         artifact_silence: { id: 'artifact_silence', name: 'Artifact Silence' },

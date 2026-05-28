@@ -1,4 +1,3 @@
-// strategies-tests/fear.strategy.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { FearStrategy } from '../strategies/fear.strategy';
 import { ArtifactService } from '../artifact.service';

@@ -1,4 +1,4 @@
-// action-validator.service.spec.ts - исправленная версия
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { ActionValidatorService } from './action-validator.service';
 import { RestrictionService } from './restriction.service';
@@ -27,7 +27,7 @@ import { MAX_COUNT_ARTIFACTS_ON_LINE } from '../game-mechanics/constants/setting
 import { RESTRICTION } from './types/restriction';
 import { GameForLogic } from 'src/game-state/types/game-for-logic';
 
-// Mock EXTRA_ACTIONS
+
 jest.mock('./constants/extra-actions', () => ({
     EXTRA_ACTIONS: {
         throw_dice: {
@@ -51,7 +51,7 @@ jest.mock('./constants/extra-actions', () => ({
     },
 }));
 
-// Mock SKILLS
+
 jest.mock('../artifact/constants/skills', () => ({
     SKILLS: {
         fear: {
@@ -64,7 +64,7 @@ jest.mock('../artifact/constants/skills', () => ({
     },
 }));
 
-// Mock SPELLS
+
 jest.mock('../spell/constants/spells', () => ({
     SPELLS: {
         piercing_bolt: {
@@ -79,7 +79,6 @@ jest.mock('../spell/constants/spells', () => ({
     },
 }));
 
-// Mock SpellHelper
 jest.mock('../spell/spell.helper', () => ({
     SpellHelper: {
         getResource: jest.fn(() => 'destruction_mana'),
@@ -335,7 +334,6 @@ describe('ActionValidatorService', () => {
         beforeEach(() => {
             gameState = createMockGameState();
             artifact = gameState.player.artifacts['artifact-1'];
-            // Добавляем вражеский артефакт в gameState.enemy.artifacts
             gameState.enemy.artifacts = {
                 'enemy-artifact': createMockArtifact('enemy-artifact'),
             };
@@ -388,7 +386,6 @@ describe('ActionValidatorService', () => {
 
         beforeEach(() => {
             gameState = createMockGameState();
-            // Создаем заклинание напрямую в объекте spells
             gameState.player.spells = {
                 light: {},
                 dark: {},

@@ -56,7 +56,6 @@ export const EFFECT = {
     DARK_BLIGHT: 'dark_blight',
     DESTRUCTION_BLIGHT: 'destruction_blight',
     PIERCE: 'pierce',
-    // MULTISHOT: 'multishot',
 };
 
 export type Effect = (typeof EFFECT)[keyof typeof EFFECT];

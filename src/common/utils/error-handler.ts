@@ -3,7 +3,6 @@ import { LobbyException } from 'src/lobby/types/lobby-exceptions';
 import { CustomException } from '../custom.exception';
 
 export enum COMMON_ERROR_CODE {
-    // Общие ошибки (1000-1999)
     INTERNAL_SERVER_ERROR = 1000,
     USER_NOT_FOUND = 1001,
     UNAUTHORIZED = 1002,

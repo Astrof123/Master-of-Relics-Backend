@@ -54,7 +54,6 @@ export const ARTIFACT = {
     SHIVER: 'shiver',
     SPELLBLIGHTER: 'spellblighter',
     SPINEPIERCER: 'spinepiercer',
-    // MULTISHOT: 'multishot',
 };
 
 export type Artifact = (typeof ARTIFACT)[keyof typeof ARTIFACT];

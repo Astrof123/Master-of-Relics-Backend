@@ -1,7 +1,6 @@
 import { CustomException } from 'src/common/custom.exception';
 
 export enum LOBBY_ERROR_CODE {
-    // Ошибки лобби (1000-1999)
     LOBBY_NOT_FOUND = 1000,
     LOBBY_ALREADY_EXISTS = 1001,
     LOBBY_FULL = 1002,
@@ -14,7 +13,6 @@ export enum LOBBY_ERROR_CODE {
     INVITATION_NOT_FOUND = 1009,
     INVITATION_EXPIRED = 1010,
 
-    // Ошибки игроков (2000-2999)
     PLAYER_NOT_FOUND = 2000,
     PLAYER_ALREADY_IN_LOBBY = 2001,
     PLAYER_NOT_IN_LOBBY = 2002,

@@ -1,4 +1,4 @@
-// strategies-tests/eat-dark-mana.strategy.spec.ts
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { CombatService } from '../../game-mechanics/combat.service';
 import { ResourceService } from '../../game-mechanics/resource.service';
