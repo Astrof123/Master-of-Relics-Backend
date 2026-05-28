@@ -100,7 +100,6 @@ export class DraftService {
 
             try {
                 const gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
-                );
 
                 if (!gameState) {
                     await this.redisService.unwatch();
@@ -174,7 +173,6 @@ export class DraftService {
 
             try {
                 const gameState = await this.gameStateService.getGameForLogicById(gameId, userId);
-                );
 
                 if (!gameState) {
                     await this.redisService.unwatch();
