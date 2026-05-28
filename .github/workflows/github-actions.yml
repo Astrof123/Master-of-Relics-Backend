@@ -9,26 +9,26 @@ on:
 
 jobs:
   unit-tests:
-    name: 🧪 Unit Tests
+    name: Unit Tests
     runs-on: ubuntu-latest
     
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: 🔧 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.0'
           cache: 'npm'
       
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: npm ci
       
-      - name: 🧪 Run unit tests
+      - name: Run unit tests
         run: npm run test:cov
       
-      - name: 📊 Upload test coverage
+      - name: Upload test coverage
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -36,106 +36,92 @@ jobs:
           path: coverage/
           retention-days: 7
       
-      - name: 🔍 Run type checking
+      - name: Run type checking
         run: npx tsc --noEmit
 
   build:
-    name: 🏗️ Build Application
+    name: Build Application
     runs-on: ubuntu-latest
     needs: unit-tests
     
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: 🔧 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.0'
           cache: 'npm'
       
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: npm ci
       
-      - name: 🏗️ Build application
+      - name: Build application
         run: npm run build
       
-      - name: 📦 Archive build artifacts
+      - name: Archive build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
           retention-days: 7
       
-      - name: 🔍 Verify build
+      - name: Verify build
         run: |
           if [ -d "dist" ]; then
-            echo "✅ Build successful!"
-            echo "📁 Build contents:"
+            echo "Build successful!"
+            echo "Build contents:"
             ls -la dist/
-            echo "📊 Build size:"
+            echo "Build size:"
             du -sh dist/
           else
-            echo "❌ Build failed: dist directory not found"
+            echo "Build failed: dist directory not found"
             exit 1
           fi
 
-  docker-build:
-    name: 🐳 Docker Build
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
+  deploy:
+    name: Deploy to Server
+    runs-on: self-hosted
+    needs: build-check
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    environment: production
     
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-      
-      - name: 🔧 Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: 🐳 Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          load: true
-          tags: mor-backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      
-      - name: 🔍 Verify Docker image
+      - name: Pull latest code
         run: |
-          docker images | grep mor-backend
-          docker inspect mor-backend:latest > /dev/null && echo "✅ Docker image is valid"
-
-  status-check:
-    name: ✅ Status Check
-    runs-on: ubuntu-latest
-    needs: [unit-tests, build]
-    if: always()
-    
-    steps:
-      - name: 📊 Check all jobs status
+          cd /app/Master-of-Relics-Backend
+          git pull origin master
+          echo "Latest code pulled"
+      
+      - name: Deploy with docker compose
         run: |
-          echo "# CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Unit Tests | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ needs.docker-build.result }}" != "skipped" ]; then
-            echo "| Docker Build | ${{ needs.docker-build.result }} |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ needs.unit-tests.result }}" != "success" ] || \
-             [ "${{ needs.build.result }}" != "success" ]; then
-            echo "❌ **Pipeline failed!**" >> $GITHUB_STEP_SUMMARY
-            exit 1
-          else
-            echo "✅ **All checks passed!**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "📦 Build size: $(du -sh dist/ | cut -f1)" >> $GITHUB_STEP_SUMMARY
-          fi
+          cd /app
+          docker compose up -d --build backend
+          echo "Backend container restarted"
+      
+      - name: Clean up old images
+        run: |
+          docker image prune -f
+          echo "Old images cleaned"
+      
+      - name: Health check
+        run: |
+          echo "Waiting for backend to be ready..."
+          for i in {1..30}; do
+            if curl -s -f http://localhost:3000/health; then
+              echo "Backend is healthy!"
+              exit 0
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+          echo "Health check failed!"
+          exit 1
+      
+      - name: Show logs if failed
+        if: failure()
+        run: |
+          cd /app
+          echo "Deployment failed! Showing logs:"
+          docker compose logs --tail=50 backend
