@@ -97,7 +97,7 @@ jobs:
       - name: Deploy with docker compose
         run: |
           cd /app
-          docker compose up -d --build backend
+          docker compose up -d --no-deps --build backend
           echo "Backend container restarted"
       
       - name: Clean up old images
