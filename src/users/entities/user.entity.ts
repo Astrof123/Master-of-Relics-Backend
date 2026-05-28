@@ -28,12 +28,12 @@ export class User {
     nickname!: string;
 
     @ApiProperty({ example: 'john_doe', minLength: 4, maxLength: 30 })
-    @Column({ unique: true, length: 30})
+    @Column({ unique: true, length: 30 })
     @Index()
     login!: string;
 
     @ApiProperty({ example: '0421484233', minLength: 10, maxLength: 10 })
-    @Column({ unique: true, length: 10})
+    @Column({ unique: true, length: 10 })
     friendCode!: string;
 
     @Exclude()
@@ -45,7 +45,7 @@ export class User {
     @Column({ nullable: true, type: 'text' })
     banReason: string | null = null;
 
-    @Exclude() 
+    @Exclude()
     @ApiProperty()
     @Column({ nullable: true, type: 'timestamp' })
     bannedUntil: Date | null = null;
@@ -72,7 +72,7 @@ export class User {
     gold!: number;
 
     @OneToMany(() => UserCollection, (userCollection) => userCollection.user)
-    collections!: UserCollection[]; 
+    collections!: UserCollection[];
 
     @OneToMany(() => Deck, (deck) => deck.user)
     decks!: Deck[];

@@ -14,7 +14,6 @@ import { Exclude } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from './user.entity';
 
-
 @Entity('users_stats')
 export class UserStats {
     @ApiProperty({ example: 1 })

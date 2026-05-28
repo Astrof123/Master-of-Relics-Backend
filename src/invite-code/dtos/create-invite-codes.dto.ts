@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsNotEmpty, IsString, MinLength, MaxLength, IsOptional, IsInt, Min, Max, IsBoolean } from 'class-validator';
+import {
+    IsNumber,
+    IsNotEmpty,
+    IsString,
+    MinLength,
+    MaxLength,
+    IsOptional,
+    IsInt,
+    Min,
+    Max,
+    IsBoolean,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import type { InviteCodeStatus } from '../types/invite-code';
 

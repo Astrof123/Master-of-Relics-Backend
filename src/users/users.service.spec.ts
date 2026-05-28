@@ -93,12 +93,18 @@ describe('UsersService', () => {
 
         service = module.get<UsersService>(UsersService);
         userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-        userStatsRepository = module.get<Repository<UserStats>>(getRepositoryToken(UserStats));
-        friendRelationShipRepository = module.get<Repository<FriendRelationShip>>(
-            getRepositoryToken(FriendRelationShip),
+        userStatsRepository = module.get<Repository<UserStats>>(
+            getRepositoryToken(UserStats),
         );
-        reportRepository = module.get<Repository<Report>>(getRepositoryToken(Report));
-        socketConnectionService = module.get<SocketConnectionService>(SocketConnectionService);
+        friendRelationShipRepository = module.get<
+            Repository<FriendRelationShip>
+        >(getRepositoryToken(FriendRelationShip));
+        reportRepository = module.get<Repository<Report>>(
+            getRepositoryToken(Report),
+        );
+        socketConnectionService = module.get<SocketConnectionService>(
+            SocketConnectionService,
+        );
 
         jest.clearAllMocks();
     });
@@ -119,14 +125,22 @@ describe('UsersService', () => {
             mockUserRepository.find.mockResolvedValue(users);
             mockFriendRelationShipRepository.findOne.mockResolvedValue(null);
 
-            const result = await service.findFriends(findFriendsDto, currentUserId);
+            const result = await service.findFriends(
+                findFriendsDto,
+                currentUserId,
+            );
 
             expect(mockUserRepository.find).toHaveBeenCalledWith({
-                where: { id: Not(currentUserId), friendCode: findFriendsDto.searchQuery },
+                where: {
+                    id: Not(currentUserId),
+                    friendCode: findFriendsDto.searchQuery,
+                },
                 take: 12,
             });
             expect(result).toEqual(users);
-            expect(mockFriendRelationShipRepository.findOne).toHaveBeenCalledTimes(2);
+            expect(
+                mockFriendRelationShipRepository.findOne,
+            ).toHaveBeenCalledTimes(2);
         });
 
         it('should exclude users that already have friendship', async () => {
@@ -142,7 +156,10 @@ describe('UsersService', () => {
                 .mockResolvedValueOnce({ id: 'friendship-1' })
                 .mockResolvedValueOnce(null);
 
-            const result = await service.findFriends(findFriendsDto, currentUserId);
+            const result = await service.findFriends(
+                findFriendsDto,
+                currentUserId,
+            );
 
             expect(result).toEqual([users[1]]);
         });
@@ -151,7 +168,11 @@ describe('UsersService', () => {
     describe('findOne', () => {
         it('should return user if found', async () => {
             const userId = 'user-1';
-            const user = { id: userId, nickname: 'TestUser', bannedUntil: null };
+            const user = {
+                id: userId,
+                nickname: 'TestUser',
+                bannedUntil: null,
+            };
 
             mockUserRepository.findOne.mockResolvedValue(user);
 
@@ -168,7 +189,9 @@ describe('UsersService', () => {
 
             mockUserRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.findOne(userId)).rejects.toThrow(UserNotFoundException);
+            await expect(service.findOne(userId)).rejects.toThrow(
+                UserNotFoundException,
+            );
         });
 
         it('should clear expired ban', async () => {
@@ -183,7 +206,11 @@ describe('UsersService', () => {
             };
 
             mockUserRepository.findOne.mockResolvedValue(user);
-            mockUserRepository.save.mockResolvedValue({ ...user, bannedUntil: null, banReason: null });
+            mockUserRepository.save.mockResolvedValue({
+                ...user,
+                bannedUntil: null,
+                banReason: null,
+            });
 
             const result = await service.findOne(userId);
 
@@ -236,8 +263,12 @@ describe('UsersService', () => {
             ];
 
             mockUserRepository.findOne.mockResolvedValue(user);
-            mockFriendRelationShipRepository.find.mockResolvedValue(friendships);
-            mockSocketConnectionService.getOnlinePlayers.mockResolvedValue(['user-2']);
+            mockFriendRelationShipRepository.find.mockResolvedValue(
+                friendships,
+            );
+            mockSocketConnectionService.getOnlinePlayers.mockResolvedValue([
+                'user-2',
+            ]);
 
             const result = await service.getFriends(userId);
 
@@ -261,7 +292,9 @@ describe('UsersService', () => {
 
             mockUserRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.getFriends(userId)).rejects.toThrow(UserNotFoundException);
+            await expect(service.getFriends(userId)).rejects.toThrow(
+                UserNotFoundException,
+            );
         });
     });
 
@@ -273,21 +306,32 @@ describe('UsersService', () => {
         it('should return user profile for other user', async () => {
             const profileId = 'user-2';
             const currentUserId = 'user-1';
-            const user = { id: profileId, nickname: 'ProfileUser', bannedUntil: null };
+            const user = {
+                id: profileId,
+                nickname: 'ProfileUser',
+                bannedUntil: null,
+            };
             const userStats = { wins: 10, winSeries: 3, totalGames: 15 };
             const currentUser = { id: currentUserId, nickname: 'CurrentUser' };
             const mockFriends = [
-                { id: 'friend-1', nickname: 'Friend1', friendId: 'friend-1-id', isOnline: false }
+                {
+                    id: 'friend-1',
+                    nickname: 'Friend1',
+                    friendId: 'friend-1-id',
+                    isOnline: false,
+                },
             ];
 
             mockUserRepository.findOne
                 .mockResolvedValueOnce(user)
                 .mockResolvedValueOnce(currentUser);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(userStats);
-            
-            jest.spyOn(service, 'getFriends').mockResolvedValue(mockFriends as any);
-            
+
+            jest.spyOn(service, 'getFriends').mockResolvedValue(
+                mockFriends as any,
+            );
+
             mockFriendRelationShipRepository.findOne.mockResolvedValue(null);
             mockReportRepository.findOne.mockResolvedValue(null);
             mockSocketConnectionService.getOnlinePlayers.mockResolvedValue([]);
@@ -310,14 +354,18 @@ describe('UsersService', () => {
                 offersFriendship: null,
                 isBanned: false,
             });
-            
+
             jest.restoreAllMocks();
         });
 
         it('should return profile with friendship offers for current user', async () => {
             const profileId = 'user-1';
             const currentUserId = 'user-1';
-            const user = { id: profileId, nickname: 'CurrentUser', bannedUntil: null };
+            const user = {
+                id: profileId,
+                nickname: 'CurrentUser',
+                bannedUntil: null,
+            };
             const userStats = { wins: 5, winSeries: 1, totalGames: 8 };
             const currentUser = { id: currentUserId, nickname: 'CurrentUser' };
             const offers = [
@@ -327,29 +375,40 @@ describe('UsersService', () => {
                 },
             ];
             const mockFriends = [
-                { id: 'friend-1', nickname: 'Friend1', friendId: 'friend-1-id', isOnline: false }
+                {
+                    id: 'friend-1',
+                    nickname: 'Friend1',
+                    friendId: 'friend-1-id',
+                    isOnline: false,
+                },
             ];
 
             mockUserRepository.findOne
                 .mockResolvedValueOnce(user)
                 .mockResolvedValueOnce(currentUser);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(userStats);
-            
-            jest.spyOn(service, 'getFriends').mockResolvedValue(mockFriends as any);
-            
+
+            jest.spyOn(service, 'getFriends').mockResolvedValue(
+                mockFriends as any,
+            );
+
             mockFriendRelationShipRepository.findOne.mockResolvedValue(null);
             mockReportRepository.findOne.mockResolvedValue(null);
             mockSocketConnectionService.getOnlinePlayers.mockResolvedValue([]);
-            
+
             mockFriendRelationShipRepository.find.mockResolvedValueOnce(offers);
 
             const result = await service.profile(profileId, currentUserId);
 
             expect(result.offersFriendship).toEqual([
-                { id: 'offer-1', nickname: 'Requester1', requesterId: 'user-2' },
+                {
+                    id: 'offer-1',
+                    nickname: 'Requester1',
+                    requesterId: 'user-2',
+                },
             ]);
-            
+
             jest.restoreAllMocks();
         });
 
@@ -359,9 +418,9 @@ describe('UsersService', () => {
 
             mockUserRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.profile(profileId, currentUserId)).rejects.toThrow(
-                UserNotFoundException,
-            );
+            await expect(
+                service.profile(profileId, currentUserId),
+            ).rejects.toThrow(UserNotFoundException);
         });
 
         it('should throw UserStatsNotFoundException if stats not found', async () => {
@@ -372,9 +431,9 @@ describe('UsersService', () => {
             mockUserRepository.findOne.mockResolvedValue(user);
             mockUserStatsRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.profile(profileId, currentUserId)).rejects.toThrow(
-                UserStatsNotFoundException,
-            );
+            await expect(
+                service.profile(profileId, currentUserId),
+            ).rejects.toThrow(UserStatsNotFoundException);
         });
 
         it('should throw UserNotFoundException for invalid UUID', async () => {
@@ -382,9 +441,9 @@ describe('UsersService', () => {
             const profileId = 'invalid-uuid';
             const currentUserId = 'user-1';
 
-            await expect(service.profile(profileId, currentUserId)).rejects.toThrow(
-                UserNotFoundException,
-            );
+            await expect(
+                service.profile(profileId, currentUserId),
+            ).rejects.toThrow(UserNotFoundException);
         });
     });
 
@@ -399,17 +458,25 @@ describe('UsersService', () => {
             mockUserRepository.findOne
                 .mockResolvedValueOnce(friend)
                 .mockResolvedValueOnce(currentUser);
-            mockFriendRelationShipRepository.create.mockReturnValue(newRelation);
-            mockFriendRelationShipRepository.save.mockResolvedValue(newRelation);
+            mockFriendRelationShipRepository.create.mockReturnValue(
+                newRelation,
+            );
+            mockFriendRelationShipRepository.save.mockResolvedValue(
+                newRelation,
+            );
 
             await service.offerFriendship(friendId, currentUserId);
 
-            expect(mockFriendRelationShipRepository.create).toHaveBeenCalledWith({
+            expect(
+                mockFriendRelationShipRepository.create,
+            ).toHaveBeenCalledWith({
                 addresseeId: friendId,
                 requesterId: currentUserId,
                 status: RELATIONSHIP.OFFER,
             });
-            expect(mockFriendRelationShipRepository.save).toHaveBeenCalledWith(newRelation);
+            expect(mockFriendRelationShipRepository.save).toHaveBeenCalledWith(
+                newRelation,
+            );
         });
 
         it('should throw UserNotFoundException if friend not found', async () => {
@@ -418,9 +485,9 @@ describe('UsersService', () => {
 
             mockUserRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.offerFriendship(friendId, currentUserId)).rejects.toThrow(
-                UserNotFoundException,
-            );
+            await expect(
+                service.offerFriendship(friendId, currentUserId),
+            ).rejects.toThrow(UserNotFoundException);
         });
 
         it('should throw InvalidFriendException if trying to befriend self', async () => {
@@ -430,9 +497,9 @@ describe('UsersService', () => {
 
             mockUserRepository.findOne.mockResolvedValue(user);
 
-            await expect(service.offerFriendship(friendId, currentUserId)).rejects.toThrow(
-                InvalidFriendException,
-            );
+            await expect(
+                service.offerFriendship(friendId, currentUserId),
+            ).rejects.toThrow(InvalidFriendException);
         });
     });
 
@@ -445,7 +512,9 @@ describe('UsersService', () => {
                 status: RELATIONSHIP.OFFER,
             };
 
-            mockFriendRelationShipRepository.findOne.mockResolvedValue(friendship);
+            mockFriendRelationShipRepository.findOne.mockResolvedValue(
+                friendship,
+            );
             mockFriendRelationShipRepository.save.mockResolvedValue({
                 ...friendship,
                 status: RELATIONSHIP.FRIEND,
@@ -454,16 +523,18 @@ describe('UsersService', () => {
             await service.acceptFriendship(friendId, currentUserId);
 
             expect(friendship.status).toBe(RELATIONSHIP.FRIEND);
-            expect(mockFriendRelationShipRepository.save).toHaveBeenCalledWith(friendship);
+            expect(mockFriendRelationShipRepository.save).toHaveBeenCalledWith(
+                friendship,
+            );
         });
 
         it('should throw InvalidFriendException if trying to accept self', async () => {
             const friendId = 'user-1';
             const currentUserId = 'user-1';
 
-            await expect(service.acceptFriendship(friendId, currentUserId)).rejects.toThrow(
-                InvalidFriendException,
-            );
+            await expect(
+                service.acceptFriendship(friendId, currentUserId),
+            ).rejects.toThrow(InvalidFriendException);
         });
 
         it('should throw FriendshipNotFoundException if friendship not found', async () => {
@@ -472,9 +543,9 @@ describe('UsersService', () => {
 
             mockFriendRelationShipRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.acceptFriendship(friendId, currentUserId)).rejects.toThrow(
-                FriendshipNotFoundException,
-            );
+            await expect(
+                service.acceptFriendship(friendId, currentUserId),
+            ).rejects.toThrow(FriendshipNotFoundException);
         });
     });
 
@@ -484,20 +555,24 @@ describe('UsersService', () => {
             const currentUserId = 'user-1';
             const friendship = { id: 'friendship-1' };
 
-            mockFriendRelationShipRepository.findOne.mockResolvedValue(friendship);
+            mockFriendRelationShipRepository.findOne.mockResolvedValue(
+                friendship,
+            );
 
             await service.breakoffFriendship(friendId, currentUserId);
 
-            expect(mockFriendRelationShipRepository.softDelete).toHaveBeenCalledWith('friendship-1');
+            expect(
+                mockFriendRelationShipRepository.softDelete,
+            ).toHaveBeenCalledWith('friendship-1');
         });
 
         it('should throw InvalidFriendException if trying to breakoff self', async () => {
             const friendId = 'user-1';
             const currentUserId = 'user-1';
 
-            await expect(service.breakoffFriendship(friendId, currentUserId)).rejects.toThrow(
-                InvalidFriendException,
-            );
+            await expect(
+                service.breakoffFriendship(friendId, currentUserId),
+            ).rejects.toThrow(InvalidFriendException);
         });
 
         it('should throw FriendshipNotFoundException if friendship not found', async () => {
@@ -506,9 +581,9 @@ describe('UsersService', () => {
 
             mockFriendRelationShipRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.breakoffFriendship(friendId, currentUserId)).rejects.toThrow(
-                FriendshipNotFoundException,
-            );
+            await expect(
+                service.breakoffFriendship(friendId, currentUserId),
+            ).rejects.toThrow(FriendshipNotFoundException);
         });
     });
 
@@ -548,9 +623,9 @@ describe('UsersService', () => {
 
             mockUserRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.reportUser(reportDto, currentUserId)).rejects.toThrow(
-                UserNotFoundException,
-            );
+            await expect(
+                service.reportUser(reportDto, currentUserId),
+            ).rejects.toThrow(UserNotFoundException);
         });
     });
 
@@ -561,7 +636,12 @@ describe('UsersService', () => {
                 text: 'Spam',
                 bannedUntil: '2025-12-31',
             };
-            const user = { id: 'user-2', nickname: 'BadUser', banReason: null, bannedUntil: null };
+            const user = {
+                id: 'user-2',
+                nickname: 'BadUser',
+                banReason: null,
+                bannedUntil: null,
+            };
             const reports = [
                 { id: 'report-1', isProcessed: false },
                 { id: 'report-2', isProcessed: false },
@@ -591,7 +671,9 @@ describe('UsersService', () => {
 
             mockUserRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.banUser(banDto)).rejects.toThrow(UserNotFoundException);
+            await expect(service.banUser(banDto)).rejects.toThrow(
+                UserNotFoundException,
+            );
         });
     });
 
@@ -605,7 +687,11 @@ describe('UsersService', () => {
             };
 
             mockUserRepository.findOne.mockResolvedValue(user);
-            mockUserRepository.save.mockResolvedValue({ ...user, banReason: null, bannedUntil: null });
+            mockUserRepository.save.mockResolvedValue({
+                ...user,
+                banReason: null,
+                bannedUntil: null,
+            });
 
             await service.unbanUser(unbanDto);
 
@@ -619,7 +705,9 @@ describe('UsersService', () => {
 
             mockUserRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.unbanUser(unbanDto)).rejects.toThrow(UserNotFoundException);
+            await expect(service.unbanUser(unbanDto)).rejects.toThrow(
+                UserNotFoundException,
+            );
         });
     });
 
@@ -639,7 +727,9 @@ describe('UsersService', () => {
                 getManyAndCount: jest.fn().mockResolvedValue([reports, 2]),
             };
 
-            mockReportRepository.createQueryBuilder.mockReturnValue(queryBuilderMock);
+            mockReportRepository.createQueryBuilder.mockReturnValue(
+                queryBuilderMock,
+            );
 
             const result = await service.getReports(getReportsDto);
 
@@ -650,7 +740,9 @@ describe('UsersService', () => {
                 limit: 10,
                 totalPages: 1,
             });
-            expect(mockReportRepository.createQueryBuilder).toHaveBeenCalledWith('report');
+            expect(
+                mockReportRepository.createQueryBuilder,
+            ).toHaveBeenCalledWith('report');
         });
 
         it('should apply filters correctly', async () => {
@@ -672,7 +764,9 @@ describe('UsersService', () => {
                 getManyAndCount: jest.fn().mockResolvedValue([reports, 1]),
             };
 
-            mockReportRepository.createQueryBuilder.mockReturnValue(queryBuilderMock);
+            mockReportRepository.createQueryBuilder.mockReturnValue(
+                queryBuilderMock,
+            );
 
             await service.getReports(getReportsDto);
 
@@ -697,7 +791,9 @@ describe('UsersService', () => {
                 getManyAndCount: jest.fn().mockResolvedValue([users, 2]),
             };
 
-            mockUserRepository.createQueryBuilder.mockReturnValue(queryBuilderMock);
+            mockUserRepository.createQueryBuilder.mockReturnValue(
+                queryBuilderMock,
+            );
 
             const result = await service.getAllUsers(getUsersDto);
 
@@ -727,7 +823,9 @@ describe('UsersService', () => {
                 getManyAndCount: jest.fn().mockResolvedValue([users, 1]),
             };
 
-            mockUserRepository.createQueryBuilder.mockReturnValue(queryBuilderMock);
+            mockUserRepository.createQueryBuilder.mockReturnValue(
+                queryBuilderMock,
+            );
 
             await service.getAllUsers(getUsersDto);
 
@@ -737,11 +835,17 @@ describe('UsersService', () => {
 
     describe('setAdmin', () => {
         it('should set admin status', async () => {
-            const setAdminDto: SetAdminDto = { userId: 'user-2', isAdmin: true };
+            const setAdminDto: SetAdminDto = {
+                userId: 'user-2',
+                isAdmin: true,
+            };
             const user = { id: 'user-2', isAdmin: false };
 
             mockUserRepository.findOne.mockResolvedValue(user);
-            mockUserRepository.save.mockResolvedValue({ ...user, isAdmin: true });
+            mockUserRepository.save.mockResolvedValue({
+                ...user,
+                isAdmin: true,
+            });
 
             await service.setAdmin(setAdminDto);
 
@@ -750,11 +854,17 @@ describe('UsersService', () => {
         });
 
         it('should remove admin status', async () => {
-            const setAdminDto: SetAdminDto = { userId: 'user-2', isAdmin: false };
+            const setAdminDto: SetAdminDto = {
+                userId: 'user-2',
+                isAdmin: false,
+            };
             const user = { id: 'user-2', isAdmin: true };
 
             mockUserRepository.findOne.mockResolvedValue(user);
-            mockUserRepository.save.mockResolvedValue({ ...user, isAdmin: false });
+            mockUserRepository.save.mockResolvedValue({
+                ...user,
+                isAdmin: false,
+            });
 
             await service.setAdmin(setAdminDto);
 
@@ -763,11 +873,16 @@ describe('UsersService', () => {
         });
 
         it('should throw UserNotFoundException if user not found', async () => {
-            const setAdminDto: SetAdminDto = { userId: 'non-existent', isAdmin: true };
+            const setAdminDto: SetAdminDto = {
+                userId: 'non-existent',
+                isAdmin: true,
+            };
 
             mockUserRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.setAdmin(setAdminDto)).rejects.toThrow(UserNotFoundException);
+            await expect(service.setAdmin(setAdminDto)).rejects.toThrow(
+                UserNotFoundException,
+            );
         });
     });
 });

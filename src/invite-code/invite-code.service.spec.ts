@@ -12,7 +12,7 @@ import { INVITE_CODE_STATUS } from './types/invite-code';
 const createMockInviteCode = (
     id: string,
     status: string = INVITE_CODE_STATUS.FREE,
-    userId?: string
+    userId?: string,
 ): InviteCode => {
     const inviteCode = new InviteCode();
     inviteCode.id = id;
@@ -81,19 +81,38 @@ describe('InviteCodeService', () => {
         it('should return paginated invite codes without filters', async () => {
             const mockInviteCodes = [
                 createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE),
-                createMockInviteCode('code-2', INVITE_CODE_STATUS.USED, 'user-1'),
+                createMockInviteCode(
+                    'code-2',
+                    INVITE_CODE_STATUS.USED,
+                    'user-1',
+                ),
             ];
             const total = 2;
             const mockQueryBuilder = createMockQueryBuilder();
-            mockQueryBuilder.getManyAndCount.mockResolvedValue([mockInviteCodes, total]);
+            mockQueryBuilder.getManyAndCount.mockResolvedValue([
+                mockInviteCodes,
+                total,
+            ]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
-            const result = await service.getInviteCodes(defaultGetInviteCodesDto);
+            const result = await service.getInviteCodes(
+                defaultGetInviteCodesDto,
+            );
 
-            expect(mockInviteCodeRepository.createQueryBuilder).toHaveBeenCalledWith('inviteCode');
-            expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('inviteCode.user', 'user');
-            expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('inviteCode.createdAt', 'DESC');
+            expect(
+                mockInviteCodeRepository.createQueryBuilder,
+            ).toHaveBeenCalledWith('inviteCode');
+            expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+                'inviteCode.user',
+                'user',
+            );
+            expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+                'inviteCode.createdAt',
+                'DESC',
+            );
             expect(mockQueryBuilder.skip).toHaveBeenCalledWith(0);
             expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
             expect(result).toEqual({
@@ -110,17 +129,24 @@ describe('InviteCodeService', () => {
                 ...defaultGetInviteCodesDto,
                 inviteCodeId: 'test-id',
             };
-            const mockInviteCodes = [createMockInviteCode('test-id-123', INVITE_CODE_STATUS.FREE)];
+            const mockInviteCodes = [
+                createMockInviteCode('test-id-123', INVITE_CODE_STATUS.FREE),
+            ];
             const mockQueryBuilder = createMockQueryBuilder();
-            mockQueryBuilder.getManyAndCount.mockResolvedValue([mockInviteCodes, 1]);
+            mockQueryBuilder.getManyAndCount.mockResolvedValue([
+                mockInviteCodes,
+                1,
+            ]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
             const result = await service.getInviteCodes(getInviteCodesDto);
 
             expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
                 'CAST(inviteCode.id AS TEXT) LIKE :inviteCodeId',
-                { inviteCodeId: '%test-id%' }
+                { inviteCodeId: '%test-id%' },
             );
             expect(result.data).toHaveLength(1);
         });
@@ -130,17 +156,28 @@ describe('InviteCodeService', () => {
                 ...defaultGetInviteCodesDto,
                 status: INVITE_CODE_STATUS.USED,
             };
-            const mockInviteCodes = [createMockInviteCode('code-1', INVITE_CODE_STATUS.USED, 'user-1')];
+            const mockInviteCodes = [
+                createMockInviteCode(
+                    'code-1',
+                    INVITE_CODE_STATUS.USED,
+                    'user-1',
+                ),
+            ];
             const mockQueryBuilder = createMockQueryBuilder();
-            mockQueryBuilder.getManyAndCount.mockResolvedValue([mockInviteCodes, 1]);
+            mockQueryBuilder.getManyAndCount.mockResolvedValue([
+                mockInviteCodes,
+                1,
+            ]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
             const result = await service.getInviteCodes(getInviteCodesDto);
 
             expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
                 'inviteCode.status = :status',
-                { status: INVITE_CODE_STATUS.USED }
+                { status: INVITE_CODE_STATUS.USED },
             );
             expect(result.data).toHaveLength(1);
         });
@@ -151,17 +188,24 @@ describe('InviteCodeService', () => {
                 ...defaultGetInviteCodesDto,
                 startDate,
             };
-            const mockInviteCodes = [createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE)];
+            const mockInviteCodes = [
+                createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE),
+            ];
             const mockQueryBuilder = createMockQueryBuilder();
-            mockQueryBuilder.getManyAndCount.mockResolvedValue([mockInviteCodes, 1]);
+            mockQueryBuilder.getManyAndCount.mockResolvedValue([
+                mockInviteCodes,
+                1,
+            ]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
             await service.getInviteCodes(getInviteCodesDto);
 
             expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
                 'inviteCode.createdAt >= :startDate',
-                expect.objectContaining({ startDate: expect.any(Date) })
+                expect.objectContaining({ startDate: expect.any(Date) }),
             );
         });
 
@@ -171,17 +215,24 @@ describe('InviteCodeService', () => {
                 ...defaultGetInviteCodesDto,
                 endDate,
             };
-            const mockInviteCodes = [createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE)];
+            const mockInviteCodes = [
+                createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE),
+            ];
             const mockQueryBuilder = createMockQueryBuilder();
-            mockQueryBuilder.getManyAndCount.mockResolvedValue([mockInviteCodes, 1]);
+            mockQueryBuilder.getManyAndCount.mockResolvedValue([
+                mockInviteCodes,
+                1,
+            ]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
             await service.getInviteCodes(getInviteCodesDto);
 
             expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
                 'inviteCode.createdAt <= :endDate',
-                expect.objectContaining({ endDate: expect.any(Date) })
+                expect.objectContaining({ endDate: expect.any(Date) }),
             );
         });
 
@@ -191,11 +242,18 @@ describe('InviteCodeService', () => {
                 startDate: '2024-01-01',
                 endDate: '2024-12-31',
             };
-            const mockInviteCodes = [createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE)];
+            const mockInviteCodes = [
+                createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE),
+            ];
             const mockQueryBuilder = createMockQueryBuilder();
-            mockQueryBuilder.getManyAndCount.mockResolvedValue([mockInviteCodes, 1]);
+            mockQueryBuilder.getManyAndCount.mockResolvedValue([
+                mockInviteCodes,
+                1,
+            ]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
             await service.getInviteCodes(getInviteCodesDto);
 
@@ -211,11 +269,18 @@ describe('InviteCodeService', () => {
                 startDate: '2024-01-01',
                 endDate: '2024-12-31',
             };
-            const mockInviteCodes = [createMockInviteCode('test-123', INVITE_CODE_STATUS.FREE)];
+            const mockInviteCodes = [
+                createMockInviteCode('test-123', INVITE_CODE_STATUS.FREE),
+            ];
             const mockQueryBuilder = createMockQueryBuilder();
-            mockQueryBuilder.getManyAndCount.mockResolvedValue([mockInviteCodes, 1]);
+            mockQueryBuilder.getManyAndCount.mockResolvedValue([
+                mockInviteCodes,
+                1,
+            ]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
             const result = await service.getInviteCodes(getInviteCodesDto);
 
@@ -230,9 +295,14 @@ describe('InviteCodeService', () => {
             const getInviteCodesDto: GetInviteCodesDto = {};
             const mockInviteCodes: InviteCode[] = [];
             const mockQueryBuilder = createMockQueryBuilder();
-            mockQueryBuilder.getManyAndCount.mockResolvedValue([mockInviteCodes, 0]);
+            mockQueryBuilder.getManyAndCount.mockResolvedValue([
+                mockInviteCodes,
+                0,
+            ]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
             const result = await service.getInviteCodes(getInviteCodesDto);
 
@@ -244,14 +314,21 @@ describe('InviteCodeService', () => {
 
         it('should calculate totalPages correctly', async () => {
             const getInviteCodesDto: GetInviteCodesDto = { page: 1, limit: 5 };
-            const mockInviteCodes = Array(5).fill(null).map((_, i) => 
-                createMockInviteCode(`code-${i}`, INVITE_CODE_STATUS.FREE)
-            );
+            const mockInviteCodes = Array(5)
+                .fill(null)
+                .map((_, i) =>
+                    createMockInviteCode(`code-${i}`, INVITE_CODE_STATUS.FREE),
+                );
             const total = 12;
             const mockQueryBuilder = createMockQueryBuilder();
-            mockQueryBuilder.getManyAndCount.mockResolvedValue([mockInviteCodes, total]);
+            mockQueryBuilder.getManyAndCount.mockResolvedValue([
+                mockInviteCodes,
+                total,
+            ]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
             const result = await service.getInviteCodes(getInviteCodesDto);
 
@@ -275,7 +352,9 @@ describe('InviteCodeService', () => {
                 code.status = data.status;
                 return code;
             });
-            mockInviteCodeRepository.save.mockImplementation((code) => Promise.resolve(code));
+            mockInviteCodeRepository.save.mockImplementation((code) =>
+                Promise.resolve(code),
+            );
 
             const result = await service.createInviteCodes(createDto);
 
@@ -289,7 +368,10 @@ describe('InviteCodeService', () => {
 
         it('should create single invite code when count is 1', async () => {
             const createDto: CreateInviteCodesDto = { count: 1 };
-            const mockInviteCode = createMockInviteCode('single-code', INVITE_CODE_STATUS.FREE);
+            const mockInviteCode = createMockInviteCode(
+                'single-code',
+                INVITE_CODE_STATUS.FREE,
+            );
 
             mockInviteCodeRepository.create.mockReturnValue(mockInviteCode);
             mockInviteCodeRepository.save.mockResolvedValue(mockInviteCode);
@@ -303,9 +385,14 @@ describe('InviteCodeService', () => {
 
         it('should create 10 invite codes (maximum)', async () => {
             const createDto: CreateInviteCodesDto = { count: 10 };
-            const mockInviteCodes = Array(10).fill(null).map(() => 
-                createMockInviteCode(`code-${Math.random()}`, INVITE_CODE_STATUS.FREE)
-            );
+            const mockInviteCodes = Array(10)
+                .fill(null)
+                .map(() =>
+                    createMockInviteCode(
+                        `code-${Math.random()}`,
+                        INVITE_CODE_STATUS.FREE,
+                    ),
+                );
 
             mockInviteCodeRepository.create.mockImplementation((data) => {
                 const code = new InviteCode();
@@ -313,7 +400,9 @@ describe('InviteCodeService', () => {
                 code.status = data.status;
                 return code;
             });
-            mockInviteCodeRepository.save.mockImplementation((code) => Promise.resolve(code));
+            mockInviteCodeRepository.save.mockImplementation((code) =>
+                Promise.resolve(code),
+            );
 
             const result = await service.createInviteCodes(createDto);
 
@@ -330,18 +419,25 @@ describe('InviteCodeService', () => {
         };
 
         it('should change invite code status successfully', async () => {
-            const existingInviteCode = createMockInviteCode('code-123', INVITE_CODE_STATUS.FREE);
+            const existingInviteCode = createMockInviteCode(
+                'code-123',
+                INVITE_CODE_STATUS.FREE,
+            );
 
-            mockInviteCodeRepository.findOne.mockResolvedValue(existingInviteCode);
+            mockInviteCodeRepository.findOne.mockResolvedValue(
+                existingInviteCode,
+            );
             mockInviteCodeRepository.save.mockResolvedValue(existingInviteCode);
 
             await service.changeStatus(changeStatusDto);
 
             expect(mockInviteCodeRepository.findOne).toHaveBeenCalledWith({
-                where: { id: changeStatusDto.inviteCodeId }
+                where: { id: changeStatusDto.inviteCodeId },
             });
             expect(existingInviteCode.status).toBe(INVITE_CODE_STATUS.BOOKED);
-            expect(mockInviteCodeRepository.save).toHaveBeenCalledWith(existingInviteCode);
+            expect(mockInviteCodeRepository.save).toHaveBeenCalledWith(
+                existingInviteCode,
+            );
         });
 
         it('should change status from FREE to USED', async () => {
@@ -349,9 +445,14 @@ describe('InviteCodeService', () => {
                 inviteCodeId: 'code-123',
                 newStatus: INVITE_CODE_STATUS.USED,
             };
-            const existingInviteCode = createMockInviteCode('code-123', INVITE_CODE_STATUS.FREE);
+            const existingInviteCode = createMockInviteCode(
+                'code-123',
+                INVITE_CODE_STATUS.FREE,
+            );
 
-            mockInviteCodeRepository.findOne.mockResolvedValue(existingInviteCode);
+            mockInviteCodeRepository.findOne.mockResolvedValue(
+                existingInviteCode,
+            );
             mockInviteCodeRepository.save.mockResolvedValue(existingInviteCode);
 
             await service.changeStatus(changeStatusDto);
@@ -364,9 +465,14 @@ describe('InviteCodeService', () => {
                 inviteCodeId: 'code-123',
                 newStatus: INVITE_CODE_STATUS.FREE,
             };
-            const existingInviteCode = createMockInviteCode('code-123', INVITE_CODE_STATUS.BOOKED);
+            const existingInviteCode = createMockInviteCode(
+                'code-123',
+                INVITE_CODE_STATUS.BOOKED,
+            );
 
-            mockInviteCodeRepository.findOne.mockResolvedValue(existingInviteCode);
+            mockInviteCodeRepository.findOne.mockResolvedValue(
+                existingInviteCode,
+            );
             mockInviteCodeRepository.save.mockResolvedValue(existingInviteCode);
 
             await service.changeStatus(changeStatusDto);
@@ -378,7 +484,7 @@ describe('InviteCodeService', () => {
             mockInviteCodeRepository.findOne.mockResolvedValue(null);
 
             await expect(service.changeStatus(changeStatusDto)).rejects.toThrow(
-                InviteCodeNotFoundException
+                InviteCodeNotFoundException,
             );
             expect(mockInviteCodeRepository.save).not.toHaveBeenCalled();
         });
@@ -388,36 +494,55 @@ describe('InviteCodeService', () => {
         const inviteCodeId = 'code-123';
 
         it('should soft delete invite code successfully', async () => {
-            const existingInviteCode = createMockInviteCode(inviteCodeId, INVITE_CODE_STATUS.FREE);
+            const existingInviteCode = createMockInviteCode(
+                inviteCodeId,
+                INVITE_CODE_STATUS.FREE,
+            );
 
-            mockInviteCodeRepository.findOne.mockResolvedValue(existingInviteCode);
-            mockInviteCodeRepository.softDelete.mockResolvedValue({ affected: 1 } as any);
+            mockInviteCodeRepository.findOne.mockResolvedValue(
+                existingInviteCode,
+            );
+            mockInviteCodeRepository.softDelete.mockResolvedValue({
+                affected: 1,
+            } as any);
 
             await service.deleteInviteCode(inviteCodeId);
 
             expect(mockInviteCodeRepository.findOne).toHaveBeenCalledWith({
-                where: { id: inviteCodeId }
+                where: { id: inviteCodeId },
             });
-            expect(mockInviteCodeRepository.softDelete).toHaveBeenCalledWith(existingInviteCode.id);
+            expect(mockInviteCodeRepository.softDelete).toHaveBeenCalledWith(
+                existingInviteCode.id,
+            );
         });
 
         it('should soft delete used invite code', async () => {
-            const existingInviteCode = createMockInviteCode(inviteCodeId, INVITE_CODE_STATUS.USED, 'user-1');
+            const existingInviteCode = createMockInviteCode(
+                inviteCodeId,
+                INVITE_CODE_STATUS.USED,
+                'user-1',
+            );
 
-            mockInviteCodeRepository.findOne.mockResolvedValue(existingInviteCode);
-            mockInviteCodeRepository.softDelete.mockResolvedValue({ affected: 1 } as any);
+            mockInviteCodeRepository.findOne.mockResolvedValue(
+                existingInviteCode,
+            );
+            mockInviteCodeRepository.softDelete.mockResolvedValue({
+                affected: 1,
+            } as any);
 
             await service.deleteInviteCode(inviteCodeId);
 
-            expect(mockInviteCodeRepository.softDelete).toHaveBeenCalledWith(existingInviteCode.id);
+            expect(mockInviteCodeRepository.softDelete).toHaveBeenCalledWith(
+                existingInviteCode.id,
+            );
         });
 
         it('should throw InviteCodeNotFoundException if invite code not found', async () => {
             mockInviteCodeRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.deleteInviteCode(inviteCodeId)).rejects.toThrow(
-                InviteCodeNotFoundException
-            );
+            await expect(
+                service.deleteInviteCode(inviteCodeId),
+            ).rejects.toThrow(InviteCodeNotFoundException);
             expect(mockInviteCodeRepository.softDelete).not.toHaveBeenCalled();
         });
     });
@@ -428,7 +553,9 @@ describe('InviteCodeService', () => {
             const mockQueryBuilder = createMockQueryBuilder();
             mockQueryBuilder.getManyAndCount.mockResolvedValue([[], 0]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
             const result = await service.getInviteCodes(getInviteCodesDto);
 
@@ -445,7 +572,9 @@ describe('InviteCodeService', () => {
             const mockQueryBuilder = createMockQueryBuilder();
             mockQueryBuilder.getManyAndCount.mockResolvedValue([[], 0]);
 
-            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockInviteCodeRepository.createQueryBuilder.mockReturnValue(
+                mockQueryBuilder,
+            );
 
             const result = await service.getInviteCodes(getInviteCodesDto);
 
@@ -457,10 +586,14 @@ describe('InviteCodeService', () => {
             const createDto: CreateInviteCodesDto = { count: 1 };
             const dbError = new Error('Database error');
 
-            mockInviteCodeRepository.create.mockReturnValue(createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE));
+            mockInviteCodeRepository.create.mockReturnValue(
+                createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE),
+            );
             mockInviteCodeRepository.save.mockRejectedValue(dbError);
 
-            await expect(service.createInviteCodes(createDto)).rejects.toThrow(dbError);
+            await expect(service.createInviteCodes(createDto)).rejects.toThrow(
+                dbError,
+            );
         });
 
         it('should handle repository error in changeStatus', async () => {
@@ -468,24 +601,38 @@ describe('InviteCodeService', () => {
                 inviteCodeId: 'code-123',
                 newStatus: INVITE_CODE_STATUS.BOOKED,
             };
-            const existingInviteCode = createMockInviteCode('code-123', INVITE_CODE_STATUS.FREE);
+            const existingInviteCode = createMockInviteCode(
+                'code-123',
+                INVITE_CODE_STATUS.FREE,
+            );
             const dbError = new Error('Database error');
 
-            mockInviteCodeRepository.findOne.mockResolvedValue(existingInviteCode);
+            mockInviteCodeRepository.findOne.mockResolvedValue(
+                existingInviteCode,
+            );
             mockInviteCodeRepository.save.mockRejectedValue(dbError);
 
-            await expect(service.changeStatus(changeStatusDto)).rejects.toThrow(dbError);
+            await expect(service.changeStatus(changeStatusDto)).rejects.toThrow(
+                dbError,
+            );
         });
 
         it('should handle repository error in deleteInviteCode', async () => {
             const inviteCodeId = 'code-123';
-            const existingInviteCode = createMockInviteCode(inviteCodeId, INVITE_CODE_STATUS.FREE);
+            const existingInviteCode = createMockInviteCode(
+                inviteCodeId,
+                INVITE_CODE_STATUS.FREE,
+            );
             const dbError = new Error('Database error');
 
-            mockInviteCodeRepository.findOne.mockResolvedValue(existingInviteCode);
+            mockInviteCodeRepository.findOne.mockResolvedValue(
+                existingInviteCode,
+            );
             mockInviteCodeRepository.softDelete.mockRejectedValue(dbError);
 
-            await expect(service.deleteInviteCode(inviteCodeId)).rejects.toThrow(dbError);
+            await expect(
+                service.deleteInviteCode(inviteCodeId),
+            ).rejects.toThrow(dbError);
         });
     });
 });

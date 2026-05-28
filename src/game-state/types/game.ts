@@ -1,42 +1,40 @@
+import { EffectType } from 'src/game-mechanics/types/effect';
+import { MiniPhase, Phase } from './phase';
+import { Face } from 'src/game-mechanics/types/face';
+import { RESOURCE } from 'src/game-mechanics/types/resource';
+import { ExtraAction, ExtraActionState } from 'src/action/types/action';
+import { Skill } from 'src/artifact/types/skill';
+import { Spell, SPELLTYPE } from 'src/spell/types/spell';
+import { LogType } from 'src/action/types/log';
 
-import { EffectType } from "src/game-mechanics/types/effect";
-import { MiniPhase, Phase } from "./phase";
-import { Face } from "src/game-mechanics/types/face";
-import { RESOURCE } from "src/game-mechanics/types/resource";
-import { ExtraAction, ExtraActionState } from "src/action/types/action";
-import { Skill } from "src/artifact/types/skill";
-import { Spell, SPELLTYPE } from "src/spell/types/spell";
-import { LogType } from "src/action/types/log";
-
-export const CONNECTIONGAME  = {
+export const CONNECTIONGAME = {
     ONLINE: 'online',
     LEAVED: 'leaved',
-    OFFLINE: "offline"
+    OFFLINE: 'offline',
 } as const;
 
-export type ConnectionGame  = typeof CONNECTIONGAME [keyof typeof CONNECTIONGAME];
+export type ConnectionGame =
+    (typeof CONNECTIONGAME)[keyof typeof CONNECTIONGAME];
 
-
-export const LINE  = {
+export const LINE = {
     FRONT: 'front',
-    BACK: 'back'
+    BACK: 'back',
 } as const;
 
-export type Line  = typeof LINE [keyof typeof LINE];
+export type Line = (typeof LINE)[keyof typeof LINE];
 
-
-export const ARTIFACT_STATE  = {
+export const ARTIFACT_STATE = {
     READY_TO_USE: 'ready_to_use',
     COOLDOWN: 'cooldown',
     STUNNED: 'stunned',
     ROOTED: 'rooted',
-    BREAKEN: "breaken",
-    DREAM: "dream",
-    DESTROYED: "destroyed"
+    BREAKEN: 'breaken',
+    DREAM: 'dream',
+    DESTROYED: 'destroyed',
 } as const;
 
-export type ArtifactState  = typeof ARTIFACT_STATE [keyof typeof ARTIFACT_STATE];
-
+export type ArtifactState =
+    (typeof ARTIFACT_STATE)[keyof typeof ARTIFACT_STATE];
 
 export interface SkillStateType {
     id: Skill;
@@ -51,13 +49,12 @@ export interface ArtifactAvailableActions {
     face: {
         id: string;
         description: string;
-        attackTargets: string[] | null,
-        healTargets: string[] | null,
-    } | null,
-    skills: SkillStateType[],
-    extraActions: ExtraActionState[]
+        attackTargets: string[] | null;
+        healTargets: string[] | null;
+    } | null;
+    skills: SkillStateType[];
+    extraActions: ExtraActionState[];
 }
-
 
 export interface ArtifactGameState {
     id: string;
@@ -73,7 +70,7 @@ export interface ArtifactGameState {
     availableActions: ArtifactAvailableActions | null;
     extraData: {
         lastStateBeforeRoot: ArtifactState;
-    }
+    };
 }
 
 export interface DeckArtifact {
@@ -93,28 +90,28 @@ export interface Player {
         [RESOURCE.LIGHT_MANA]: number;
         [RESOURCE.DARK_MANA]: number;
         [RESOURCE.DESTRUCTION_MANA]: number;
-    },
+    };
     artifacts: Record<string, ArtifactGameState>;
     spells: {
-        [SPELLTYPE.LIGHT]: Record<Spell, SpellGameState>,
-        [SPELLTYPE.DARK]: Record<Spell, SpellGameState>,
-        [SPELLTYPE.DESTRUCTION]: Record<Spell, SpellGameState>
+        [SPELLTYPE.LIGHT]: Record<Spell, SpellGameState>;
+        [SPELLTYPE.DARK]: Record<Spell, SpellGameState>;
+        [SPELLTYPE.DESTRUCTION]: Record<Spell, SpellGameState>;
     };
     effects: EffectType[];
     isReady: boolean;
     movePoints: number;
     draft: {
-        pickedArtifact: string|null;
+        pickedArtifact: string | null;
         deck: DeckArtifact[];
-    },
+    };
     temporaryArtifacts: Record<string, ArtifactGameState>;
     offerDraw: boolean;
     extraData: {
         skippedMoves: number;
-    },
+        countActionsSinceStartTurn: number;
+    };
     isBot: boolean;
 }
-
 
 export interface Game {
     id: string;
@@ -134,6 +131,7 @@ export interface ConstantsGameState {
     timerMovement: number | null;
     timerTurn: number | null;
     isNewRound: boolean;
+    countActionsFromStartGame: number;
 }
 
 export interface EndState {

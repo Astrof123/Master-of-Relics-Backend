@@ -11,10 +11,10 @@ export interface OfferFriendship {
     requesterId: string;
 }
 
-export const RELATIONSHIP  = {
+export const RELATIONSHIP = {
     FRIEND: 'friend',
-    STRANGER: "stranger",
-    OFFER: "offer"
+    STRANGER: 'stranger',
+    OFFER: 'offer',
 };
 
-export type Relationship  = typeof RELATIONSHIP [keyof typeof RELATIONSHIP];
+export type Relationship = (typeof RELATIONSHIP)[keyof typeof RELATIONSHIP];

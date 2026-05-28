@@ -1,4 +1,10 @@
-import { ConflictException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+    ConflictException,
+    HttpException,
+    HttpStatus,
+    Injectable,
+    UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
@@ -7,7 +13,12 @@ import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { TokensDto } from './dto/tokens.dto';
 import { LoginDto } from './dto/login.dto';
-import { InvalidCredentialsException, InvalidInviteCodeException, UsedInviteCodeException, UserAlreadyExistsException } from './exceptions/auth.exception';
+import {
+    InvalidCredentialsException,
+    InvalidInviteCodeException,
+    UsedInviteCodeException,
+    UserAlreadyExistsException,
+} from './exceptions/auth.exception';
 import { CustomHttpException } from 'src/common/custom-http.exception';
 import { CollectionService } from 'src/collection/collection.service';
 import { UserStats } from 'src/users/entities/user-stats.entity';
@@ -27,7 +38,7 @@ export class AuthService {
         private inviteCodeRepository: Repository<InviteCode>,
         private tokenService: TokenService,
         private collectionService: CollectionService,
-        private readonly deckService: DeckService
+        private readonly deckService: DeckService,
     ) {}
 
     private generateFriendCode(): string {
@@ -39,8 +50,8 @@ export class AuthService {
         const { nickname, login, password } = registerDto;
 
         try {
-            const existingUser = await this.usersRepository.findOne({ 
-                where: { login } 
+            const existingUser = await this.usersRepository.findOne({
+                where: { login },
             });
 
             if (existingUser) {
@@ -51,10 +62,10 @@ export class AuthService {
                 throw new InvalidInviteCodeException();
             }
 
-            const inviteCode = await this.inviteCodeRepository.findOne({ 
-                where: { id: registerDto.inviteCode } 
+            const inviteCode = await this.inviteCodeRepository.findOne({
+                where: { id: registerDto.inviteCode },
             });
-            
+
             if (!inviteCode) {
                 throw new InvalidInviteCodeException();
             }
@@ -66,23 +77,25 @@ export class AuthService {
             const hashedPassword = await bcrypt.hash(password, 10);
 
             let exists = true;
-            let code: string = "4235235233";
+            let code: string = '4235235233';
 
             while (exists) {
                 code = this.generateFriendCode();
-                exists = await this.usersRepository.exists({ where: { friendCode: code } });
+                exists = await this.usersRepository.exists({
+                    where: { friendCode: code },
+                });
             }
 
             const user = this.usersRepository.create({
                 nickname,
                 login,
                 password: hashedPassword,
-                friendCode: code
+                friendCode: code,
             });
             await this.usersRepository.save(user);
 
             const userStats = this.userStatsRepository.create({
-                userId: user.id
+                userId: user.id,
             });
             await this.userStatsRepository.save(userStats);
 
@@ -95,22 +108,23 @@ export class AuthService {
             await this.deckService.createForNewUser(user.id);
 
             const tokens = await this.tokenService.generateTokens({
-                sub: user.id
+                sub: user.id,
             });
 
             return {
                 accessToken: tokens.accessToken,
-                refreshToken: tokens.refreshToken
+                refreshToken: tokens.refreshToken,
             };
-        }
-        catch (error) {
-            if (error instanceof UserAlreadyExistsException ||
+        } catch (error) {
+            if (
+                error instanceof UserAlreadyExistsException ||
                 error instanceof InvalidInviteCodeException ||
                 error instanceof UsedInviteCodeException ||
-                error instanceof CustomHttpException) {
+                error instanceof CustomHttpException
+            ) {
                 throw error;
             }
-            
+
             throw new HttpException(
                 'Ошибка при регистрации пользователя',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -122,32 +136,36 @@ export class AuthService {
         const { login, password } = loginDto;
 
         try {
-            const user = await this.usersRepository.findOne({ 
-                where: { login } 
+            const user = await this.usersRepository.findOne({
+                where: { login },
             });
-            
+
             if (!user) {
                 throw new InvalidCredentialsException();
             }
 
-            const isPasswordValid = await bcrypt.compare(password, user.password);
-            
+            const isPasswordValid = await bcrypt.compare(
+                password,
+                user.password,
+            );
+
             if (!isPasswordValid) {
                 throw new InvalidCredentialsException();
             }
 
             const tokens = await this.tokenService.generateTokens({
-                sub: user.id
+                sub: user.id,
             });
 
             return {
                 accessToken: tokens.accessToken,
                 refreshToken: tokens.refreshToken,
             };
-        }
-        catch (error) {
-            if (error instanceof InvalidCredentialsException ||
-                error instanceof CustomHttpException) {
+        } catch (error) {
+            if (
+                error instanceof InvalidCredentialsException ||
+                error instanceof CustomHttpException
+            ) {
                 throw error;
             }
 
@@ -160,35 +178,37 @@ export class AuthService {
 
     async refreshTokens(refreshToken: string) {
         try {
-            const payload = await this.tokenService.verifyRefreshToken(refreshToken);
-            
+            const payload =
+                await this.tokenService.verifyRefreshToken(refreshToken);
+
             if (!payload) {
                 throw new UnauthorizedException('Невалидный refresh token');
             }
 
-            const user = await this.usersRepository.findOne({ 
-                where: { id: payload.sub } 
+            const user = await this.usersRepository.findOne({
+                where: { id: payload.sub },
             });
-            
+
             if (!user) {
                 throw new UnauthorizedException('Пользователь не найден');
             }
 
             const tokens = await this.tokenService.generateTokens({
-                sub: user.id
+                sub: user.id,
             });
 
             return {
                 accessToken: tokens.accessToken,
                 refreshToken: tokens.refreshToken,
             };
-        }
-        catch (error) {
-            if (error instanceof UnauthorizedException ||
-                error instanceof CustomHttpException) {
+        } catch (error) {
+            if (
+                error instanceof UnauthorizedException ||
+                error instanceof CustomHttpException
+            ) {
                 throw error;
             }
-            
+
             throw new HttpException(
                 'Ошибка на стороне сервера',
                 HttpStatus.INTERNAL_SERVER_ERROR,

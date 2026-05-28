@@ -1,9 +1,9 @@
-import { SetMetadata } from "@nestjs/common";
-import { Restriction, TargetRestriction } from "src/action/types/restriction";
+import { SetMetadata } from '@nestjs/common';
+import { Restriction, TargetRestriction } from 'src/action/types/restriction';
 
 export interface SkillDataType {
     id: Skill;
-    type: "active" | "passive"
+    type: 'active' | 'passive';
     cost: number | null;
     description: string;
     countAnyTarget: number;
@@ -13,7 +13,7 @@ export interface SkillDataType {
     targetRestrictions: TargetRestriction[];
 }
 
-export const SKILL  = {
+export const SKILL = {
     FEAR: 'fear',
     FROZE: 'froze',
     NEIGHBORING_HEALING: 'neighboring_healing',
@@ -52,8 +52,13 @@ export const SKILL  = {
     REPAIR: 'repair',
     HARDENING: 'hardening',
     RUSTING: 'rusting',
+    WEAK: 'weak',
+    SHIV: 'shiv',
+    LIGHT_BLIGHT: 'light_blight',
+    DARK_BLIGHT: 'dark_blight',
+    DESTRUCTION_BLIGHT: 'destruction_blight',
+    PIERCE: 'pierce',
+    MULTISHOT: 'multishot',
 };
 
-export type Skill  = typeof SKILL [keyof typeof SKILL];
-
-
+export type Skill = (typeof SKILL)[keyof typeof SKILL];

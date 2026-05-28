@@ -42,6 +42,13 @@ import { StealRageStrategy } from './strategies/steal-rage.strategy';
 import { RepairStrategy } from './strategies/repair.strategy';
 import { HardeningStrategy } from './strategies/hardening.strategy';
 import { RustingStrategy } from './strategies/rusting.strategy';
+import { ShivStrategy } from './strategies/shiv.strategy';
+import { WeakStrategy } from './strategies/weak.strategy';
+import { DarkBlightStrategy } from './strategies/dark-blight.strategy';
+import { LightBlightStrategy } from './strategies/light-blight.strategy';
+import { DestructionBlightStrategy } from './strategies/destruction-blight.strategy';
+import { PierceStrategy } from './strategies/pierce.strategy';
+import { MultishotStrategy } from './strategies/multishot.strategy';
 
 const ACTION_HANDLER_PROVIDERS = [
     FearStrategy,
@@ -81,7 +88,14 @@ const ACTION_HANDLER_PROVIDERS = [
     StealRageStrategy,
     RepairStrategy,
     HardeningStrategy,
-    RustingStrategy
+    RustingStrategy,
+    ShivStrategy,
+    WeakStrategy,
+    DarkBlightStrategy,
+    LightBlightStrategy,
+    DestructionBlightStrategy,
+    PierceStrategy,
+    // MultishotStrategy
 ];
 
 @Module({
@@ -99,6 +113,6 @@ const ACTION_HANDLER_PROVIDERS = [
     imports: [
         forwardRef(() => ActionModule),
         forwardRef(() => GameMechanicsModule),
-    ]
+    ],
 })
 export class ArtifactModule {}

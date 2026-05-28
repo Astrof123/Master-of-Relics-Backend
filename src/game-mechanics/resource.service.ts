@@ -8,48 +8,71 @@ import { LogHelper } from 'src/action/helpers/logHelper';
 
 @Injectable()
 export class ResourceService {
-    constructor (
-    ) {}
+    constructor() {}
 
-    addResource(player: Player, resource: ResourceType, amount: number, logParts: string[]) {
+    addResource(
+        player: Player,
+        resource: ResourceType,
+        amount: number,
+        logParts: string[],
+    ) {
         const newAmount = player.resources[resource] + amount;
-        player.resources[resource] = newAmount > MAX_AMOUNT_RESOURCES ? MAX_AMOUNT_RESOURCES : newAmount;
+        player.resources[resource] =
+            newAmount > MAX_AMOUNT_RESOURCES ? MAX_AMOUNT_RESOURCES : newAmount;
 
         if (resource === RESOURCE.AGILITY) {
-            logParts.push(LogHelper.getRestoreAgilityFullLog(amount))
-        }
-        else if (resource === RESOURCE.RAGE) {
-            logParts.push(LogHelper.getRestoreRageFullLog(amount))
-        }
-        else if (resource === RESOURCE.LIGHT_MANA) {
-            logParts.push(LogHelper.getRestoreLightManaFullLog(amount))
-        }
-        else if (resource === RESOURCE.DARK_MANA) {
-            logParts.push(LogHelper.getRestoreDarkManaFullLog(amount))
-        }
-        else if (resource === RESOURCE.DESTRUCTION_MANA) {
-            logParts.push(LogHelper.getRestoreDestructionManaFullLog(amount))
+            logParts.push(LogHelper.getRestoreAgilityFullLog(amount));
+        } else if (resource === RESOURCE.RAGE) {
+            logParts.push(LogHelper.getRestoreRageFullLog(amount));
+        } else if (resource === RESOURCE.LIGHT_MANA) {
+            logParts.push(LogHelper.getRestoreLightManaFullLog(amount));
+        } else if (resource === RESOURCE.DARK_MANA) {
+            logParts.push(LogHelper.getRestoreDarkManaFullLog(amount));
+        } else if (resource === RESOURCE.DESTRUCTION_MANA) {
+            logParts.push(LogHelper.getRestoreDestructionManaFullLog(amount));
         }
     }
 
-    decreaseResource(player: Player, resource: ResourceType, amount: number, logParts: string[]) {
+    decreaseResource(
+        player: Player,
+        resource: ResourceType,
+        amount: number,
+        logParts: string[],
+        isBurn: boolean = false,
+    ) {
         const newAmount = player.resources[resource] - amount;
         player.resources[resource] = newAmount < 0 ? 0 : newAmount;
 
         if (resource === RESOURCE.AGILITY) {
-            logParts.push(LogHelper.getSpentAgilityFullLog(amount))
-        }
-        else if (resource === RESOURCE.RAGE) {
-            logParts.push(LogHelper.getSpentRageFullLog(amount))
-        }
-        else if (resource === RESOURCE.LIGHT_MANA) {
-            logParts.push(LogHelper.getSpentLightManaFullLog(amount))
-        }
-        else if (resource === RESOURCE.DARK_MANA) {
-            logParts.push(LogHelper.getSpentDarkManaFullLog(amount))
-        }
-        else if (resource === RESOURCE.DESTRUCTION_MANA) {
-            logParts.push(LogHelper.getSpentDestructionManaFullLog(amount))
+            if (isBurn) {
+                logParts.push(`Выжег ${amount} ловкости противнику`);
+            } else {
+                logParts.push(LogHelper.getSpentAgilityFullLog(amount));
+            }
+        } else if (resource === RESOURCE.RAGE) {
+            if (isBurn) {
+                logParts.push(`Выжег ${amount} ярости противнику`);
+            } else {
+                logParts.push(LogHelper.getSpentRageFullLog(amount));
+            }
+        } else if (resource === RESOURCE.LIGHT_MANA) {
+            if (isBurn) {
+                logParts.push(`Выжег ${amount} маны света противнику`);
+            } else {
+                logParts.push(LogHelper.getSpentLightManaFullLog(amount));
+            }
+        } else if (resource === RESOURCE.DARK_MANA) {
+            if (isBurn) {
+                logParts.push(`Выжег ${amount} маны тьмы противнику`);
+            } else {
+                logParts.push(LogHelper.getSpentDarkManaFullLog(amount));
+            }
+        } else if (resource === RESOURCE.DESTRUCTION_MANA) {
+            if (isBurn) {
+                logParts.push(`Выжег ${amount} маны разрушения противнику`);
+            } else {
+                logParts.push(LogHelper.getSpentDestructionManaFullLog(amount));
+            }
         }
     }
 
@@ -75,6 +98,6 @@ export class ResourceService {
 
     extraMove(player: Player, logParts: string[]) {
         player.movePoints += 1;
-        logParts.push("Получил дополнительное действие")
+        logParts.push('Получил дополнительное действие');
     }
 }

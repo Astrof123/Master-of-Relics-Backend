@@ -7,7 +7,11 @@ import { ArtifactModule } from 'src/artifact/artifact.module';
 
 @Module({
     providers: [DraftService, DraftGateway],
-    imports: [forwardRef(() => PhaseModule), forwardRef(() => GameStateModule), forwardRef(() => ArtifactModule) ],
-    exports: [DraftService]
+    imports: [
+        forwardRef(() => PhaseModule),
+        forwardRef(() => GameStateModule),
+        forwardRef(() => ArtifactModule),
+    ],
+    exports: [DraftService],
 })
 export class DraftModule {}

@@ -11,12 +11,12 @@ export class RedisService {
 
     async setJson<T>(
         key: string,
-        path: string = ".",
+        path: string = '.',
         value: T,
-        ttl?: number
+        ttl?: number,
     ): Promise<void> {
         const valueStr = JSON.stringify(value);
-        
+
         await this.redisClient.call('JSON.SET', key, path, valueStr);
 
         if (ttl) {
@@ -27,7 +27,7 @@ export class RedisService {
     async getJson<T>(key: string, path: string = '.'): Promise<T | null> {
         try {
             const result = await this.redisClient.call('JSON.GET', key, path);
-            
+
             if (!result) {
                 return null;
             }
@@ -58,7 +58,7 @@ export class RedisService {
         multi: ChainableCommander,
         key: string,
         path: string,
-        value: any
+        value: any,
     ): ChainableCommander {
         return multi.call('JSON.SET', key, path, JSON.stringify(value));
     }
@@ -66,13 +66,17 @@ export class RedisService {
     jsonGetInTransaction(
         multi: ChainableCommander,
         key: string,
-        path: string
+        path: string,
     ): ChainableCommander {
         return multi.call('JSON.GET', key, path);
     }
 
-    async arrayAppend(key: string, path: string, ...values: any[]): Promise<number> {
-        const stringValues = values.map(v => JSON.stringify(v));
+    async arrayAppend(
+        key: string,
+        path: string,
+        ...values: any[]
+    ): Promise<number> {
+        const stringValues = values.map((v) => JSON.stringify(v));
         const result = await this.redisClient.call(
             'JSON.ARRAPPEND',
             key,
@@ -83,12 +87,21 @@ export class RedisService {
         return parseInt(result as string, 10);
     }
 
-    async arrayPop<T>(key: string, path: string, index: number = -1): Promise<T | null> {
-        const result = await this.redisClient.call('JSON.ARRPOP', key, path, index);
-        
+    async arrayPop<T>(
+        key: string,
+        path: string,
+        index: number = -1,
+    ): Promise<T | null> {
+        const result = await this.redisClient.call(
+            'JSON.ARRPOP',
+            key,
+            path,
+            index,
+        );
+
         if (!result) {
-            return null
-        };
+            return null;
+        }
 
         return JSON.parse(result as string) as T;
     }
@@ -127,7 +140,12 @@ export class RedisService {
         }
     }
 
-    async addToSortedSet(key: string, score: number, member: string, ttl?: number): Promise<void> {
+    async addToSortedSet(
+        key: string,
+        score: number,
+        member: string,
+        ttl?: number,
+    ): Promise<void> {
         await this.redisClient.zadd(key, score, member);
 
         if (ttl) {
@@ -139,7 +157,11 @@ export class RedisService {
         return await this.redisClient.smembers(key);
     }
 
-    async getSortedSetRange(key: string, start: number, stop: number): Promise<string[]> {
+    async getSortedSetRange(
+        key: string,
+        start: number,
+        stop: number,
+    ): Promise<string[]> {
         return await this.redisClient.zrange(key, start, stop);
     }
 

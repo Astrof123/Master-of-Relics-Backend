@@ -4,7 +4,12 @@ import { LOG_TYPE } from 'src/action/types/log';
 import { ArtifactService } from 'src/artifact/artifact.service';
 import { CollectionService } from 'src/collection/collection.service';
 import { ArtifactStateService } from 'src/game-mechanics/artifact-state.service';
-import { DRAW_PRIZE, LOSER_PRIZE, WINNER_PRIZE } from 'src/game-mechanics/constants/settings';
+import {
+    DRAW_PRIZE,
+    LOSER_PRIZE,
+    MIN_ACTIONS_FOR_PRIZE,
+    WINNER_PRIZE,
+} from 'src/game-mechanics/constants/settings';
 import { DiceService } from 'src/game-mechanics/dice.service';
 import { GameEffectsService } from 'src/game-mechanics/game-effects.service';
 import { ResourceService } from 'src/game-mechanics/resource.service';
@@ -40,14 +45,14 @@ export class PhaseService {
         @Inject(forwardRef(() => UsersStatsService))
         private readonly usersStatsService: UsersStatsService,
         @Inject(forwardRef(() => GameEffectsService))
-        private readonly gameEffectsService: GameEffectsService
+        private readonly gameEffectsService: GameEffectsService,
     ) {}
-    
+
     async newRound(gameState: GameForLogic) {
         const logItem: LogState = {
             text: `Новый раунд.`,
-            type: LOG_TYPE.SYSTEM
-        }
+            type: LOG_TYPE.SYSTEM,
+        };
         gameState.logs.push(logItem);
 
         gameState.player.isReady = false;
@@ -59,44 +64,43 @@ export class PhaseService {
         this.artifactStateService.updateStateNewRound(gameState);
         this.diceService.updateDicesNewRound(gameState);
         gameState.currentTurn = this.setFirstPlayer(gameState);
-        gameState.player.movePoints = this.resourceService.calculateNewTurnMovePoints(gameState.player);
-        gameState.enemy.movePoints = this.resourceService.calculateNewTurnMovePoints(gameState.enemy);
+        gameState.player.movePoints =
+            this.resourceService.calculateNewTurnMovePoints(gameState.player);
+        gameState.enemy.movePoints =
+            this.resourceService.calculateNewTurnMovePoints(gameState.enemy);
 
-        Object.values(gameState.player.spells).forEach(spells => {
-            Object.values(spells).forEach(spell => {
+        Object.values(gameState.player.spells).forEach((spells) => {
+            Object.values(spells).forEach((spell) => {
                 spell.cooldown = false;
-            });            
+            });
         });
 
-        Object.values(gameState.enemy.spells).forEach(spells => {
-            Object.values(spells).forEach(spell => {
+        Object.values(gameState.enemy.spells).forEach((spells) => {
+            Object.values(spells).forEach((spell) => {
                 spell.cooldown = false;
-            });            
+            });
         });
 
         gameState.miniPhase = MINIPHASE.MOVEMENT;
 
-        if (gameState.currentTurn === gameState.player.id) {
-            await this.calculateNewState(gameState, gameState.player);
-        }
-        else {
-            await this.calculateNewState(gameState, gameState.enemy);
-        }
+        await this.calculateNewState(gameState, gameState.player);
+        await this.calculateNewState(gameState, gameState.enemy);
 
         await this.gameTimerService.stopAllTimers(gameState.id);
         if (gameState.constants.timerMovement) {
-            await this.gameTimerService.startTimer(gameState.id, TIMER_TYPE.MOVEMENT, gameState.constants.timerMovement);
+            await this.gameTimerService.startTimer(
+                gameState.id,
+                TIMER_TYPE.MOVEMENT,
+                gameState.constants.timerMovement,
+            );
         }
-        
 
         return gameState;
     }
 
-
-
     async checkEndGame(gameState: GameForLogic): Promise<boolean> {
         let hasPlayerNotBreaken = false;
-        Object.values(gameState.player.artifacts).forEach(artifact => {
+        Object.values(gameState.player.artifacts).forEach((artifact) => {
             if (artifact.state !== ARTIFACT_STATE.BREAKEN) {
                 hasPlayerNotBreaken = true;
                 return;
@@ -104,7 +108,7 @@ export class PhaseService {
         });
 
         let hasEnemyNotBreaken = false;
-        Object.values(gameState.enemy.artifacts).forEach(artifact => {
+        Object.values(gameState.enemy.artifacts).forEach((artifact) => {
             if (artifact.state !== ARTIFACT_STATE.BREAKEN) {
                 hasEnemyNotBreaken = true;
                 return;
@@ -114,12 +118,10 @@ export class PhaseService {
         if (!hasEnemyNotBreaken && !hasPlayerNotBreaken) {
             await this.setEndGame(gameState, null);
             return true;
-        }
-        else if (!hasPlayerNotBreaken) {
+        } else if (!hasPlayerNotBreaken) {
             await this.setEndGame(gameState, gameState.enemy.id);
             return true;
-        }
-        else if (!hasEnemyNotBreaken) {
+        } else if (!hasEnemyNotBreaken) {
             await this.setEndGame(gameState, gameState.player.id);
             return true;
         }
@@ -131,50 +133,81 @@ export class PhaseService {
         gameState.player.offerDraw = false;
         gameState.enemy.offerDraw = false;
 
-
-        if (gameState.enemy.isBot) {
+        if (
+            gameState.enemy.isBot ||
+            gameState.constants.countActionsFromStartGame <
+                MIN_ACTIONS_FOR_PRIZE
+        ) {
             gameState.end = {
                 winner: winner,
                 winner_prize: 0,
                 loser_prize: 0,
                 draw_prize: 0,
-            }     
-        }
-        else {
+            };
+        } else {
             gameState.end = {
                 winner: winner,
                 winner_prize: winner ? WINNER_PRIZE : 0,
                 loser_prize: winner ? LOSER_PRIZE : 0,
                 draw_prize: !winner ? DRAW_PRIZE : 0,
-            }
+            };
         }
-        
-        if (!gameState.enemy.isBot) {
+
+        if (
+            !gameState.enemy.isBot &&
+            gameState.constants.countActionsFromStartGame >=
+                MIN_ACTIONS_FOR_PRIZE
+        ) {
             await this.collectionService.giveGold(
-                gameState.player.id,  
-                winner == gameState.player.id ? WINNER_PRIZE : !winner ? DRAW_PRIZE : LOSER_PRIZE
+                gameState.player.id,
+                winner == gameState.player.id
+                    ? WINNER_PRIZE
+                    : !winner
+                      ? DRAW_PRIZE
+                      : LOSER_PRIZE,
             );
             await this.collectionService.giveGold(
-                gameState.enemy.id,  
-                winner == gameState.enemy.id ? WINNER_PRIZE : !winner ? DRAW_PRIZE : LOSER_PRIZE
+                gameState.enemy.id,
+                winner == gameState.enemy.id
+                    ? WINNER_PRIZE
+                    : !winner
+                      ? DRAW_PRIZE
+                      : LOSER_PRIZE,
             );
-            
+
             if (winner === null) {
                 await this.usersStatsService.setLose(gameState.player.id);
                 await this.usersStatsService.setLose(gameState.enemy.id);
-            }
-            else {
-                await this.usersStatsService.setWin(winner == gameState.player.id ? gameState.player.id : gameState.enemy.id);
-                await this.usersStatsService.setLose(winner == gameState.player.id ? gameState.enemy.id : gameState.player.id);
+            } else {
+                await this.usersStatsService.setWin(
+                    winner == gameState.player.id
+                        ? gameState.player.id
+                        : gameState.enemy.id,
+                );
+                await this.usersStatsService.setLose(
+                    winner == gameState.player.id
+                        ? gameState.enemy.id
+                        : gameState.player.id,
+                );
             }
         }
 
-        await this.lobbyService.changeLobbyState(gameState.id, LOBBY_STATE_TYPE.END)
+        await this.lobbyService.changeLobbyState(
+            gameState.id,
+            LOBBY_STATE_TYPE.END,
+        );
     }
 
-    async calculateNewState(gameState: GameForLogic, player: Player, skipCheckEnd = false) {
-        const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
-        
+    async calculateNewState(
+        gameState: GameForLogic,
+        player: Player,
+        skipCheckEnd = false,
+    ) {
+        const enemy =
+            gameState.enemy.id === player.id
+                ? gameState.player
+                : gameState.enemy;
+
         if (!skipCheckEnd) {
             const isEnd = await this.checkEndGame(gameState);
 
@@ -183,10 +216,18 @@ export class PhaseService {
             }
         }
 
-        this.artifactService.calculateAvailableActions(gameState, player, enemy);
+        this.artifactService.calculateAvailableActions(
+            gameState,
+            player,
+            enemy,
+        );
         this.spellService.calculateSpellActions(gameState, player, enemy);
-        this.gameEffectsService.calculateNewStateEffects(gameState, player, enemy);
-        
+        this.gameEffectsService.calculateNewStateEffects(
+            gameState,
+            player,
+            enemy,
+        );
+
         return gameState;
     }
 
@@ -213,26 +254,28 @@ export class PhaseService {
 
         if (playerCountArtifacts > enemyCountArtifacts) {
             return gameState.enemy.id;
-        }
-        else if (playerCountArtifacts < enemyCountArtifacts) {
+        } else if (playerCountArtifacts < enemyCountArtifacts) {
             return gameState.player.id;
         }
 
         let countPlayerHp = 0;
         let countEnemyHp = 0;
 
-        for (const [key, artifact] of Object.entries(gameState.player.artifacts)) {
+        for (const [key, artifact] of Object.entries(
+            gameState.player.artifacts,
+        )) {
             countPlayerHp += artifact.currentHp;
         }
 
-        for (const [key, artifact] of Object.entries(gameState.enemy.artifacts)) {
+        for (const [key, artifact] of Object.entries(
+            gameState.enemy.artifacts,
+        )) {
             countEnemyHp += artifact.currentHp;
         }
 
         if (countPlayerHp > countEnemyHp) {
             return gameState.enemy.id;
-        }
-        else if (countPlayerHp < countEnemyHp) {
+        } else if (countPlayerHp < countEnemyHp) {
             return gameState.player.id;
         }
 

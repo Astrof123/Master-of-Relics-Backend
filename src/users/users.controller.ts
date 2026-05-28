@@ -1,4 +1,17 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    ParseIntPipe,
+    Post,
+    Query,
+    Req,
+    UseGuards,
+    ValidationPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.dto';
 import { plainToInstance } from 'class-transformer';
@@ -18,7 +31,6 @@ import { SetAdminDto } from './dto/set-admin.dto';
 import { GetUsersDto } from './dto/users.dto';
 import { GetUsersResponseDto } from './dto/get-users-response.dto';
 
-
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
@@ -29,18 +41,18 @@ export class UsersController {
     @ApiBearerAuth('access-token')
     async getAllUsers(
         @Req() request: AuthenticatedRequest,
-        @Query(ValidationPipe) data: GetUsersDto
+        @Query(ValidationPipe) data: GetUsersDto,
     ): Promise<GetUsersResponseDto> {
         const users = await this.usersService.getAllUsers(data);
 
         const resultDto: GetUsersResponseDto = {
             ...users,
-            data: users.data.map(user => 
+            data: users.data.map((user) =>
                 plainToInstance(UserResponseDto, user, {
                     excludeExtraneousValues: true,
-                })
-            )
-        }
+                }),
+            ),
+        };
 
         return resultDto;
     }
@@ -51,30 +63,30 @@ export class UsersController {
     @ApiBearerAuth('access-token')
     @HttpCode(HttpStatus.OK)
     async setAdmin(
-        @Req() request: AuthenticatedRequest, 
-        @Body(ValidationPipe) setAdminDto: SetAdminDto
+        @Req() request: AuthenticatedRequest,
+        @Body(ValidationPipe) setAdminDto: SetAdminDto,
     ) {
         const userId = request.user.userId;
         await this.usersService.setAdmin(setAdminDto);
     }
 
-    @Get("reports")
+    @Get('reports')
     @ApiOperation({ summary: 'Получить все жалобы (с пагинацией)' })
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     async getReports(
         @Req() request: AuthenticatedRequest,
-        @Query(ValidationPipe) getReportsDto: GetReportsDto
+        @Query(ValidationPipe) getReportsDto: GetReportsDto,
     ) {
         const result = await this.usersService.getReports(getReportsDto);
         const resultDto: GetReportsResponseDto = {
             ...result,
-            data: result.data.map(report => 
+            data: result.data.map((report) =>
                 plainToInstance(ReportResponseDto, report, {
                     excludeExtraneousValues: true,
-                })
-            )
-        }
+                }),
+            ),
+        };
 
         return resultDto;
     }
@@ -96,30 +108,35 @@ export class UsersController {
     @ApiOperation({ summary: 'Получить профиль пользователя по ID' })
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
-    async getProfile(@Req() request: AuthenticatedRequest, @Param('id') id: string): Promise<UserProfileResponseDto> {
+    async getProfile(
+        @Req() request: AuthenticatedRequest,
+        @Param('id') id: string,
+    ): Promise<UserProfileResponseDto> {
         const userId = request.user.userId;
         const profile = await this.usersService.profile(id, userId);
 
         return profile;
     }
 
-
-
-    @Post("friendships")
+    @Post('friendships')
     @ApiOperation({ summary: 'Получить всех пользователей для дружбы' })
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
-    async findAllForFriends(@Req() request: AuthenticatedRequest, @Body(ValidationPipe) findFriendsDto: FindFriendsDto): Promise<UserResponseDto[]> {
+    async findAllForFriends(
+        @Req() request: AuthenticatedRequest,
+        @Body(ValidationPipe) findFriendsDto: FindFriendsDto,
+    ): Promise<UserResponseDto[]> {
         const userId = request.user.userId;
-        const users = await this.usersService.findFriends(findFriendsDto, userId);
+        const users = await this.usersService.findFriends(
+            findFriendsDto,
+            userId,
+        );
 
-        const result = users.map(user => {
-            return (
-                plainToInstance(UserResponseDto, user, {
-                    excludeExtraneousValues: true,
-                })
-            )
-        })
+        const result = users.map((user) => {
+            return plainToInstance(UserResponseDto, user, {
+                excludeExtraneousValues: true,
+            });
+        });
 
         return result;
     }
@@ -129,7 +146,10 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     @HttpCode(HttpStatus.CREATED)
-    async offerFriendship(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
+    async offerFriendship(
+        @Req() request: AuthenticatedRequest,
+        @Param('id') id: string,
+    ) {
         const userId = request.user.userId;
         await this.usersService.offerFriendship(id, userId);
     }
@@ -139,7 +159,10 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     @HttpCode(HttpStatus.OK)
-    async acceptFriendship(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
+    async acceptFriendship(
+        @Req() request: AuthenticatedRequest,
+        @Param('id') id: string,
+    ) {
         const userId = request.user.userId;
         await this.usersService.acceptFriendship(id, userId);
     }
@@ -149,7 +172,10 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     @HttpCode(HttpStatus.OK)
-    async declineFriendship(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
+    async declineFriendship(
+        @Req() request: AuthenticatedRequest,
+        @Param('id') id: string,
+    ) {
         const userId = request.user.userId;
         await this.usersService.breakoffFriendship(id, userId);
     }
@@ -159,21 +185,27 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     @HttpCode(HttpStatus.OK)
-    async breakoffFriendship(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
+    async breakoffFriendship(
+        @Req() request: AuthenticatedRequest,
+        @Param('id') id: string,
+    ) {
         const userId = request.user.userId;
         await this.usersService.breakoffFriendship(id, userId);
     }
 
-    @Post("reports")
+    @Post('reports')
     @ApiOperation({ summary: 'Отправить жалобу на игрока' })
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
-    async reportPlayer(@Req() request: AuthenticatedRequest, @Body(ValidationPipe) reportUserDto: ReportUserDto) {
+    async reportPlayer(
+        @Req() request: AuthenticatedRequest,
+        @Body(ValidationPipe) reportUserDto: ReportUserDto,
+    ) {
         const userId = request.user.userId;
         await this.usersService.reportUser(reportUserDto, userId);
     }
 
-    @Post("ban")
+    @Post('ban')
     @ApiOperation({ summary: 'Забанить игрока' })
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
@@ -181,7 +213,7 @@ export class UsersController {
         await this.usersService.banUser(banUserDto);
     }
 
-    @Post("unban")
+    @Post('unban')
     @ApiOperation({ summary: 'Разбанить игрока' })
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')

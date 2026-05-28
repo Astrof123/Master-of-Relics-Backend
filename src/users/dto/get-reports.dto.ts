@@ -1,5 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsNotEmpty, IsString, MinLength, MaxLength, IsOptional, IsInt, Min, Max, IsBoolean, isString } from 'class-validator';
+import {
+    IsNumber,
+    IsNotEmpty,
+    IsString,
+    MinLength,
+    MaxLength,
+    IsOptional,
+    IsInt,
+    Min,
+    Max,
+    IsBoolean,
+    isString,
+} from 'class-validator';
 import type { ReportType } from '../types/report';
 import { Transform, Type } from 'class-transformer';
 
@@ -16,22 +28,33 @@ export class GetReportsDto {
     @IsNumber()
     limit?: number = 10;
 
-    @ApiPropertyOptional({ description: 'ID пользователя, на которого пожаловались' })
+    @ApiPropertyOptional({
+        description: 'ID пользователя, на которого пожаловались',
+    })
     @IsOptional()
     @IsString()
-    reportedUserId?: string
+    reportedUserId?: string;
 
-    @ApiPropertyOptional({ description: 'Начальная дата (ISO format)', example: '2024-01-01' })
+    @ApiPropertyOptional({
+        description: 'Начальная дата (ISO format)',
+        example: '2024-01-01',
+    })
     @IsOptional()
     @IsString()
     startDate?: string;
 
-    @ApiPropertyOptional({ description: 'Конечная дата (ISO format)', example: '2024-12-31' })
+    @ApiPropertyOptional({
+        description: 'Конечная дата (ISO format)',
+        example: '2024-12-31',
+    })
     @IsOptional()
     @IsString()
     endDate?: string;
 
-    @ApiPropertyOptional({ description: 'Обработана ли жалоба', example: false })
+    @ApiPropertyOptional({
+        description: 'Обработана ли жалоба',
+        example: false,
+    })
     @IsOptional()
     @Transform(({ value }) => {
         if (value === undefined || value === null || value === '') {

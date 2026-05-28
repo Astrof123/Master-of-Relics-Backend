@@ -15,20 +15,19 @@ import { ApiProperty } from '@nestjs/swagger';
 import { User } from './user.entity';
 import type { ReportType } from '../types/report';
 
-
 @Entity('reports')
 export class Report {
     @ApiProperty({ example: 1 })
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @ApiProperty({ example: "Выходит из игр" })
+    @ApiProperty({ example: 'Выходит из игр' })
     @Column()
     text!: string;
 
-    @ApiProperty({ example: "Препятствование игре" })
+    @ApiProperty({ example: 'Препятствование игре' })
     @Column()
-    reportType!: ReportType;    
+    reportType!: ReportType;
 
     @ApiProperty({ example: false })
     @Column({ default: false })

@@ -1,188 +1,234 @@
-import { DISPELL_TYPE, EFFECT, Effect, EFFECT_DURATION, EffectType } from "../types/effect";
+import {
+    DISPELL_TYPE,
+    EFFECT,
+    Effect,
+    EFFECT_DURATION,
+    EffectType,
+} from '../types/effect';
 
 export const EFFECTS: Record<Effect, EffectType> = {
     [EFFECT.SINGLE_CHARGE]: {
         id: EFFECT.SINGLE_CHARGE,
-        name: "Single Charge",
+        name: 'Single Charge',
         duration: EFFECT_DURATION.ALWAYS,
         type: 'negative',
         number: null,
-        dispellType: DISPELL_TYPE.NEVER
+        dispellType: DISPELL_TYPE.NEVER,
     },
     [EFFECT.USED_SKILL_CHARGES]: {
         id: EFFECT.USED_SKILL_CHARGES,
-        name: "Used One Charge",
+        name: 'Used One Charge',
         duration: EFFECT_DURATION.CURRENT_ROUND,
         type: 'negative',
-        number: null,
-        dispellType: DISPELL_TYPE.NEVER
+        number: 1,
+        dispellType: DISPELL_TYPE.NEVER,
     },
     [EFFECT.LIGHT_MANA_DISCOUNT]: {
         id: EFFECT.LIGHT_MANA_DISCOUNT,
-        name: "Light Mana Discount",
+        name: 'Light Mana Discount',
         duration: EFFECT_DURATION.ALWAYS,
         type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.PASSIVE
+        dispellType: DISPELL_TYPE.PASSIVE,
     },
     [EFFECT.DARK_MANA_DISCOUNT]: {
         id: EFFECT.DARK_MANA_DISCOUNT,
-        name: "Dark Mana Discount",
+        name: 'Dark Mana Discount',
         duration: EFFECT_DURATION.ALWAYS,
         type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.PASSIVE
+        dispellType: DISPELL_TYPE.PASSIVE,
     },
     [EFFECT.DESTRUCTION_MANA_DISCOUNT]: {
         id: EFFECT.DESTRUCTION_MANA_DISCOUNT,
-        name: "Destruction Mana Discount",
+        name: 'Destruction Mana Discount',
         duration: EFFECT_DURATION.ALWAYS,
         type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.PASSIVE
+        dispellType: DISPELL_TYPE.PASSIVE,
     },
     [EFFECT.RAGE_DISCOUNT]: {
         id: EFFECT.RAGE_DISCOUNT,
-        name: "Rage Discount",
+        name: 'Rage Discount',
         duration: EFFECT_DURATION.ALWAYS,
         type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.PASSIVE
+        dispellType: DISPELL_TYPE.PASSIVE,
     },
     [EFFECT.UPGRADE]: {
         id: EFFECT.UPGRADE,
-        name: "Upgrade",
+        name: 'Upgrade',
         duration: EFFECT_DURATION.ALWAYS,
         type: 'positive',
         number: 1,
-        dispellType: DISPELL_TYPE.NEVER
+        dispellType: DISPELL_TYPE.NEVER,
     },
     [EFFECT.BERSERK]: {
         id: EFFECT.BERSERK,
-        name: "Berserk",
+        name: 'Berserk',
         duration: EFFECT_DURATION.ALWAYS,
         type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.PASSIVE
+        dispellType: DISPELL_TYPE.PASSIVE,
     },
     [EFFECT.COPY]: {
         id: EFFECT.COPY,
-        name: "Copy",
+        name: 'Copy',
         duration: EFFECT_DURATION.ALWAYS,
-        type: "negative",
+        type: 'negative',
         number: null,
-        dispellType: DISPELL_TYPE.NEVER
+        dispellType: DISPELL_TYPE.NEVER,
     },
     [EFFECT.GLIMPSE]: {
         id: EFFECT.GLIMPSE,
-        name: "Glimpse",
+        name: 'Glimpse',
         duration: EFFECT_DURATION.ALWAYS,
         type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.PASSIVE
+        dispellType: DISPELL_TYPE.PASSIVE,
     },
     [EFFECT.HUNT]: {
         id: EFFECT.HUNT,
-        name: "Hunt",
+        name: 'Hunt',
         duration: EFFECT_DURATION.ALWAYS,
         type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.PASSIVE
+        dispellType: DISPELL_TYPE.PASSIVE,
     },
     [EFFECT.LIVE_FOR_ROUND]: {
         id: EFFECT.LIVE_FOR_ROUND,
-        name: "Live For Round",
+        name: 'Live For Round',
         duration: EFFECT_DURATION.ALWAYS,
-        type: "negative",
+        type: 'negative',
         number: null,
-        dispellType: DISPELL_TYPE.NEVER
+        dispellType: DISPELL_TYPE.NEVER,
     },
     [EFFECT.INVISIBLE]: {
         id: EFFECT.INVISIBLE,
-        name: "Invisible",
+        name: 'Invisible',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "positive",
+        type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.NEVER
+        dispellType: DISPELL_TYPE.NEVER,
     },
     [EFFECT.FREE_SPELL]: {
         id: EFFECT.FREE_SPELL,
-        name: "Free Spell",
+        name: 'Free Spell',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "positive",
+        type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.NEVER
+        dispellType: DISPELL_TYPE.NEVER,
     },
     [EFFECT.ONE_ATTACK_SHIELD]: {
         id: EFFECT.ONE_ATTACK_SHIELD,
-        name: "One Attack Shield",
+        name: 'One Attack Shield',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "positive",
+        type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.NORMAL
+        dispellType: DISPELL_TYPE.NORMAL,
     },
     [EFFECT.BLINDLESS]: {
         id: EFFECT.BLINDLESS,
-        name: "Blindness",
+        name: 'Blindness',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "negative",
+        type: 'negative',
         number: null,
-        dispellType: DISPELL_TYPE.NORMAL
+        dispellType: DISPELL_TYPE.NORMAL,
     },
     [EFFECT.EXHAUSTION]: {
         id: EFFECT.EXHAUSTION,
-        name: "Exhaustion",
+        name: 'Exhaustion',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "negative",
+        type: 'negative',
         number: null,
-        dispellType: DISPELL_TYPE.NORMAL
+        dispellType: DISPELL_TYPE.NORMAL,
     },
     [EFFECT.ARTIFACT_SILENCE]: {
         id: EFFECT.ARTIFACT_SILENCE,
-        name: "Silence",
+        name: 'Silence',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "negative",
+        type: 'negative',
         number: null,
-        dispellType: DISPELL_TYPE.NORMAL
+        dispellType: DISPELL_TYPE.NORMAL,
     },
     [EFFECT.AVATAR]: {
         id: EFFECT.AVATAR,
-        name: "Avatar",
+        name: 'Avatar',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "positive",
+        type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.NORMAL
+        dispellType: DISPELL_TYPE.NORMAL,
     },
     [EFFECT.VAMPIRISM]: {
         id: EFFECT.VAMPIRISM,
-        name: "Vampirism",
+        name: 'Vampirism',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "positive",
+        type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.NORMAL
+        dispellType: DISPELL_TYPE.NORMAL,
     },
     [EFFECT.RUST]: {
         id: EFFECT.RUST,
-        name: "Rust",
+        name: 'Rust',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "negative",
+        type: 'negative',
         number: null,
-        dispellType: DISPELL_TYPE.NORMAL
+        dispellType: DISPELL_TYPE.NORMAL,
     },
     [EFFECT.DIVINE_GUARD]: {
         id: EFFECT.DIVINE_GUARD,
-        name: "Divine Guard",
+        name: 'Divine Guard',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "positive",
+        type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.NORMAL
+        dispellType: DISPELL_TYPE.NORMAL,
     },
     [EFFECT.SHARP]: {
         id: EFFECT.SHARP,
-        name: "Sharp",
+        name: 'Sharp',
         duration: EFFECT_DURATION.CURRENT_ROUND,
-        type: "positive",
+        type: 'positive',
         number: null,
-        dispellType: DISPELL_TYPE.NORMAL
+        dispellType: DISPELL_TYPE.NORMAL,
     },
-}
+    [EFFECT.SHIV]: {
+        id: EFFECT.SHIV,
+        name: 'Shiver',
+        duration: EFFECT_DURATION.CURRENT_ROUND,
+        type: 'negative',
+        number: null,
+        dispellType: DISPELL_TYPE.NORMAL,
+    },
+    [EFFECT.DARK_BLIGHT]: {
+        id: EFFECT.DARK_BLIGHT,
+        name: 'Dark Blight',
+        duration: EFFECT_DURATION.CURRENT_ROUND,
+        type: 'negative',
+        number: null,
+        dispellType: DISPELL_TYPE.NORMAL,
+    },
+    [EFFECT.LIGHT_BLIGHT]: {
+        id: EFFECT.LIGHT_BLIGHT,
+        name: 'Light Blight',
+        duration: EFFECT_DURATION.CURRENT_ROUND,
+        type: 'negative',
+        number: null,
+        dispellType: DISPELL_TYPE.NORMAL,
+    },
+    [EFFECT.DESTRUCTION_BLIGHT]: {
+        id: EFFECT.DESTRUCTION_BLIGHT,
+        name: 'Destruction Blight',
+        duration: EFFECT_DURATION.CURRENT_ROUND,
+        type: 'negative',
+        number: null,
+        dispellType: DISPELL_TYPE.NORMAL,
+    },
+    [EFFECT.PIERCE]: {
+        id: EFFECT.PIERCE,
+        name: 'Pierce',
+        duration: EFFECT_DURATION.ALWAYS,
+        type: 'positive',
+        number: null,
+        dispellType: DISPELL_TYPE.PASSIVE,
+    },
+};

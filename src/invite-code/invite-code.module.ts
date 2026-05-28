@@ -6,10 +6,8 @@ import { User } from 'src/users/entities/user.entity';
 import { InviteCode } from './entities/invite-code.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([InviteCode]),
-  ],
-  controllers: [InviteCodeController],
-  providers: [InviteCodeService]
+    imports: [TypeOrmModule.forFeature([InviteCode])],
+    controllers: [InviteCodeController],
+    providers: [InviteCodeService],
 })
 export class InviteCodeModule {}

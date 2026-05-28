@@ -13,7 +13,7 @@ export class CardsService implements OnModuleInit {
         @InjectRepository(Card)
         private cardRepository: Repository<Card>,
     ) {}
-    
+
     async onModuleInit() {
         if (process.env.NODE_ENV !== 'production') {
             await this.syncCardsFromDefinitions();
@@ -22,27 +22,32 @@ export class CardsService implements OnModuleInit {
 
     async syncCardsFromDefinitions(): Promise<void> {
         this.logger.log('Starting cards synchronization...');
-        
+
         let synced = 0;
         let added = 0;
         let updated = 0;
 
         for (const cardData of Object.values(ARTIFACTS)) {
             const existingCard = await this.cardRepository.findOne({
-                where: { innerCardId: cardData.id }
+                where: { innerCardId: cardData.id },
             });
 
             if (!existingCard) {
-                await this.cardRepository.save(this.mapDefinitionToEntity(cardData));
+                await this.cardRepository.save(
+                    this.mapDefinitionToEntity(cardData),
+                );
                 added++;
                 this.logger.debug(`Added new card: ${cardData.id}`);
             } else {
-                const needsUpdate = this.checkIfNeedsUpdate(existingCard, cardData);
-                
+                const needsUpdate = this.checkIfNeedsUpdate(
+                    existingCard,
+                    cardData,
+                );
+
                 if (needsUpdate) {
                     await this.cardRepository.update(
                         { id: existingCard.id },
-                        this.mapDefinitionToEntity(cardData)
+                        this.mapDefinitionToEntity(cardData),
                     );
                     updated++;
                     this.logger.debug(`Updated card: ${cardData.id}`);
@@ -52,32 +57,39 @@ export class CardsService implements OnModuleInit {
             }
         }
 
-        this.logger.log(`✅ Sync complete: ${added} added, ${updated} updated, ${synced} synced`);
-        
+        this.logger.log(
+            `✅ Sync complete: ${added} added, ${updated} updated, ${synced} synced`,
+        );
+
         await this.removeOrphanedCards();
     }
 
-    private checkIfNeedsUpdate(existingCard: Card, definition: ArtifactDataType): boolean {
-        return existingCard.price !== definition.price ||
-               existingCard.isForSale !== definition.isForSale
+    private checkIfNeedsUpdate(
+        existingCard: Card,
+        definition: ArtifactDataType,
+    ): boolean {
+        return (
+            existingCard.price !== definition.price ||
+            existingCard.isForSale !== definition.isForSale
+        );
     }
 
     private mapDefinitionToEntity(definition: ArtifactDataType): Partial<Card> {
         return {
             innerCardId: definition.id,
             isForSale: definition.isForSale,
-            price: definition.price
+            price: definition.price,
         };
     }
 
     private async removeOrphanedCards(): Promise<void> {
-        const definedIds = Object.values(ARTIFACTS).map(card => card.id);
+        const definedIds = Object.values(ARTIFACTS).map((card) => card.id);
 
         const allCards = await this.cardRepository.find();
-        const orphaned = allCards.filter(card => 
-            !definedIds.includes(card.innerCardId)
+        const orphaned = allCards.filter(
+            (card) => !definedIds.includes(card.innerCardId),
         );
-        
+
         if (orphaned.length > 0) {
             await this.cardRepository.remove(orphaned);
             this.logger.warn(`Removed ${orphaned.length} orphaned cards`);

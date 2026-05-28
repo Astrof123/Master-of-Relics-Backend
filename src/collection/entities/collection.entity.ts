@@ -14,7 +14,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { User } from 'src/users/entities/user.entity';
 import { Card } from './card.entity';
 
-
 @Entity('user_collections')
 export class UserCollection {
     @ApiProperty({ example: 1 })

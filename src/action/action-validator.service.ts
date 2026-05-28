@@ -1,9 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { GameForLogic } from 'src/game-state/types/game-for-logic';
 import { ACTION_ERROR_CODE, ActionException } from './types/action-exceptions';
-import { ARTIFACT_STATE, ArtifactGameState, LINE, Player } from 'src/game-state/types/game';
-import { ExtraActionData, ToggleReadyMovementData, UseFaceData, UseSkillData, UseSpellData } from './types/action-evens-data';
-import { COMMON_ERROR_CODE, CommonException } from 'src/common/utils/error-handler';
+import {
+    ARTIFACT_STATE,
+    ArtifactGameState,
+    LINE,
+    Player,
+} from 'src/game-state/types/game';
+import {
+    ExtraActionData,
+    ToggleReadyMovementData,
+    UseFaceData,
+    UseSkillData,
+    UseSpellData,
+} from './types/action-evens-data';
+import {
+    COMMON_ERROR_CODE,
+    CommonException,
+} from 'src/common/utils/error-handler';
 import { MINIPHASE, PHASE } from 'src/game-state/types/phase';
 import { EXTRA_ACTION } from './types/action';
 import { EXTRA_ACTIONS } from './constants/extra-actions';
@@ -23,7 +37,7 @@ import { GameEffectsService } from 'src/game-mechanics/game-effects.service';
 export class ActionValidatorService {
     constructor(
         private readonly restrictionService: RestrictionService,
-        private readonly gameEffectsService: GameEffectsService
+        private readonly gameEffectsService: GameEffectsService,
     ) {}
 
     private generalValidator(gameState: GameForLogic) {
@@ -56,62 +70,78 @@ export class ActionValidatorService {
         }
     }
 
-    useFaceValidator(gameState: GameForLogic, artifact: ArtifactGameState, data: UseFaceData) {
+    useFaceValidator(
+        gameState: GameForLogic,
+        artifact: ArtifactGameState,
+        data: UseFaceData,
+    ) {
         this.generalValidator(gameState);
         this.movePointsValidator(gameState);
         this.artifactStateValidator(artifact);
-        
+
         if (artifact.availableActions === null) {
             throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
         }
-        
+
         if (artifact.availableActions.face === null) {
             throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
         }
 
         const face = artifact.availableActions.face;
-        
+
         if (face.attackTargets !== null && face.attackTargets.length > 0) {
             if (data.attackTarget === null) {
-                throw new ActionException(ACTION_ERROR_CODE.INVALID_ATTACK_TARGET);
+                throw new ActionException(
+                    ACTION_ERROR_CODE.INVALID_ATTACK_TARGET,
+                );
             }
 
             if (!face.attackTargets.includes(data.attackTarget)) {
-                throw new ActionException(ACTION_ERROR_CODE.INVALID_ATTACK_TARGET);
+                throw new ActionException(
+                    ACTION_ERROR_CODE.INVALID_ATTACK_TARGET,
+                );
             }
         }
 
         if (face.healTargets !== null && face.healTargets.length > 0) {
             if (data.healTarget === null) {
-                throw new ActionException(ACTION_ERROR_CODE.INVALID_ATTACK_TARGET);
+                throw new ActionException(
+                    ACTION_ERROR_CODE.INVALID_ATTACK_TARGET,
+                );
             }
 
             if (!face.healTargets.includes(data.healTarget)) {
-                throw new ActionException(ACTION_ERROR_CODE.INVALID_HEAL_TARGET);
+                throw new ActionException(
+                    ACTION_ERROR_CODE.INVALID_HEAL_TARGET,
+                );
             }
         }
     }
 
-    useSkillValidator(gameState: GameForLogic, artifact: ArtifactGameState, data: UseSkillData) {
+    useSkillValidator(
+        gameState: GameForLogic,
+        artifact: ArtifactGameState,
+        data: UseSkillData,
+    ) {
         this.generalValidator(gameState);
         this.movePointsValidator(gameState);
         this.artifactStateValidator(artifact);
-        
+
         if (artifact.availableActions === null) {
             throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
         }
-        
+
         if (artifact.availableActions.skills === null) {
             throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
         }
 
         const skills = artifact.availableActions.skills;
-        
+
         if (!Object.keys(SKILLS).includes(data.skillId)) {
             throw new ActionException(ACTION_ERROR_CODE.UNKNOWN_SKILL);
         }
 
-        if (!skills.find((skill => skill.id === data.skillId))) {
+        if (!skills.find((skill) => skill.id === data.skillId)) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
 
@@ -123,39 +153,62 @@ export class ActionValidatorService {
         const allies = SKILLS[data.skillId].countTargetAllies;
         const enemies = SKILLS[data.skillId].countTargetEnemy;
         if (any > 0) {
-            if (allies > data.targets[0].length || data.targets[0].length > any + allies) {
+            if (
+                allies > data.targets[0].length ||
+                data.targets[0].length > any + allies
+            ) {
                 throw new ActionException(ACTION_ERROR_CODE.INVALID_TARGETS);
             }
-            let remainder = (any + allies) - data.targets[0].length;
+            const remainder = any + allies - data.targets[0].length;
 
-            if (enemies > data.targets[1].length || data.targets[1].length > remainder + enemies) {
+            if (
+                enemies > data.targets[1].length ||
+                data.targets[1].length > remainder + enemies
+            ) {
                 throw new ActionException(ACTION_ERROR_CODE.INVALID_TARGETS);
             }
         }
 
-        if (SKILLS[data.skillId].cost && SKILLS[data.skillId].cost! > gameState.player.resources[RESOURCE.RAGE]) {
+        if (
+            artifact.skillCost !== null &&
+            artifact.skillCost > gameState.player.resources[RESOURCE.RAGE]
+        ) {
             throw new ActionException(ACTION_ERROR_CODE.NOT_ENOUGH_RESOURCES);
         }
-    
-        if (!this.restrictionService.checkGeneralRestrictions(
-            gameState.player, 
-            gameState.enemy,
-            SKILLS[data.skillId].restrictions
-        )) {
+
+        if (
+            !this.restrictionService.checkGeneralRestrictions(
+                gameState.player,
+                gameState.enemy,
+                SKILLS[data.skillId].restrictions,
+            )
+        ) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
-        if (!this.restrictionService.checkArtifactRestrictions(SKILLS[data.skillId].restrictions, gameState.player, artifact)) {
+        if (
+            !this.restrictionService.checkArtifactRestrictions(
+                SKILLS[data.skillId].restrictions,
+                gameState.player,
+                artifact,
+            )
+        ) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
 
-        data.targets[0].forEach(artifactGameId => {
-            if (!Object.keys(gameState.player.artifacts).includes(artifactGameId)) {
+        data.targets[0].forEach((artifactGameId) => {
+            if (
+                !Object.keys(gameState.player.artifacts).includes(
+                    artifactGameId,
+                )
+            ) {
                 throw new ActionException(ACTION_ERROR_CODE.INVALID_TARGETS);
             }
         });
 
-        data.targets[1].forEach(artifactGameId => {
-            if (!Object.keys(gameState.enemy.artifacts).includes(artifactGameId)) {
+        data.targets[1].forEach((artifactGameId) => {
+            if (
+                !Object.keys(gameState.enemy.artifacts).includes(artifactGameId)
+            ) {
                 throw new ActionException(ACTION_ERROR_CODE.INVALID_TARGETS);
             }
         });
@@ -164,7 +217,7 @@ export class ActionValidatorService {
     useSpellValidator(gameState: GameForLogic, data: UseSpellData) {
         this.generalValidator(gameState);
         this.movePointsValidator(gameState);
-        
+
         if (data.targets.length !== 2) {
             throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
         }
@@ -172,14 +225,14 @@ export class ActionValidatorService {
         if (!Object.keys(SPELLS).includes(data.spellId)) {
             throw new ActionException(ACTION_ERROR_CODE.UNKNOWN_SPELL);
         }
-        
+
         const spell = SPELLS[data.spellId];
         if (!gameState.player.spells[spell.type][spell.id].canUse) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
 
-        let neededResource = SpellHelper.getResource(spell.type);
-        
+        const neededResource = SpellHelper.getResource(spell.type);
+
         if (spell.cost > gameState.player.resources[RESOURCE[neededResource]]) {
             throw new ActionException(ACTION_ERROR_CODE.NOT_ENOUGH_RESOURCES);
         }
@@ -188,31 +241,54 @@ export class ActionValidatorService {
         const allies = SPELLS[data.spellId].countTargetAllies;
         const enemies = SPELLS[data.spellId].countTargetEnemy;
         if (any > 0) {
-            if (allies > data.targets[0].length || data.targets[0].length > any + allies) {
+            if (
+                allies > data.targets[0].length ||
+                data.targets[0].length > any + allies
+            ) {
                 throw new ActionException(ACTION_ERROR_CODE.INVALID_TARGETS);
             }
-            let remainder = (any + allies) - data.targets[0].length;
+            const remainder = any + allies - data.targets[0].length;
 
-            if (enemies > data.targets[1].length || data.targets[1].length > remainder + enemies) {
+            if (
+                enemies > data.targets[1].length ||
+                data.targets[1].length > remainder + enemies
+            ) {
                 throw new ActionException(ACTION_ERROR_CODE.INVALID_TARGETS);
             }
         }
 
-        if (!this.restrictionService.checkGeneralRestrictions(gameState.player, gameState.enemy, SPELLS[data.spellId].restrictions)) {
+        if (
+            !this.restrictionService.checkGeneralRestrictions(
+                gameState.player,
+                gameState.enemy,
+                SPELLS[data.spellId].restrictions,
+            )
+        ) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
-        if (!this.restrictionService.checkSpellRestrictions(gameState.enemy, SPELLS[data.spellId].restrictions)) {
+        if (
+            !this.restrictionService.checkSpellRestrictions(
+                gameState.enemy,
+                SPELLS[data.spellId].restrictions,
+            )
+        ) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
 
-        data.targets[0].forEach(artifactGameId => {
-            if (!Object.keys(gameState.player.artifacts).includes(artifactGameId)) {
+        data.targets[0].forEach((artifactGameId) => {
+            if (
+                !Object.keys(gameState.player.artifacts).includes(
+                    artifactGameId,
+                )
+            ) {
                 throw new ActionException(ACTION_ERROR_CODE.INVALID_TARGETS);
             }
         });
 
-        data.targets[1].forEach(artifactGameId => {
-            if (!Object.keys(gameState.enemy.artifacts).includes(artifactGameId)) {
+        data.targets[1].forEach((artifactGameId) => {
+            if (
+                !Object.keys(gameState.enemy.artifacts).includes(artifactGameId)
+            ) {
                 throw new ActionException(ACTION_ERROR_CODE.INVALID_TARGETS);
             }
         });
@@ -220,6 +296,10 @@ export class ActionValidatorService {
 
     endTurnValidator(gameState: GameForLogic) {
         this.generalValidator(gameState);
+
+        if (gameState.player.extraData.countActionsSinceStartTurn < 1) {
+            throw new ActionException(ACTION_ERROR_CODE.NO_ACTIONS_TAKEN);
+        }
     }
 
     giveUpValidator(gameState: GameForLogic) {
@@ -233,7 +313,7 @@ export class ActionValidatorService {
             throw new ActionException(ACTION_ERROR_CODE.PHASE_NOT_BATTLE);
         }
 
-        if (gameState.miniPhase !== MINIPHASE.BATTLE) {
+        if (gameState.phase !== PHASE.BATTLE) {
             throw new ActionException(ACTION_ERROR_CODE.PHASE_NOT_BATTLE);
         }
     }
@@ -242,9 +322,13 @@ export class ActionValidatorService {
         this.generalValidator(gameState);
     }
 
-    extraActionValidator(gameState: GameForLogic, artifact: ArtifactGameState, data: ExtraActionData) {
+    extraActionValidator(
+        gameState: GameForLogic,
+        artifact: ArtifactGameState,
+        data: ExtraActionData,
+    ) {
         this.generalValidator(gameState);
-        
+
         if (artifact.availableActions === null) {
             throw new CommonException(COMMON_ERROR_CODE.INTERNAL_SERVER_ERROR);
         }
@@ -257,19 +341,30 @@ export class ActionValidatorService {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
 
-        if (!this.restrictionService.checkGeneralRestrictions(gameState.player, gameState.enemy, EXTRA_ACTIONS[data.type].restrictions)) {
+        if (
+            !this.restrictionService.checkGeneralRestrictions(
+                gameState.player,
+                gameState.enemy,
+                EXTRA_ACTIONS[data.type].restrictions,
+            )
+        ) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
 
-        if (!this.restrictionService.checkArtifactRestrictions(EXTRA_ACTIONS[data.type].restrictions, gameState.player, artifact)) {
+        if (
+            !this.restrictionService.checkArtifactRestrictions(
+                EXTRA_ACTIONS[data.type].restrictions,
+                gameState.player,
+                artifact,
+            )
+        ) {
             throw new ActionException(ACTION_ERROR_CODE.IMPOSSIBLE_ACTION);
         }
         let cost = EXTRA_ACTIONS[data.type].cost;
         if (this.gameEffectsService.countEffect(artifact, EFFECT.GLIMPSE) > 0) {
             if (data.type === EXTRA_ACTION.MOVE) {
                 cost = 0;
-            }
-            else if (data.type === EXTRA_ACTION.RETURN_TO_BATTLE) {
+            } else if (data.type === EXTRA_ACTION.RETURN_TO_BATTLE) {
                 cost = 15;
             }
         }
@@ -287,8 +382,15 @@ export class ActionValidatorService {
         }
     }
 
-    toggleReadyMovementValidator(gameState: GameForLogic, data: ToggleReadyMovementData) {
-        const EXCLUDED_FIELDS: (keyof ArtifactGameState)[] = ['line', 'position', "availableActions"];
+    toggleReadyMovementValidator(
+        gameState: GameForLogic,
+        data: ToggleReadyMovementData,
+    ) {
+        const EXCLUDED_FIELDS: (keyof ArtifactGameState)[] = [
+            'line',
+            'position',
+            'availableActions',
+        ];
 
         if (gameState.end !== null) {
             throw new ActionException(ACTION_ERROR_CODE.PHASE_NOT_BATTLE);
@@ -302,22 +404,31 @@ export class ActionValidatorService {
             throw new ActionException(ACTION_ERROR_CODE.MINIPHASE_NOT_BATTLE);
         }
 
-
-        if (Object.values(data.artifactsWithNewPosition).length !== Object.values(gameState.player.artifacts).length) {
+        if (
+            Object.values(data.artifactsWithNewPosition).length !==
+            Object.values(gameState.player.artifacts).length
+        ) {
             throw new ActionException(ACTION_ERROR_CODE.INVALID_DATA);
         }
-        
-        const countArtifactsFront = Object.values(data.artifactsWithNewPosition).filter(a => a.line === LINE.FRONT).length;
-        const countArtifactsBack = Object.values(data.artifactsWithNewPosition).filter(a => a.line === LINE.BACK).length;
 
-        if (countArtifactsFront > MAX_COUNT_ARTIFACTS_ON_LINE || countArtifactsBack > MAX_COUNT_ARTIFACTS_ON_LINE) {
+        const countArtifactsFront = Object.values(
+            data.artifactsWithNewPosition,
+        ).filter((a) => a.line === LINE.FRONT).length;
+        const countArtifactsBack = Object.values(
+            data.artifactsWithNewPosition,
+        ).filter((a) => a.line === LINE.BACK).length;
+
+        if (
+            countArtifactsFront > MAX_COUNT_ARTIFACTS_ON_LINE ||
+            countArtifactsBack > MAX_COUNT_ARTIFACTS_ON_LINE
+        ) {
             throw new ActionException(ACTION_ERROR_CODE.INVALID_DATA);
         }
-        
+
         const backPositionsIndex: number[] = [];
         const frontPositionsIndex: number[] = [];
 
-        Object.keys(data.artifactsWithNewPosition).forEach(artifactGameId => {
+        Object.keys(data.artifactsWithNewPosition).forEach((artifactGameId) => {
             const realArtifact = gameState.player.artifacts[artifactGameId];
             const newArtifact = data.artifactsWithNewPosition[artifactGameId];
 
@@ -325,18 +436,23 @@ export class ActionValidatorService {
                 throw new ActionException(ACTION_ERROR_CODE.INVALID_DATA);
             }
 
-            const allKeys = Object.keys(realArtifact) as (keyof ArtifactGameState)[];
-            
+            const allKeys = Object.keys(
+                realArtifact,
+            ) as (keyof ArtifactGameState)[];
+
             for (const key of allKeys) {
                 if (EXCLUDED_FIELDS.includes(key)) continue;
-                
+
                 if (!this.isEqual(realArtifact[key], newArtifact[key])) {
                     throw new ActionException(ACTION_ERROR_CODE.INVALID_DATA);
                 }
             }
 
             if (newArtifact.line === LINE.FRONT) {
-                if (newArtifact.position < 0 || newArtifact.position > countArtifactsFront - 1) {
+                if (
+                    newArtifact.position < 0 ||
+                    newArtifact.position > countArtifactsFront - 1
+                ) {
                     throw new ActionException(ACTION_ERROR_CODE.INVALID_DATA);
                 }
 
@@ -344,10 +460,12 @@ export class ActionValidatorService {
                     throw new ActionException(ACTION_ERROR_CODE.INVALID_DATA);
                 }
 
-                frontPositionsIndex.push(newArtifact.position)
-            }
-            else if (newArtifact.line === LINE.BACK) {
-                if (newArtifact.position < 0 || newArtifact.position > countArtifactsBack - 1) {
+                frontPositionsIndex.push(newArtifact.position);
+            } else if (newArtifact.line === LINE.BACK) {
+                if (
+                    newArtifact.position < 0 ||
+                    newArtifact.position > countArtifactsBack - 1
+                ) {
                     throw new ActionException(ACTION_ERROR_CODE.INVALID_DATA);
                 }
 
@@ -355,34 +473,36 @@ export class ActionValidatorService {
                     throw new ActionException(ACTION_ERROR_CODE.INVALID_DATA);
                 }
 
-                backPositionsIndex.push(newArtifact.position)
-            } 
+                backPositionsIndex.push(newArtifact.position);
+            }
         });
     }
 
     private isEqual(value1: any, value2: any): boolean {
         if (value1 === value2) return true;
-        
+
         if (value1 == null || value2 == null) return value1 === value2;
-        
+
         if (Array.isArray(value1) && Array.isArray(value2)) {
             if (value1.length !== value2.length) return false;
-            
+
             const sorted1 = [...value1].sort();
             const sorted2 = [...value2].sort();
-            
-            return sorted1.every((item, index) => this.isEqual(item, sorted2[index]));
+
+            return sorted1.every((item, index) =>
+                this.isEqual(item, sorted2[index]),
+            );
         }
-        
+
         if (typeof value1 === 'object' && typeof value2 === 'object') {
             const keys1 = Object.keys(value1);
             const keys2 = Object.keys(value2);
-            
+
             if (keys1.length !== keys2.length) return false;
-            
-            return keys1.every(key => this.isEqual(value1[key], value2[key]));
+
+            return keys1.every((key) => this.isEqual(value1[key], value2[key]));
         }
-        
+
         return false;
     }
 }

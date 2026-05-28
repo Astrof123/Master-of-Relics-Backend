@@ -1,5 +1,5 @@
-import { ConstantsGameState, EndState, LogState, Player } from "./game";
-import { MiniPhase, Phase } from "./phase";
+import { ConstantsGameState, EndState, LogState, Player } from './game';
+import { MiniPhase, Phase } from './phase';
 
 export interface GameForLogic {
     id: string;

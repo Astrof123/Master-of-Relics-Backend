@@ -1,4 +1,3 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { InviteCodeController } from './invite-code.controller';
 import { InviteCodeService } from './invite-code.service';
@@ -10,7 +9,6 @@ import { GetInviteCodesResponseDto } from './dtos/get-invite-codes-response';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { INVITE_CODE_STATUS } from './types/invite-code';
 
-
 const createMockRequest = (userId: string = 'user-123'): any => ({
     user: { userId },
     headers: {},
@@ -20,11 +18,10 @@ const createMockRequest = (userId: string = 'user-123'): any => ({
     get: jest.fn(),
 });
 
-
 const createMockInviteCode = (
     id: string,
     status: string = INVITE_CODE_STATUS.FREE,
-    userId?: string
+    userId?: string,
 ): any => ({
     id,
     status,
@@ -55,9 +52,9 @@ describe('InviteCodeController', () => {
                 },
             ],
         })
-        .overrideGuard(JwtAuthGuard)
-        .useValue({ canActivate: jest.fn(() => true) })
-        .compile();
+            .overrideGuard(JwtAuthGuard)
+            .useValue({ canActivate: jest.fn(() => true) })
+            .compile();
 
         controller = module.get<InviteCodeController>(InviteCodeController);
         inviteCodeService = module.get(InviteCodeService);
@@ -79,22 +76,26 @@ describe('InviteCodeController', () => {
 
         it('should change invite code status', async () => {
             const request = createMockRequest();
-            
+
             mockInviteCodeService.changeStatus.mockResolvedValue(undefined);
 
             await controller.changeStatus(request, changeStatusDto);
 
-            expect(inviteCodeService.changeStatus).toHaveBeenCalledWith(changeStatusDto);
+            expect(inviteCodeService.changeStatus).toHaveBeenCalledWith(
+                changeStatusDto,
+            );
             expect(inviteCodeService.changeStatus).toHaveBeenCalledTimes(1);
         });
 
         it('should handle service error', async () => {
             const request = createMockRequest();
             const error = new Error('Service error');
-            
+
             mockInviteCodeService.changeStatus.mockRejectedValue(error);
 
-            await expect(controller.changeStatus(request, changeStatusDto)).rejects.toThrow(error);
+            await expect(
+                controller.changeStatus(request, changeStatusDto),
+            ).rejects.toThrow(error);
         });
     });
 
@@ -108,7 +109,11 @@ describe('InviteCodeController', () => {
             const request = createMockRequest();
             const mockInviteCodes = [
                 createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE),
-                createMockInviteCode('code-2', INVITE_CODE_STATUS.USED, 'user-1'),
+                createMockInviteCode(
+                    'code-2',
+                    INVITE_CODE_STATUS.USED,
+                    'user-1',
+                ),
             ];
             const mockResult = {
                 data: mockInviteCodes,
@@ -120,9 +125,14 @@ describe('InviteCodeController', () => {
 
             mockInviteCodeService.getInviteCodes.mockResolvedValue(mockResult);
 
-            const result = await controller.getInviteCodes(request, getInviteCodesDto);
+            const result = await controller.getInviteCodes(
+                request,
+                getInviteCodesDto,
+            );
 
-            expect(inviteCodeService.getInviteCodes).toHaveBeenCalledWith(getInviteCodesDto);
+            expect(inviteCodeService.getInviteCodes).toHaveBeenCalledWith(
+                getInviteCodesDto,
+            );
             expect(result).toBeDefined();
             expect(result.data).toHaveLength(2);
             expect(result.total).toBe(2);
@@ -144,7 +154,10 @@ describe('InviteCodeController', () => {
 
             mockInviteCodeService.getInviteCodes.mockResolvedValue(mockResult);
 
-            const result = await controller.getInviteCodes(request, getInviteCodesDto);
+            const result = await controller.getInviteCodes(
+                request,
+                getInviteCodesDto,
+            );
 
             expect(result.data).toEqual([]);
             expect(result.total).toBe(0);
@@ -157,7 +170,9 @@ describe('InviteCodeController', () => {
                 page: 2,
                 limit: 5,
             };
-            const mockInviteCodes = [createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE)];
+            const mockInviteCodes = [
+                createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE),
+            ];
             const mockResult = {
                 data: mockInviteCodes,
                 total: 1,
@@ -184,7 +199,9 @@ describe('InviteCodeController', () => {
                 startDate: '2024-01-01',
                 endDate: '2024-12-31',
             };
-            const mockInviteCodes = [createMockInviteCode('test-123', INVITE_CODE_STATUS.FREE)];
+            const mockInviteCodes = [
+                createMockInviteCode('test-123', INVITE_CODE_STATUS.FREE),
+            ];
             const mockResult = {
                 data: mockInviteCodes,
                 total: 1,
@@ -195,19 +212,26 @@ describe('InviteCodeController', () => {
 
             mockInviteCodeService.getInviteCodes.mockResolvedValue(mockResult);
 
-            const result = await controller.getInviteCodes(request, filteredDto);
+            const result = await controller.getInviteCodes(
+                request,
+                filteredDto,
+            );
 
-            expect(inviteCodeService.getInviteCodes).toHaveBeenCalledWith(filteredDto);
+            expect(inviteCodeService.getInviteCodes).toHaveBeenCalledWith(
+                filteredDto,
+            );
             expect(result.data).toHaveLength(1);
         });
 
         it('should handle service error', async () => {
             const request = createMockRequest();
             const error = new Error('Service error');
-            
+
             mockInviteCodeService.getInviteCodes.mockRejectedValue(error);
 
-            await expect(controller.getInviteCodes(request, getInviteCodesDto)).rejects.toThrow(error);
+            await expect(
+                controller.getInviteCodes(request, getInviteCodesDto),
+            ).rejects.toThrow(error);
         });
     });
 
@@ -224,11 +248,18 @@ describe('InviteCodeController', () => {
                 createMockInviteCode('code-3', INVITE_CODE_STATUS.FREE),
             ];
 
-            mockInviteCodeService.createInviteCodes.mockResolvedValue(mockInviteCodes);
+            mockInviteCodeService.createInviteCodes.mockResolvedValue(
+                mockInviteCodes,
+            );
 
-            const result = await controller.createInviteCodes(request, createInviteCodesDto);
+            const result = await controller.createInviteCodes(
+                request,
+                createInviteCodesDto,
+            );
 
-            expect(inviteCodeService.createInviteCodes).toHaveBeenCalledWith(createInviteCodesDto);
+            expect(inviteCodeService.createInviteCodes).toHaveBeenCalledWith(
+                createInviteCodesDto,
+            );
             expect(result).toHaveLength(3);
             expect(result[0]).toBeInstanceOf(InviteCodeDto);
             expect(result[0].status).toBe(INVITE_CODE_STATUS.FREE);
@@ -237,11 +268,18 @@ describe('InviteCodeController', () => {
         it('should create single invite code', async () => {
             const request = createMockRequest();
             const singleDto: CreateInviteCodesDto = { count: 1 };
-            const mockInviteCodes = [createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE)];
+            const mockInviteCodes = [
+                createMockInviteCode('code-1', INVITE_CODE_STATUS.FREE),
+            ];
 
-            mockInviteCodeService.createInviteCodes.mockResolvedValue(mockInviteCodes);
+            mockInviteCodeService.createInviteCodes.mockResolvedValue(
+                mockInviteCodes,
+            );
 
-            const result = await controller.createInviteCodes(request, singleDto);
+            const result = await controller.createInviteCodes(
+                request,
+                singleDto,
+            );
 
             expect(result).toHaveLength(1);
             expect(result[0].id).toBe('code-1');
@@ -250,11 +288,15 @@ describe('InviteCodeController', () => {
         it('should create max 10 invite codes', async () => {
             const request = createMockRequest();
             const maxDto: CreateInviteCodesDto = { count: 10 };
-            const mockInviteCodes = Array(10).fill(null).map((_, i) => 
-                createMockInviteCode(`code-${i}`, INVITE_CODE_STATUS.FREE)
-            );
+            const mockInviteCodes = Array(10)
+                .fill(null)
+                .map((_, i) =>
+                    createMockInviteCode(`code-${i}`, INVITE_CODE_STATUS.FREE),
+                );
 
-            mockInviteCodeService.createInviteCodes.mockResolvedValue(mockInviteCodes);
+            mockInviteCodeService.createInviteCodes.mockResolvedValue(
+                mockInviteCodes,
+            );
 
             const result = await controller.createInviteCodes(request, maxDto);
 
@@ -264,10 +306,12 @@ describe('InviteCodeController', () => {
         it('should handle service error', async () => {
             const request = createMockRequest();
             const error = new Error('Service error');
-            
+
             mockInviteCodeService.createInviteCodes.mockRejectedValue(error);
 
-            await expect(controller.createInviteCodes(request, createInviteCodesDto)).rejects.toThrow(error);
+            await expect(
+                controller.createInviteCodes(request, createInviteCodesDto),
+            ).rejects.toThrow(error);
         });
     });
 
@@ -276,22 +320,26 @@ describe('InviteCodeController', () => {
 
         it('should delete invite code', async () => {
             const request = createMockRequest();
-            
+
             mockInviteCodeService.deleteInviteCode.mockResolvedValue(undefined);
 
             await controller.deleteInviteCode(request, inviteCodeId);
 
-            expect(inviteCodeService.deleteInviteCode).toHaveBeenCalledWith(inviteCodeId);
+            expect(inviteCodeService.deleteInviteCode).toHaveBeenCalledWith(
+                inviteCodeId,
+            );
             expect(inviteCodeService.deleteInviteCode).toHaveBeenCalledTimes(1);
         });
 
         it('should handle service error', async () => {
             const request = createMockRequest();
             const error = new Error('Service error');
-            
+
             mockInviteCodeService.deleteInviteCode.mockRejectedValue(error);
 
-            await expect(controller.deleteInviteCode(request, inviteCodeId)).rejects.toThrow(error);
+            await expect(
+                controller.deleteInviteCode(request, inviteCodeId),
+            ).rejects.toThrow(error);
         });
     });
 
@@ -317,7 +365,10 @@ describe('InviteCodeController', () => {
 
             mockInviteCodeService.getInviteCodes.mockResolvedValue(mockResult);
 
-            const result = await controller.getInviteCodes(request, getInviteCodesDto);
+            const result = await controller.getInviteCodes(
+                request,
+                getInviteCodesDto,
+            );
 
             expect(result.data[0]).toHaveProperty('id');
             expect(result.data[0]).toHaveProperty('status');
@@ -348,7 +399,10 @@ describe('InviteCodeController', () => {
 
             mockInviteCodeService.getInviteCodes.mockResolvedValue(mockResult);
 
-            const result = await controller.getInviteCodes(request, getInviteCodesDto);
+            const result = await controller.getInviteCodes(
+                request,
+                getInviteCodesDto,
+            );
 
             expect(result.data[0].userId).toBeUndefined();
             expect(result.data[0].user).toBeNull();
@@ -363,19 +417,25 @@ describe('InviteCodeController', () => {
                 newStatus: INVITE_CODE_STATUS.BOOKED,
             };
             const error = new Error('Invite code not found');
-            
+
             mockInviteCodeService.changeStatus.mockRejectedValue(error);
 
-            await expect(controller.changeStatus(request, changeStatusDto)).rejects.toThrow(error);
+            await expect(
+                controller.changeStatus(request, changeStatusDto),
+            ).rejects.toThrow(error);
         });
 
         it('should handle validation errors', async () => {
             const request = createMockRequest();
             const invalidDto = {} as ChangeStatusDto;
-            
-            mockInviteCodeService.changeStatus.mockRejectedValue(new Error('Validation failed'));
 
-            await expect(controller.changeStatus(request, invalidDto)).rejects.toThrow();
+            mockInviteCodeService.changeStatus.mockRejectedValue(
+                new Error('Validation failed'),
+            );
+
+            await expect(
+                controller.changeStatus(request, invalidDto),
+            ).rejects.toThrow();
         });
     });
 
@@ -389,11 +449,15 @@ describe('InviteCodeController', () => {
         });
 
         it('should have POST /invite-codes endpoint', () => {
-            expect(InviteCodeController.prototype.createInviteCodes).toBeDefined();
+            expect(
+                InviteCodeController.prototype.createInviteCodes,
+            ).toBeDefined();
         });
 
         it('should have DELETE /invite-codes/:id endpoint', () => {
-            expect(InviteCodeController.prototype.deleteInviteCode).toBeDefined();
+            expect(
+                InviteCodeController.prototype.deleteInviteCode,
+            ).toBeDefined();
         });
     });
 });
@@ -419,9 +483,9 @@ describe('InviteCodeController (with guards)', () => {
                 },
             ],
         })
-        .overrideGuard(JwtAuthGuard)
-        .useValue({ canActivate: jest.fn(() => true) })
-        .compile();
+            .overrideGuard(JwtAuthGuard)
+            .useValue({ canActivate: jest.fn(() => true) })
+            .compile();
 
         controller = module.get<InviteCodeController>(InviteCodeController);
         inviteCodeService = module.get(InviteCodeService);
@@ -464,7 +528,9 @@ describe('InviteCodeController (with guards)', () => {
                 { id: 'code-2', status: INVITE_CODE_STATUS.FREE },
             ];
 
-            mockInviteCodeService.createInviteCodes.mockResolvedValue(mockInviteCodes as any);
+            mockInviteCodeService.createInviteCodes.mockResolvedValue(
+                mockInviteCodes as any,
+            );
 
             const result = await controller.createInviteCodes(request, dto);
 

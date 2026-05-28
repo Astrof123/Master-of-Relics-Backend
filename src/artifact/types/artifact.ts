@@ -1,13 +1,12 @@
-import { Face } from "src/game-mechanics/types/face";
-import { Skill } from "./skill";
-import { Effect, EffectType } from "src/game-mechanics/types/effect";
-import { ArtifactGameState } from "src/game-state/types/game";
+import { Face } from 'src/game-mechanics/types/face';
+import { Skill } from './skill';
+import { Effect, EffectType } from 'src/game-mechanics/types/effect';
+import { ArtifactGameState } from 'src/game-state/types/game';
 
 export interface ArtifactNeighbors {
-    left: ArtifactGameState | null,
-    right: ArtifactGameState | null
+    left: ArtifactGameState | null;
+    right: ArtifactGameState | null;
 }
-
 
 export interface ArtifactDataType {
     id: string;
@@ -51,12 +50,16 @@ export const ARTIFACT = {
     REAPER: 'reaper',
     BONE_KNIFE: 'bone_knife',
     DESTRUCTION_SHARD: 'destruction_shard',
+    BOOK_OF_WEAKNESS: 'book_of_weakness',
+    SHIVER: 'shiver',
+    SPELLBLIGHTER: 'spellblighter',
+    SPINEPIERCER: 'spinepiercer',
+    // MULTISHOT: 'multishot',
 };
 
-export type Artifact  = typeof ARTIFACT [keyof typeof ARTIFACT];
+export type Artifact = (typeof ARTIFACT)[keyof typeof ARTIFACT];
 
-
-export const SPAWN_POSITION  = {
+export const SPAWN_POSITION = {
     NEAR: 'near',
     LEFT: 'left',
     RIGHT: 'right',
@@ -64,9 +67,10 @@ export const SPAWN_POSITION  = {
     BACK_LINE: 'back_line',
 };
 
-export type SpawnPosition  = typeof SPAWN_POSITION [keyof typeof SPAWN_POSITION];
+export type SpawnPosition =
+    (typeof SPAWN_POSITION)[keyof typeof SPAWN_POSITION];
 
-export const ARTIFACT_TYPE  = {
+export const ARTIFACT_TYPE = {
     MELEE_DAMAGE: 'near',
     DEFENDER: 'defender',
     RANGE_DAMAGE: 'range_damage',
@@ -76,4 +80,4 @@ export const ARTIFACT_TYPE  = {
     GENERAL: 'general',
 };
 
-export type ArtifactType  = typeof ARTIFACT_TYPE [keyof typeof ARTIFACT_TYPE];
+export type ArtifactType = (typeof ARTIFACT_TYPE)[keyof typeof ARTIFACT_TYPE];

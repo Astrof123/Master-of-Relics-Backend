@@ -19,9 +19,6 @@ import { Report } from './entities/report.entity';
     ],
     controllers: [UsersController],
     providers: [UsersService, UsersStatsService],
-    exports: [
-        UsersService,
-        UsersStatsService
-    ]
+    exports: [UsersService, UsersStatsService],
 })
 export class UsersModule {}

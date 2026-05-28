@@ -1,15 +1,15 @@
-export const TIMER_TYPE  = {
+export const TIMER_TYPE = {
     DRAFT: 'draft',
     MOVEMENT: 'movement',
-    TURN: 'turn'
+    TURN: 'turn',
 };
 
-export type TimerType  = typeof TIMER_TYPE [keyof typeof TIMER_TYPE];
+export type TimerType = (typeof TIMER_TYPE)[keyof typeof TIMER_TYPE];
 
 export const DEFAULT_TIMER_DURATIONS = {
     [TIMER_TYPE.DRAFT]: 60,
     [TIMER_TYPE.MOVEMENT]: 60,
-    [TIMER_TYPE.TURN]: 30
+    [TIMER_TYPE.TURN]: 30,
 };
 
 export interface TimerSyncData {

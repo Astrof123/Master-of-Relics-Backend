@@ -5,7 +5,7 @@ import { WsException } from '@nestjs/websockets';
 export class WebSocketAuthGuard implements CanActivate {
     canActivate(context: ExecutionContext): boolean {
         const client = context.switchToWs().getClient();
-        
+
         if (!client.data?.userId) {
             throw new WsException('Неавторизованный доступ');
         }

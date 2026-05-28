@@ -23,6 +23,6 @@ import { DeckService } from './deck.service';
     ],
     providers: [CollectionService, CardsService, DeckService],
     controllers: [CollectionController, DeckController],
-    exports: [CardsService, CollectionService, DeckService]
+    exports: [CardsService, CollectionService, DeckService],
 })
 export class CollectionModule {}

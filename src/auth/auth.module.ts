@@ -16,10 +16,8 @@ import { InviteCode } from 'src/invite-code/entities/invite-code.entity';
         TypeOrmModule.forFeature([User]),
         TypeOrmModule.forFeature([UserStats]),
         TypeOrmModule.forFeature([InviteCode]),
-        forwardRef(() => CollectionModule)
+        forwardRef(() => CollectionModule),
     ],
-    exports: [
-        WebSocketAuthMiddleware
-    ]
+    exports: [WebSocketAuthMiddleware],
 })
 export class AuthModule {}

@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Not, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { FriendshipNotFoundException, InvalidFriendException, UserNotFoundException, UserStatsNotFoundException } from './exceptions/users.exception';
+import {
+    FriendshipNotFoundException,
+    InvalidFriendException,
+    UserNotFoundException,
+    UserStatsNotFoundException,
+} from './exceptions/users.exception';
 import { UserProfileResponseDto } from './dto/user-profile-response.dto';
 import { UserStats } from './entities/user-stats.entity';
 import { Friend, OfferFriendship, RELATIONSHIP } from './types/friend';
@@ -29,13 +34,19 @@ export class UsersService {
         private friendRelationShipRepository: Repository<FriendRelationShip>,
         @InjectRepository(Report)
         private reportRepository: Repository<Report>,
-        private socketConnectionService: SocketConnectionService
+        private socketConnectionService: SocketConnectionService,
     ) {}
 
-    async findFriends(findFriendsDto: FindFriendsDto, currentUserId: string): Promise<User[]> {
+    async findFriends(
+        findFriendsDto: FindFriendsDto,
+        currentUserId: string,
+    ): Promise<User[]> {
         const users = await this.userRepository.find({
-            where: { id: Not(currentUserId), friendCode: findFriendsDto.searchQuery },
-            take: 12
+            where: {
+                id: Not(currentUserId),
+                friendCode: findFriendsDto.searchQuery,
+            },
+            take: 12,
         });
 
         const filteredUsers: User[] = [];
@@ -44,8 +55,8 @@ export class UsersService {
             const friendship = await this.friendRelationShipRepository.findOne({
                 where: [
                     { requesterId: currentUserId, addresseeId: user.id },
-                    { requesterId: user.id, addresseeId: currentUserId }
-                ]
+                    { requesterId: user.id, addresseeId: currentUserId },
+                ],
             });
 
             if (!friendship) {
@@ -58,7 +69,7 @@ export class UsersService {
 
     async findOne(id: string): Promise<User> {
         const user = await this.userRepository.findOne({
-            where: { id }
+            where: { id },
         });
 
         if (!user) {
@@ -68,7 +79,7 @@ export class UsersService {
         if (user.bannedUntil) {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
+
             if (user.bannedUntil < today) {
                 user.banReason = null;
                 user.bannedUntil = null;
@@ -81,7 +92,7 @@ export class UsersService {
 
     async getFriends(userId: string): Promise<Friend[]> {
         const user = await this.userRepository.findOne({
-            where: { id: userId }
+            where: { id: userId },
         });
 
         if (!user) {
@@ -90,27 +101,34 @@ export class UsersService {
 
         const friendships = await this.friendRelationShipRepository.find({
             where: [
-                { requesterId: user.id, status: RELATIONSHIP.FRIEND},
-                { addresseeId: user.id, status: RELATIONSHIP.FRIEND}
+                { requesterId: user.id, status: RELATIONSHIP.FRIEND },
+                { addresseeId: user.id, status: RELATIONSHIP.FRIEND },
             ],
             relations: {
                 addressee: true,
-                requester: true
-            }
+                requester: true,
+            },
         });
 
         const friendshipsDto: Friend[] = [];
-        
-        const onlinePlayers = await this.socketConnectionService.getOnlinePlayers();
+
+        const onlinePlayers =
+            await this.socketConnectionService.getOnlinePlayers();
         for (const friend of friendships) {
-            const friendId = friend.addressee.id === user.id ? friend.requesterId : friend.addresseeId;
+            const friendId =
+                friend.addressee.id === user.id
+                    ? friend.requesterId
+                    : friend.addresseeId;
 
             friendshipsDto.push({
                 id: friend.id,
-                nickname: friend.addressee.id === user.id ? friend.requester.nickname : friend.addressee.nickname,
+                nickname:
+                    friend.addressee.id === user.id
+                        ? friend.requester.nickname
+                        : friend.addressee.nickname,
                 friendId: friendId,
-                isOnline: onlinePlayers.includes(friendId.toString())
-            })
+                isOnline: onlinePlayers.includes(friendId.toString()),
+            });
         }
 
         return friendshipsDto;
@@ -122,7 +140,7 @@ export class UsersService {
         }
 
         const user = await this.userRepository.findOne({
-            where: { id }
+            where: { id },
         });
 
         if (!user) {
@@ -130,7 +148,7 @@ export class UsersService {
         }
 
         const userStats = await this.userStatsRepository.findOne({
-            where: { userId: user.id }
+            where: { userId: user.id },
         });
 
         if (!userStats) {
@@ -138,34 +156,41 @@ export class UsersService {
         }
 
         const currentUser = await this.userRepository.findOne({
-            where: { id: userId }
+            where: { id: userId },
         });
 
         if (!currentUser) {
             throw new UserNotFoundException();
-        } 
+        }
 
         const friendshipsDto = await this.getFriends(user.id);
 
         const myFriendship = await this.friendRelationShipRepository.findOne({
             where: [
                 { requesterId: user.id, addresseeId: currentUser.id },
-                { requesterId: currentUser.id, addresseeId: user.id }
-            ]
+                { requesterId: currentUser.id, addresseeId: user.id },
+            ],
         });
 
         let offerFriendshipsDto: OfferFriendship[] | null = null;
         if (id == userId) {
             const offers = await this.friendRelationShipRepository.find({
-                where: { addresseeId: currentUser.id, status: RELATIONSHIP.OFFER },
+                where: {
+                    addresseeId: currentUser.id,
+                    status: RELATIONSHIP.OFFER,
+                },
                 relations: {
-                    requester: true
-                }
+                    requester: true,
+                },
             });
 
             offerFriendshipsDto = offers.map((offer) => {
-                return { id: offer.id, nickname: offer.requester.nickname, requesterId: offer.requester.id }
-            })
+                return {
+                    id: offer.id,
+                    nickname: offer.requester.nickname,
+                    requesterId: offer.requester.id,
+                };
+            });
         }
 
         const today = new Date();
@@ -175,37 +200,42 @@ export class UsersService {
         tomorrow.setDate(tomorrow.getDate() + 1);
 
         const reportByUser = await this.reportRepository.findOne({
-            where: { 
-                requesterUserId: currentUser.id, 
+            where: {
+                requesterUserId: currentUser.id,
                 reportedUserId: user.id,
-                createdAt: Between(today, tomorrow)
-            }
+                createdAt: Between(today, tomorrow),
+            },
         });
 
-        const onlinePlayers = await this.socketConnectionService.getOnlinePlayers();
+        const onlinePlayers =
+            await this.socketConnectionService.getOnlinePlayers();
         const response: UserProfileResponseDto = {
             id: user.id,
             nickname: user.nickname,
             isOnline: onlinePlayers.includes(user.id.toString()),
             friends: friendshipsDto,
             isReported: reportByUser ? true : false,
-            relationship: myFriendship ? myFriendship.status : RELATIONSHIP.STRANGER,
-            relationshipInitiator: myFriendship ? myFriendship?.requesterId : null,
+            relationship: myFriendship
+                ? myFriendship.status
+                : RELATIONSHIP.STRANGER,
+            relationshipInitiator: myFriendship
+                ? myFriendship?.requesterId
+                : null,
             stats: {
                 wins: userStats.wins,
                 winSeries: userStats.winSeries,
-                totalGames: userStats.totalGames
+                totalGames: userStats.totalGames,
             },
             offersFriendship: offerFriendshipsDto,
-            isBanned: user.bannedUntil ? true : false
-        }
+            isBanned: user.bannedUntil ? true : false,
+        };
 
         return response;
     }
 
     async offerFriendship(friendId: string, currentUserId: string) {
         const user = await this.userRepository.findOne({
-            where: { id: friendId }
+            where: { id: friendId },
         });
 
         if (!user) {
@@ -217,12 +247,12 @@ export class UsersService {
         }
 
         const currentUser = await this.userRepository.findOne({
-            where: { id: currentUserId }
+            where: { id: currentUserId },
         });
 
         if (!currentUser) {
             throw new UserNotFoundException();
-        } 
+        }
 
         const newRelation = this.friendRelationShipRepository.create({
             addresseeId: user.id,
@@ -240,8 +270,8 @@ export class UsersService {
         const friendship = await this.friendRelationShipRepository.findOne({
             where: [
                 { requesterId: currentUserId, addresseeId: friendId },
-                { requesterId: friendId, addresseeId: currentUserId }
-            ]
+                { requesterId: friendId, addresseeId: currentUserId },
+            ],
         });
 
         if (!friendship) {
@@ -260,8 +290,8 @@ export class UsersService {
         const friendship = await this.friendRelationShipRepository.findOne({
             where: [
                 { requesterId: currentUserId, addresseeId: friendId },
-                { requesterId: friendId, addresseeId: currentUserId }
-            ]
+                { requesterId: friendId, addresseeId: currentUserId },
+            ],
         });
 
         if (!friendship) {
@@ -273,7 +303,7 @@ export class UsersService {
 
     async reportUser(data: ReportUserDto, currentUserId: string) {
         const user = await this.userRepository.findOne({
-            where: { id: data.reportedUserId }
+            where: { id: data.reportedUserId },
         });
 
         if (!user) {
@@ -284,7 +314,7 @@ export class UsersService {
             reportedUserId: user.id,
             requesterUserId: currentUserId,
             text: data.text,
-            reportType: data.reportType
+            reportType: data.reportType,
         });
 
         await this.reportRepository.save(newReport);
@@ -292,7 +322,7 @@ export class UsersService {
 
     async banUser(data: BanUserDto) {
         const user = await this.userRepository.findOne({
-            where: { id: data.bannedUserId }
+            where: { id: data.bannedUserId },
         });
 
         if (!user) {
@@ -305,8 +335,8 @@ export class UsersService {
         await this.userRepository.save(user);
 
         const reports = await this.reportRepository.find({
-            where: { reportedUserId: user.id, isProcessed: false }
-        })
+            where: { reportedUserId: user.id, isProcessed: false },
+        });
 
         for (const report of reports) {
             report.isProcessed = true;
@@ -316,7 +346,7 @@ export class UsersService {
 
     async unbanUser(data: UnbanUserDto) {
         const user = await this.userRepository.findOne({
-            where: { id: data.bannedUserId }
+            where: { id: data.bannedUserId },
         });
 
         if (!user) {
@@ -335,7 +365,7 @@ export class UsersService {
         const startDate = data.startDate;
         const endDate = data.endDate;
         const isProcessed = data.isProcessed;
-        
+
         const skip = (page - 1) * limit;
 
         const queryBuilder = this.reportRepository
@@ -344,85 +374,88 @@ export class UsersService {
             .leftJoinAndSelect('report.reportedUser', 'reportedUser');
 
         if (reportedUserId) {
-            queryBuilder.andWhere('reportedUser.id = :reportedUserId', 
-                { reportedUserId: reportedUserId });
+            queryBuilder.andWhere('reportedUser.id = :reportedUserId', {
+                reportedUserId: reportedUserId,
+            });
         }
 
         if (isProcessed !== undefined && isProcessed !== null) {
-            queryBuilder.andWhere('report.isProcessed = :isProcessed', 
-                { isProcessed: isProcessed });
+            queryBuilder.andWhere('report.isProcessed = :isProcessed', {
+                isProcessed: isProcessed,
+            });
         }
 
         if (startDate) {
             const startDateTime = new Date(startDate);
             startDateTime.setHours(0, 0, 0, 0);
-            queryBuilder.andWhere('report.createdAt >= :startDate', 
-                { startDate: startDateTime });
+            queryBuilder.andWhere('report.createdAt >= :startDate', {
+                startDate: startDateTime,
+            });
         }
 
         if (endDate) {
             const endDateTime = new Date(endDate);
             endDateTime.setHours(23, 59, 59, 999);
-            queryBuilder.andWhere('report.createdAt <= :endDate', 
-                { endDate: endDateTime });
+            queryBuilder.andWhere('report.createdAt <= :endDate', {
+                endDate: endDateTime,
+            });
         }
 
         queryBuilder.orderBy(`report.createdAt`, 'DESC');
 
         queryBuilder.skip(skip).take(limit);
-        
+
         const [reports, total] = await queryBuilder.getManyAndCount();
-            
+
         return {
             data: reports,
             total: total,
             page: page,
             limit: limit,
-            totalPages: Math.ceil(total / limit)
+            totalPages: Math.ceil(total / limit),
         };
     }
-
 
     async getAllUsers(data: GetUsersDto) {
         const page = Number(data.page) || 1;
         const limit = Number(data.limit) || 10;
         const userId = data.userId;
-        
+
         const skip = (page - 1) * limit;
 
-        const queryBuilder = this.userRepository
-            .createQueryBuilder('user');
+        const queryBuilder = this.userRepository.createQueryBuilder('user');
 
         if (userId) {
-            queryBuilder.andWhere('CAST(user.id AS TEXT) LIKE :userId', 
-                { userId: `%${userId}%` });
+            queryBuilder.andWhere('CAST(user.id AS TEXT) LIKE :userId', {
+                userId: `%${userId}%`,
+            });
         }
 
         if (data.isBanned !== undefined && data.isBanned !== null) {
             if (data.isBanned) {
                 queryBuilder.andWhere('user.bannedUntil IS NOT NULL');
-            }
-            else {
+            } else {
                 queryBuilder.andWhere('user.bannedUntil IS NULL');
             }
         }
 
         if (data.isAdmin !== undefined && data.isAdmin !== null) {
-            queryBuilder.andWhere('user.isAdmin = :isAdmin', 
-                { isAdmin: data.isAdmin });
+            queryBuilder.andWhere('user.isAdmin = :isAdmin', {
+                isAdmin: data.isAdmin,
+            });
         }
 
         queryBuilder.orderBy(`user.createdAt`, 'DESC');
         queryBuilder.skip(skip).take(limit);
-        
+
         const [users, total] = await queryBuilder.getManyAndCount();
-            
+
         return {
             data: users,
             total: total,
             page: page,
             limit: limit,
-            totalPages: Math.ceil(total / limit)
+            totalPages: Math.ceil(total / limit),
         };
     }
 
@@ -433,7 +466,7 @@ export class UsersService {
 
         if (!user) {
             throw new UserNotFoundException();
-        } 
+        }
 
         user.isAdmin = setAdminDto.isAdmin;
         await this.userRepository.save(user);

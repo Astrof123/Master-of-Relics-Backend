@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
+import {
+    UnauthorizedException,
+    HttpException,
+    HttpStatus,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { TokenService } from './jwt/token.service';
 import { CollectionService } from '../collection/collection.service';
@@ -64,7 +68,10 @@ describe('AuthService', () => {
         createForNewUser: jest.fn(),
     };
 
-    const createMockInviteCode = (id: string, status: string = INVITE_CODE_STATUS.FREE): InviteCode => {
+    const createMockInviteCode = (
+        id: string,
+        status: string = INVITE_CODE_STATUS.FREE,
+    ): InviteCode => {
         const inviteCode = new InviteCode();
         inviteCode.id = id;
         inviteCode.status = status as any;
@@ -76,7 +83,11 @@ describe('AuthService', () => {
         return inviteCode;
     };
 
-    const createMockUser = (id: string, login: string, nickname: string): User => {
+    const createMockUser = (
+        id: string,
+        login: string,
+        nickname: string,
+    ): User => {
         const user = new User();
         user.id = id;
         user.login = login;
@@ -150,7 +161,9 @@ describe('AuthService', () => {
 
     describe('generateFriendCode', () => {
         it('should generate a 10-digit friend code', () => {
-            const generateFriendCode = (service as any).generateFriendCode.bind(service);
+            const generateFriendCode = (service as any).generateFriendCode.bind(
+                service,
+            );
             const code = generateFriendCode();
             expect(code).toHaveLength(10);
             expect(/^\d+$/.test(code)).toBe(true);
@@ -180,8 +193,15 @@ describe('AuthService', () => {
         });
 
         it('should successfully register a new user', async () => {
-            const mockInviteCode = createMockInviteCode(registerDto.inviteCode, INVITE_CODE_STATUS.FREE);
-            const mockUser = createMockUser(mockUserId, registerDto.login, registerDto.nickname);
+            const mockInviteCode = createMockInviteCode(
+                registerDto.inviteCode,
+                INVITE_CODE_STATUS.FREE,
+            );
+            const mockUser = createMockUser(
+                mockUserId,
+                registerDto.login,
+                registerDto.nickname,
+            );
             const mockUserStats = { userId: mockUserId } as UserStats;
 
             mockUsersRepository.findOne.mockResolvedValue(null);
@@ -197,33 +217,43 @@ describe('AuthService', () => {
 
             expect(result).toEqual(mockTokens);
             expect(mockUsersRepository.findOne).toHaveBeenCalledWith({
-                where: { login: registerDto.login }
+                where: { login: registerDto.login },
             });
             expect(mockInviteCodeRepository.findOne).toHaveBeenCalledWith({
-                where: { id: registerDto.inviteCode }
+                where: { id: registerDto.inviteCode },
             });
             expect(mockUsersRepository.exists).toHaveBeenCalled();
             expect(bcrypt.hash).toHaveBeenCalledWith(registerDto.password, 10);
             expect(mockUsersRepository.create).toHaveBeenCalled();
             expect(mockUsersRepository.save).toHaveBeenCalled();
             expect(mockUserStatsRepository.create).toHaveBeenCalledWith({
-                userId: mockUserId
+                userId: mockUserId,
             });
             expect(mockUserStatsRepository.save).toHaveBeenCalled();
             expect(mockInviteCodeRepository.save).toHaveBeenCalled();
-            expect(mockCollectionService.createForNewUser).toHaveBeenCalledWith(mockUserId);
-            expect(mockDeckService.createForNewUser).toHaveBeenCalledWith(mockUserId);
+            expect(mockCollectionService.createForNewUser).toHaveBeenCalledWith(
+                mockUserId,
+            );
+            expect(mockDeckService.createForNewUser).toHaveBeenCalledWith(
+                mockUserId,
+            );
             expect(mockTokenService.generateTokens).toHaveBeenCalledWith({
-                sub: mockUserId
+                sub: mockUserId,
             });
         });
 
         it('should throw UserAlreadyExistsException if user already exists', async () => {
-            const existingUser = createMockUser('existing-user', registerDto.login, 'ExistingUser');
-            
+            const existingUser = createMockUser(
+                'existing-user',
+                registerDto.login,
+                'ExistingUser',
+            );
+
             mockUsersRepository.findOne.mockResolvedValue(existingUser);
 
-            await expect(service.register(registerDto)).rejects.toThrow(UserAlreadyExistsException);
+            await expect(service.register(registerDto)).rejects.toThrow(
+                UserAlreadyExistsException,
+            );
             expect(mockInviteCodeRepository.findOne).not.toHaveBeenCalled();
             expect(mockUsersRepository.save).not.toHaveBeenCalled();
         });
@@ -232,7 +262,9 @@ describe('AuthService', () => {
             (isValidUUID as jest.Mock).mockReturnValue(false);
             mockUsersRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.register(registerDto)).rejects.toThrow(InvalidInviteCodeException);
+            await expect(service.register(registerDto)).rejects.toThrow(
+                InvalidInviteCodeException,
+            );
             expect(mockInviteCodeRepository.findOne).not.toHaveBeenCalled();
             expect(mockUsersRepository.save).not.toHaveBeenCalled();
         });
@@ -241,24 +273,38 @@ describe('AuthService', () => {
             mockUsersRepository.findOne.mockResolvedValue(null);
             mockInviteCodeRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.register(registerDto)).rejects.toThrow(InvalidInviteCodeException);
+            await expect(service.register(registerDto)).rejects.toThrow(
+                InvalidInviteCodeException,
+            );
             expect(mockUsersRepository.save).not.toHaveBeenCalled();
         });
 
         it('should throw UsedInviteCodeException if invite code is already used', async () => {
-            const usedInviteCode = createMockInviteCode(registerDto.inviteCode, INVITE_CODE_STATUS.USED);
+            const usedInviteCode = createMockInviteCode(
+                registerDto.inviteCode,
+                INVITE_CODE_STATUS.USED,
+            );
             usedInviteCode.userId = 'existing-user-id';
 
             mockUsersRepository.findOne.mockResolvedValue(null);
             mockInviteCodeRepository.findOne.mockResolvedValue(usedInviteCode);
 
-            await expect(service.register(registerDto)).rejects.toThrow(UsedInviteCodeException);
+            await expect(service.register(registerDto)).rejects.toThrow(
+                UsedInviteCodeException,
+            );
             expect(mockUsersRepository.save).not.toHaveBeenCalled();
         });
 
         it('should generate unique friend code', async () => {
-            const mockInviteCode = createMockInviteCode(registerDto.inviteCode, INVITE_CODE_STATUS.FREE);
-            const mockUser = createMockUser(mockUserId, registerDto.login, registerDto.nickname);
+            const mockInviteCode = createMockInviteCode(
+                registerDto.inviteCode,
+                INVITE_CODE_STATUS.FREE,
+            );
+            const mockUser = createMockUser(
+                mockUserId,
+                registerDto.login,
+                registerDto.nickname,
+            );
             const mockUserStats = { userId: mockUserId } as UserStats;
 
             mockUsersRepository.findOne.mockResolvedValue(null);
@@ -278,8 +324,15 @@ describe('AuthService', () => {
         });
 
         it('should update invite code with user info on successful registration', async () => {
-            const mockInviteCode = createMockInviteCode(registerDto.inviteCode, INVITE_CODE_STATUS.FREE);
-            const mockUser = createMockUser(mockUserId, registerDto.login, registerDto.nickname);
+            const mockInviteCode = createMockInviteCode(
+                registerDto.inviteCode,
+                INVITE_CODE_STATUS.FREE,
+            );
+            const mockUser = createMockUser(
+                mockUserId,
+                registerDto.login,
+                registerDto.nickname,
+            );
             const mockUserStats = { userId: mockUserId } as UserStats;
 
             mockUsersRepository.findOne.mockResolvedValue(null);
@@ -296,14 +349,18 @@ describe('AuthService', () => {
             expect(mockInviteCode.userId).toBe(mockUserId);
             expect(mockInviteCode.usedAt).toBeInstanceOf(Date);
             expect(mockInviteCode.status).toBe(INVITE_CODE_STATUS.USED);
-            expect(mockInviteCodeRepository.save).toHaveBeenCalledWith(mockInviteCode);
+            expect(mockInviteCodeRepository.save).toHaveBeenCalledWith(
+                mockInviteCode,
+            );
         });
 
         it('should handle unexpected errors and throw internal server error', async () => {
-            mockUsersRepository.findOne.mockRejectedValue(new Error('Database error'));
+            mockUsersRepository.findOne.mockRejectedValue(
+                new Error('Database error'),
+            );
 
             await expect(service.register(registerDto)).rejects.toThrow(
-                'Ошибка при регистрации пользователя'
+                'Ошибка при регистрации пользователя',
             );
         });
     });
@@ -326,47 +383,64 @@ describe('AuthService', () => {
         });
 
         it('should successfully login with valid credentials', async () => {
-            const mockUser = createMockUser(mockUserId, loginDto.login, 'TestUser');
+            const mockUser = createMockUser(
+                mockUserId,
+                loginDto.login,
+                'TestUser',
+            );
             mockUser.password = 'hashed_password';
-            
+
             mockUsersRepository.findOne.mockResolvedValue(mockUser);
 
             const result = await service.login(loginDto);
 
             expect(result).toEqual(mockTokens);
             expect(mockUsersRepository.findOne).toHaveBeenCalledWith({
-                where: { login: loginDto.login }
+                where: { login: loginDto.login },
             });
-            expect(bcrypt.compare).toHaveBeenCalledWith(loginDto.password, mockUser.password);
+            expect(bcrypt.compare).toHaveBeenCalledWith(
+                loginDto.password,
+                mockUser.password,
+            );
             expect(mockTokenService.generateTokens).toHaveBeenCalledWith({
-                sub: mockUserId
+                sub: mockUserId,
             });
         });
 
         it('should throw InvalidCredentialsException if user not found', async () => {
             mockUsersRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.login(loginDto)).rejects.toThrow(InvalidCredentialsException);
+            await expect(service.login(loginDto)).rejects.toThrow(
+                InvalidCredentialsException,
+            );
             expect(bcrypt.compare).not.toHaveBeenCalled();
             expect(mockTokenService.generateTokens).not.toHaveBeenCalled();
         });
 
         it('should throw InvalidCredentialsException if password is invalid', async () => {
-            const mockUser = createMockUser(mockUserId, loginDto.login, 'TestUser');
+            const mockUser = createMockUser(
+                mockUserId,
+                loginDto.login,
+                'TestUser',
+            );
             mockUser.password = 'hashed_password';
-            
+
             mockUsersRepository.findOne.mockResolvedValue(mockUser);
             (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-            await expect(service.login(loginDto)).rejects.toThrow(InvalidCredentialsException);
+            await expect(service.login(loginDto)).rejects.toThrow(
+                InvalidCredentialsException,
+            );
             expect(mockTokenService.generateTokens).not.toHaveBeenCalled();
         });
 
         it('should handle unexpected errors and throw internal server error', async () => {
-            mockUsersRepository.findOne.mockRejectedValue(new Error('Database error'));
+            mockUsersRepository.findOne.mockRejectedValue(
+                new Error('Database error'),
+            );
 
             await expect(service.login(loginDto)).rejects.toThrow(
-                'Ошибка на стороне сервера'
+                'Ошибка на стороне сервера',
             );
         });
     });
@@ -387,27 +461,31 @@ describe('AuthService', () => {
 
         it('should successfully refresh tokens', async () => {
             const mockUser = createMockUser(mockUserId, 'testuser', 'TestUser');
-            
+
             mockUsersRepository.findOne.mockResolvedValue(mockUser);
 
             const result = await service.refreshTokens(refreshToken);
 
             expect(result).toEqual(mockTokens);
-            expect(mockTokenService.verifyRefreshToken).toHaveBeenCalledWith(refreshToken);
+            expect(mockTokenService.verifyRefreshToken).toHaveBeenCalledWith(
+                refreshToken,
+            );
             expect(mockUsersRepository.findOne).toHaveBeenCalledWith({
-                where: { id: mockUserId }
+                where: { id: mockUserId },
             });
             expect(mockTokenService.generateTokens).toHaveBeenCalledWith({
-                sub: mockUserId
+                sub: mockUserId,
             });
         });
 
         it('should throw UnauthorizedException if refresh token is invalid', async () => {
             mockTokenService.verifyRefreshToken.mockRejectedValue(
-                new UnauthorizedException('Невалидный refresh token')
+                new UnauthorizedException('Невалидный refresh token'),
             );
 
-            await expect(service.refreshTokens(refreshToken)).rejects.toThrow(UnauthorizedException);
+            await expect(service.refreshTokens(refreshToken)).rejects.toThrow(
+                UnauthorizedException,
+            );
             expect(mockUsersRepository.findOne).not.toHaveBeenCalled();
         });
 
@@ -415,15 +493,19 @@ describe('AuthService', () => {
             mockTokenService.verifyRefreshToken.mockResolvedValue(mockPayload);
             mockUsersRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.refreshTokens(refreshToken)).rejects.toThrow(UnauthorizedException);
+            await expect(service.refreshTokens(refreshToken)).rejects.toThrow(
+                UnauthorizedException,
+            );
             expect(mockTokenService.generateTokens).not.toHaveBeenCalled();
         });
 
         it('should handle unexpected errors and throw internal server error', async () => {
-            mockTokenService.verifyRefreshToken.mockRejectedValue(new Error('Unexpected error'));
+            mockTokenService.verifyRefreshToken.mockRejectedValue(
+                new Error('Unexpected error'),
+            );
 
             await expect(service.refreshTokens(refreshToken)).rejects.toThrow(
-                'Ошибка на стороне сервера'
+                'Ошибка на стороне сервера',
             );
         });
     });

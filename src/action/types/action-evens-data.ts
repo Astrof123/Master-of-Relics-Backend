@@ -1,12 +1,12 @@
-import { Skill } from "src/artifact/types/skill";
-import { ExtraAction } from "./action";
-import { ArtifactGameState, Line } from "src/game-state/types/game";
+import { Skill } from 'src/artifact/types/skill';
+import { ExtraAction } from './action';
+import { ArtifactGameState, Line } from 'src/game-state/types/game';
 
 export interface UseFaceData {
     gameId: string;
     artifactGameId: string;
-    attackTarget: string | null,
-    healTarget: string | null
+    attackTarget: string | null;
+    healTarget: string | null;
 }
 
 export interface UseSkillData {
@@ -37,12 +37,10 @@ export interface ExtraActionData {
     details: MoveArtifactDetails | null;
 }
 
-
 export interface ToggleReadyMovementData {
     gameId: string;
     artifactsWithNewPosition: Record<string, ArtifactGameState>;
 }
-
 
 export interface MoveArtifactDetails {
     newPosition: number;

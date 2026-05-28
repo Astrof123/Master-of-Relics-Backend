@@ -12,15 +12,15 @@ import { UsersModule } from 'src/users/users.module';
 @Module({
     providers: [PhaseService],
     imports: [
-        RedisModule, 
-        forwardRef(() => GameStateModule), 
-        GameMechanicsModule, 
+        RedisModule,
+        forwardRef(() => GameStateModule),
+        GameMechanicsModule,
         forwardRef(() => ArtifactModule),
         SpellModule,
         CollectionModule,
         forwardRef(() => LobbyModule),
-        UsersModule
+        UsersModule,
     ],
-    exports: [PhaseService]
+    exports: [PhaseService],
 })
 export class PhaseModule {}
