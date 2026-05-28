@@ -14,21 +14,21 @@ import { BotService } from './bot.service';
 
 @Module({
     providers: [
-        ActionGateway, 
-        ActionValidatorService, 
-        ActionResolverService, 
-        ActionService, 
+        ActionGateway,
+        ActionValidatorService,
+        ActionResolverService,
+        ActionService,
         ExtraActionService,
         RestrictionService,
-        BotService
+        BotService,
     ],
     imports: [
-        forwardRef(() => GameStateModule), 
-        forwardRef(() => GameMechanicsModule), 
-        forwardRef(() => PhaseModule), 
+        forwardRef(() => GameStateModule),
+        forwardRef(() => GameMechanicsModule),
+        forwardRef(() => PhaseModule),
         forwardRef(() => ArtifactModule),
-        forwardRef(() => SpellModule)
+        forwardRef(() => SpellModule),
     ],
-    exports: [ExtraActionService, RestrictionService, ActionService]
+    exports: [ExtraActionService, RestrictionService, ActionService],
 })
 export class ActionModule {}

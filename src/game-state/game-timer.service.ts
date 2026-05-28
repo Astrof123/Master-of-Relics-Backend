@@ -7,7 +7,7 @@ import { GAME_EVENT_NAME } from './types/game-events-name';
 @Injectable()
 export class GameTimerService {
     private readonly logger = new Logger(GameTimerService.name);
-    
+
     private server: Server | null = null;
 
     constructor(
@@ -20,15 +20,18 @@ export class GameTimerService {
     }
 
     async startTimer(
-        gameId: string, 
-        timerType: TimerType, 
-        duration: number
+        gameId: string,
+        timerType: TimerType,
+        duration: number,
     ): Promise<void> {
         this.logger.log(`Starting ${timerType} timer for game ${gameId}`);
-        
+
         await this.gameStateService.startGameTimer(gameId, timerType, duration);
-        
-        const timerInfo = await this.gameStateService.getTimerInfo(gameId, timerType);
+
+        const timerInfo = await this.gameStateService.getTimerInfo(
+            gameId,
+            timerType,
+        );
 
         if (this.server) {
             this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.TIMER_START, {
@@ -41,9 +44,9 @@ export class GameTimerService {
 
     async stopTimer(gameId: string, timerType: TimerType): Promise<void> {
         this.logger.log(`Stopping ${timerType} timer for game ${gameId}`);
-        
+
         await this.gameStateService.cancelGameTimer(gameId, timerType);
-        
+
         if (this.server) {
             this.server.to(`game-${gameId}`).emit('timer:cancel', {
                 gameId,
@@ -54,9 +57,9 @@ export class GameTimerService {
 
     async stopAllTimers(gameId: string): Promise<void> {
         this.logger.log(`Stopping all timers for game ${gameId}`);
-        
+
         await this.gameStateService.cancelAllGameTimers(gameId);
-        
+
         if (this.server) {
             this.server.to(`game-${gameId}`).emit('timer:cancel-all', {
                 gameId,
@@ -66,7 +69,7 @@ export class GameTimerService {
 
     async syncTimersOnRecovery(gameId: string): Promise<void> {
         const game = await this.gameStateService.getGameById(gameId);
-        
+
         if (!game) {
             return;
         }

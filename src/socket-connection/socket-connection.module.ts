@@ -6,18 +6,8 @@ import { SocketConnectionService } from './socket-connection.service';
 import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
-    providers: [
-        SocketConnectionGateway,
-        SocketConnectionService
-    ],
-    imports: [
-        forwardRef(() => AuthModule),
-        RedisModule
-    ],
-    exports: [
-        SocketConnectionService
-    ]
+    providers: [SocketConnectionGateway, SocketConnectionService],
+    imports: [forwardRef(() => AuthModule), RedisModule],
+    exports: [SocketConnectionService],
 })
-export class SocketConnectionModule {
-
-}
+export class SocketConnectionModule {}

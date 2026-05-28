@@ -9,9 +9,20 @@ import { GameEffectsService } from './game-effects.service';
 import { ArtifactModule } from 'src/artifact/artifact.module';
 
 @Module({
-    providers: [ResourceService, ArtifactStateService, DiceService, CombatService, GameEffectsService],
-    imports: [RedisModule, forwardRef(() => GameStateModule),  ArtifactModule],
-    exports: [ResourceService, ArtifactStateService, DiceService, CombatService, GameEffectsService]
+    providers: [
+        ResourceService,
+        ArtifactStateService,
+        DiceService,
+        CombatService,
+        GameEffectsService,
+    ],
+    imports: [RedisModule, forwardRef(() => GameStateModule), ArtifactModule],
+    exports: [
+        ResourceService,
+        ArtifactStateService,
+        DiceService,
+        CombatService,
+        GameEffectsService,
+    ],
 })
 export class GameMechanicsModule {}
-

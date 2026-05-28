@@ -1,4 +1,4 @@
-import { ARTIFACT, Artifact } from "src/artifact/types/artifact";
+import { ARTIFACT, Artifact } from 'src/artifact/types/artifact';
 
 export const ROBOT_DECK: Artifact[] = [
     ARTIFACT.MOON_STAFF,
@@ -15,4 +15,4 @@ export const ROBOT_DECK: Artifact[] = [
     ARTIFACT.VOLT,
     ARTIFACT.VOIDER,
     ARTIFACT.GLIMPSE,
-]
+];

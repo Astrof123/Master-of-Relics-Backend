@@ -1,5 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards, ValidationPipe } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Post,
+    Req,
+    Res,
+    UnauthorizedException,
+    UseGuards,
+    ValidationPipe,
+} from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TokenService } from './jwt/token.service';
@@ -60,9 +71,9 @@ describe('AuthController', () => {
                 },
             ],
         })
-        .overrideGuard(JwtAuthGuard)
-        .useValue({ canActivate: jest.fn(() => true) })
-        .compile();
+            .overrideGuard(JwtAuthGuard)
+            .useValue({ canActivate: jest.fn(() => true) })
+            .compile();
 
         controller = module.get<AuthController>(AuthController);
         authService = module.get(AuthService);
@@ -83,7 +94,7 @@ describe('AuthController', () => {
             const refreshToken = 'test-refresh-token';
 
             (controller as any).setRefreshTokenCookie(response, refreshToken);
-            
+
             expect(response.cookie).toHaveBeenCalledWith(
                 'refresh_token',
                 refreshToken,
@@ -91,27 +102,27 @@ describe('AuthController', () => {
                     httpOnly: true,
                     sameSite: 'lax',
                     maxAge: 30 * 24 * 60 * 60 * 1000,
-                })
+                }),
             );
         });
 
         it('should set secure flag in production', () => {
             const originalNodeEnv = process.env.NODE_ENV;
             process.env.NODE_ENV = 'production';
-            
+
             const response = createMockResponse();
             const refreshToken = 'test-refresh-token';
-            
+
             (controller as any).setRefreshTokenCookie(response, refreshToken);
-            
+
             expect(response.cookie).toHaveBeenCalledWith(
                 'refresh_token',
                 refreshToken,
                 expect.objectContaining({
                     secure: true,
-                })
+                }),
             );
-            
+
             process.env.NODE_ENV = originalNodeEnv;
         });
     });
@@ -131,7 +142,7 @@ describe('AuthController', () => {
 
         it('should register user and set refresh token cookie', async () => {
             const response = createMockResponse();
-            
+
             mockAuthService.register.mockResolvedValue(mockTokens);
 
             const result = await controller.register(registerDto, response);
@@ -140,7 +151,7 @@ describe('AuthController', () => {
             expect(response.cookie).toHaveBeenCalledWith(
                 'refresh_token',
                 mockTokens.refreshToken,
-                expect.any(Object)
+                expect.any(Object),
             );
             expect(result).toEqual({
                 accessToken: mockTokens.accessToken,
@@ -151,10 +162,12 @@ describe('AuthController', () => {
         it('should handle registration error', async () => {
             const response = createMockResponse();
             const error = new Error('Registration failed');
-            
+
             mockAuthService.register.mockRejectedValue(error);
 
-            await expect(controller.register(registerDto, response)).rejects.toThrow(error);
+            await expect(
+                controller.register(registerDto, response),
+            ).rejects.toThrow(error);
             expect(response.cookie).not.toHaveBeenCalled();
         });
     });
@@ -172,7 +185,7 @@ describe('AuthController', () => {
 
         it('should login user and set refresh token cookie', async () => {
             const response = createMockResponse();
-            
+
             mockAuthService.login.mockResolvedValue(mockTokens);
 
             const result = await controller.login(loginDto, response);
@@ -181,7 +194,7 @@ describe('AuthController', () => {
             expect(response.cookie).toHaveBeenCalledWith(
                 'refresh_token',
                 mockTokens.refreshToken,
-                expect.any(Object)
+                expect.any(Object),
             );
             expect(result).toEqual({
                 accessToken: mockTokens.accessToken,
@@ -192,10 +205,12 @@ describe('AuthController', () => {
         it('should handle login error', async () => {
             const response = createMockResponse();
             const error = new Error('Login failed');
-            
+
             mockAuthService.login.mockRejectedValue(error);
 
-            await expect(controller.login(loginDto, response)).rejects.toThrow(error);
+            await expect(controller.login(loginDto, response)).rejects.toThrow(
+                error,
+            );
             expect(response.cookie).not.toHaveBeenCalled();
         });
     });
@@ -208,18 +223,22 @@ describe('AuthController', () => {
         };
 
         it('should refresh tokens when refresh token exists', async () => {
-            const request = createMockRequest({ refresh_token: mockRefreshToken });
+            const request = createMockRequest({
+                refresh_token: mockRefreshToken,
+            });
             const response = createMockResponse();
-            
+
             mockAuthService.refreshTokens.mockResolvedValue(mockTokens);
 
             const result = await controller.refresh(request, response);
 
-            expect(authService.refreshTokens).toHaveBeenCalledWith(mockRefreshToken);
+            expect(authService.refreshTokens).toHaveBeenCalledWith(
+                mockRefreshToken,
+            );
             expect(response.cookie).toHaveBeenCalledWith(
                 'refresh_token',
                 mockTokens.refreshToken,
-                expect.any(Object)
+                expect.any(Object),
             );
             expect(result).toEqual({
                 accessToken: mockTokens.accessToken,
@@ -231,23 +250,27 @@ describe('AuthController', () => {
             const response = createMockResponse();
 
             await expect(controller.refresh(request, response)).rejects.toThrow(
-                UnauthorizedException
+                UnauthorizedException,
             );
             await expect(controller.refresh(request, response)).rejects.toThrow(
-                'Токен не найден'
+                'Токен не найден',
             );
             expect(authService.refreshTokens).not.toHaveBeenCalled();
             expect(response.cookie).not.toHaveBeenCalled();
         });
 
         it('should handle refresh token error', async () => {
-            const request = createMockRequest({ refresh_token: mockRefreshToken });
+            const request = createMockRequest({
+                refresh_token: mockRefreshToken,
+            });
             const response = createMockResponse();
             const error = new Error('Refresh failed');
-            
+
             mockAuthService.refreshTokens.mockRejectedValue(error);
 
-            await expect(controller.refresh(request, response)).rejects.toThrow(error);
+            await expect(controller.refresh(request, response)).rejects.toThrow(
+                error,
+            );
             expect(response.cookie).not.toHaveBeenCalled();
         });
     });
@@ -263,14 +286,14 @@ describe('AuthController', () => {
                 expect.objectContaining({
                     httpOnly: true,
                     sameSite: 'lax',
-                })
+                }),
             );
         });
 
         it('should clear cookie with secure flag in production', async () => {
             const originalNodeEnv = process.env.NODE_ENV;
             process.env.NODE_ENV = 'production';
-            
+
             const response = createMockResponse();
 
             await controller.logout(response);
@@ -279,9 +302,9 @@ describe('AuthController', () => {
                 'refresh_token',
                 expect.objectContaining({
                     secure: true,
-                })
+                }),
             );
-            
+
             process.env.NODE_ENV = originalNodeEnv;
         });
 
@@ -295,7 +318,10 @@ describe('AuthController', () => {
     describe('HTTP decorators verification', () => {
         it('should have POST /register endpoint', () => {
             const routes = Reflect.getMetadata('path', AuthController);
-            const method = Reflect.getMetadata('method', AuthController.prototype.register);
+            const method = Reflect.getMetadata(
+                'method',
+                AuthController.prototype.register,
+            );
             expect(AuthController.prototype.register).toBeDefined();
         });
 
@@ -309,7 +335,10 @@ describe('AuthController', () => {
 
         it('should have POST /logout endpoint with JwtAuthGuard', () => {
             expect(AuthController.prototype.logout).toBeDefined();
-            const guards = Reflect.getMetadata('__guards__', AuthController.prototype.logout);
+            const guards = Reflect.getMetadata(
+                '__guards__',
+                AuthController.prototype.logout,
+            );
             expect(guards).toBeDefined();
         });
     });
@@ -346,9 +375,9 @@ describe('AuthController (integration style)', () => {
                 },
             ],
         })
-        .overrideGuard(JwtAuthGuard)
-        .useValue({ canActivate: jest.fn(() => true) })
-        .compile();
+            .overrideGuard(JwtAuthGuard)
+            .useValue({ canActivate: jest.fn(() => true) })
+            .compile();
 
         controller = module.get<AuthController>(AuthController);
         authService = module.get(AuthService);
@@ -365,7 +394,7 @@ describe('AuthController (integration style)', () => {
                 accessToken: 'access',
                 refreshToken: 'refresh',
             };
-            
+
             mockAuthService.register.mockResolvedValue(tokens);
 
             await controller.register({} as RegisterDto, response);
@@ -380,7 +409,7 @@ describe('AuthController (integration style)', () => {
                 accessToken: 'access',
                 refreshToken: 'refresh',
             };
-            
+
             mockAuthService.register.mockResolvedValue(tokens);
 
             await controller.register({} as RegisterDto, response);
@@ -397,10 +426,13 @@ describe('AuthController (integration style)', () => {
                 accessToken: 'access-token',
                 refreshToken: 'refresh-token',
             };
-            
+
             mockAuthService.register.mockResolvedValue(tokens);
 
-            const result = await controller.register({} as RegisterDto, response);
+            const result = await controller.register(
+                {} as RegisterDto,
+                response,
+            );
 
             expect(result).toEqual({ accessToken: 'access-token' });
             expect(Object.keys(result)).toHaveLength(1);
@@ -412,7 +444,7 @@ describe('AuthController (integration style)', () => {
                 accessToken: 'access-token',
                 refreshToken: 'refresh-token',
             };
-            
+
             mockAuthService.login.mockResolvedValue(tokens);
 
             const result = await controller.login({} as LoginDto, response);
@@ -428,7 +460,7 @@ describe('AuthController (integration style)', () => {
                 accessToken: 'new-access-token',
                 refreshToken: 'new-refresh-token',
             };
-            
+
             mockAuthService.refreshTokens.mockResolvedValue(tokens);
 
             const result = await controller.refresh(request, response);

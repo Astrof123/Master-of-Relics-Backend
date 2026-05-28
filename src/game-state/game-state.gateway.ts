@@ -1,12 +1,12 @@
-import { 
-    WebSocketGateway, 
-    WebSocketServer, 
+import {
+    WebSocketGateway,
+    WebSocketServer,
     SubscribeMessage,
     OnGatewayConnection,
     OnGatewayDisconnect,
     MessageBody,
-    ConnectedSocket, 
-    OnGatewayInit
+    ConnectedSocket,
+    OnGatewayInit,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Inject, Logger, UseGuards } from '@nestjs/common';
@@ -25,10 +25,12 @@ import { GameTimerService } from './game-timer.service';
 import { MINIPHASE, PHASE } from './types/phase';
 import { DraftService } from 'src/draft/draft.service';
 import { ActionService } from 'src/action/action.service';
-import { GameNotificationData, NOTIFICATION_LEVEL } from './types/game-events-data';
+import {
+    GameNotificationData,
+    NOTIFICATION_LEVEL,
+} from './types/game-events-data';
 import { MAX_SKIP_TURN } from 'src/game-mechanics/constants/settings';
 import { LOG_TYPE } from 'src/action/types/log';
-
 
 @WebSocketGateway()
 export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
@@ -36,13 +38,13 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
     private subscriber!: Redis;
 
     constructor(
-        @Inject('REDIS_CLIENT') 
+        @Inject('REDIS_CLIENT')
         private readonly redisClient: Redis,
         private readonly gameStateService: GameStateService,
         private readonly lobbyService: LobbyService,
         private readonly gameTimerService: GameTimerService,
         private readonly draftService: DraftService,
-        private readonly actionService: ActionService
+        private readonly actionService: ActionService,
     ) {}
 
     @WebSocketServer()
@@ -64,7 +66,6 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
         this.subscriber.on('pmessage', async (pattern, channel, expiredKey) => {
             await this.handleExpiredKey(expiredKey);
         });
-
     }
 
     private async handleExpiredKey(key: string) {
@@ -79,9 +80,12 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
         const [, gameId, timerType] = parts;
 
         try {
-            await this.handleTimerExpired(gameId, timerType as TimerType);
+            await this.handleTimerExpired(gameId, timerType);
         } catch (error) {
-            this.logger.error(`Error handling timer expiration for ${key}:`, error);
+            this.logger.error(
+                `Error handling timer expiration for ${key}:`,
+                error,
+            );
         }
     }
 
@@ -106,15 +110,18 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
                 this.logger.warn(`Unknown timer type: ${timerType}`);
         }
 
-        this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
+        this.server
+            .to(`game-${gameId}`)
+            .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId);
     }
 
     private async handleDraftTimeout(gameId: string) {
         const gameState = await this.gameStateService.getGameById(gameId);
-        if (!gameState || gameState.phase !== PHASE.DRAFT || gameState.end) return;
-        
+        if (!gameState || gameState.phase !== PHASE.DRAFT || gameState.end)
+            return;
+
         const players = Object.keys(gameState.players);
-        
+
         for (const userId of players) {
             const player = gameState.players[userId];
             if (!player.isReady) {
@@ -125,42 +132,64 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
 
     private async handleMovementTimeout(gameId: string) {
         const gameState = await this.gameStateService.getGameById(gameId);
-        if (!gameState || gameState.miniPhase !== MINIPHASE.MOVEMENT || gameState.end) return;
-        
+        if (
+            !gameState ||
+            gameState.miniPhase !== MINIPHASE.MOVEMENT ||
+            gameState.end
+        )
+            return;
+
         const players = Object.keys(gameState.players);
-        
+
         for (const userId of players) {
             const player = gameState.players[userId];
             if (!player.isReady) {
-                await this.actionService.autoToggleReadyMovement(gameId, userId);
+                await this.actionService.autoToggleReadyMovement(
+                    gameId,
+                    userId,
+                );
             }
         }
     }
 
     private async handleTurnTimeout(gameId: string) {
         const gameState = await this.gameStateService.getGameById(gameId);
-        if (!gameState || gameState.miniPhase !== MINIPHASE.BATTLE || gameState.end) return;
-        
+        if (
+            !gameState ||
+            gameState.miniPhase !== MINIPHASE.BATTLE ||
+            gameState.end
+        )
+            return;
+
         const players = Object.keys(gameState.players);
-        
+
         for (const userId of players) {
             const player = gameState.players[userId];
             if (gameState.currentTurn === player.id) {
-
-                const skippedTurn = await this.actionService.autoEndTurn(gameId, userId);
+                const skippedTurn = await this.actionService.autoEndTurn(
+                    gameId,
+                    userId,
+                );
 
                 if (skippedTurn) {
                     if (player.extraData.skippedMoves + 1 >= MAX_SKIP_TURN) {
-                        await this.actionService.autoGiveUp(gameState.id, userId);
-                    }
-                    else {
+                        await this.actionService.autoGiveUp(
+                            gameState.id,
+                            userId,
+                        );
+                    } else {
                         const notification: GameNotificationData = {
                             receiverId: player.id,
                             text: `Вы пропустили уже ${player.extraData.skippedMoves + 1} ходов. Если вы пропустите ${MAX_SKIP_TURN} ходов, то автоматически проиграете!`,
-                            level: NOTIFICATION_LEVEL.WARNING
-                        }
+                            level: NOTIFICATION_LEVEL.WARNING,
+                        };
 
-                        this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.NEW_NOTIFICATION, notification);
+                        this.server
+                            .to(`game-${gameId}`)
+                            .emit(
+                                GAME_EVENT_NAME.NEW_NOTIFICATION,
+                                notification,
+                            );
                     }
                 }
             }
@@ -172,84 +201,129 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
         const game = await this.gameStateService.getGameByUserId(userId);
 
         if (game) {
-            await this.gameStateService.setPlayerConnectionStatus(CONNECTIONGAME.OFFLINE, game.id, userId);
-            const gameForClient = await this.gameStateService.getGameForClientById(game.id, userId);
-            
+            await this.gameStateService.setPlayerConnectionStatus(
+                CONNECTIONGAME.OFFLINE,
+                game.id,
+                userId,
+            );
+            const gameForClient =
+                await this.gameStateService.getGameForClientById(
+                    game.id,
+                    userId,
+                );
+
             if (gameForClient) {
                 const playersOnline = {
                     [gameForClient.player.name]: CONNECTIONGAME.OFFLINE,
-                    [gameForClient.enemy.name]: gameForClient.enemy.connection
-                }
+                    [gameForClient.enemy.name]: gameForClient.enemy.connection,
+                };
 
-                client.to(`game-${game.id}`).emit(GAME_EVENT_NAME.PLAYERS_ONLINE_UPDATED, playersOnline)
+                client
+                    .to(`game-${game.id}`)
+                    .emit(
+                        GAME_EVENT_NAME.PLAYERS_ONLINE_UPDATED,
+                        playersOnline,
+                    );
             }
         }
     }
-    
+
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(GAME_EVENT_NAME.CREATE_GAME)
-    async handleCreateGame(client: Socket, lobbyId: string, callback: Function): Promise<void> {
+    async handleCreateGame(
+        client: Socket,
+        lobbyId: string,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
 
-            const gameId = await this.gameStateService.createGameSessionState(lobbyId, userId);
-            client.to(`lobby-${gameId}`).emit(LOBBY_EVENT_NAME.GAME_STARTED, gameId);
+            const gameId = await this.gameStateService.createGameSessionState(
+                lobbyId,
+                userId,
+            );
+            client
+                .to(`lobby-${gameId}`)
+                .emit(LOBBY_EVENT_NAME.GAME_STARTED, gameId);
 
-            this.server.to(LOBBY_ROOMS_NAME.HALL).emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED)
+            this.server
+                .to(LOBBY_ROOMS_NAME.HALL)
+                .emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED);
 
             const currentLobby = await this.lobbyService.getLobbyById(lobbyId);
-            this.server.to(`lobby-${lobbyId}`).emit(LOBBY_EVENT_NAME.LOBBY_UPDATE, currentLobby)
+            this.server
+                .to(`lobby-${lobbyId}`)
+                .emit(LOBBY_EVENT_NAME.LOBBY_UPDATE, currentLobby);
 
             if (callback) {
                 callback({
                     success: true,
                     data: {
-                        gameId: gameId
+                        gameId: gameId,
                     },
-                    message: "Вы успешно начали матч"
+                    message: 'Вы успешно начали матч',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(GAME_EVENT_NAME.CREATE_GAME_WITH_BOT)
-    async handleCreateGameWithBot(client: Socket, lobbyId: string, callback: Function): Promise<void> {
+    async handleCreateGameWithBot(
+        client: Socket,
+        lobbyId: string,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
 
-            const gameId = await this.gameStateService.createGameSessionWithBotState(lobbyId, userId);
-            client.to(`lobby-${gameId}`).emit(LOBBY_EVENT_NAME.GAME_STARTED, gameId);
+            const gameId =
+                await this.gameStateService.createGameSessionWithBotState(
+                    lobbyId,
+                    userId,
+                );
+            client
+                .to(`lobby-${gameId}`)
+                .emit(LOBBY_EVENT_NAME.GAME_STARTED, gameId);
 
-            this.server.to(LOBBY_ROOMS_NAME.HALL).emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED)
+            this.server
+                .to(LOBBY_ROOMS_NAME.HALL)
+                .emit(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED);
 
             const currentLobby = await this.lobbyService.getLobbyById(lobbyId);
-            this.server.to(`lobby-${lobbyId}`).emit(LOBBY_EVENT_NAME.LOBBY_UPDATE, currentLobby)
+            this.server
+                .to(`lobby-${lobbyId}`)
+                .emit(LOBBY_EVENT_NAME.LOBBY_UPDATE, currentLobby);
 
             if (callback) {
                 callback({
                     success: true,
                     data: {
-                        gameId: gameId
+                        gameId: gameId,
                     },
-                    message: "Вы успешно начали матч с ботом"
+                    message: 'Вы успешно начали матч с ботом',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(GAME_EVENT_NAME.JOIN_GAME)
-    async handleJoinGame(client: Socket, gameId: string, callback: Function): Promise<void> {
+    async handleJoinGame(
+        client: Socket,
+        gameId: string,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
-            const game = await this.gameStateService.getGameForClientById(gameId, userId);
+            const game = await this.gameStateService.getGameForClientById(
+                gameId,
+                userId,
+            );
 
             if (game === null) {
                 throw new GameException(GAME_ERROR_CODE.GAME_NOT_FOUND);
@@ -259,20 +333,30 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
 
             client.data.gameId = gameId;
 
-            await this.gameStateService.setPlayerConnectionStatus(CONNECTIONGAME.ONLINE, gameId, userId);
+            await this.gameStateService.setPlayerConnectionStatus(
+                CONNECTIONGAME.ONLINE,
+                gameId,
+                userId,
+            );
 
             const playersOnline = {
                 [game.player.name]: CONNECTIONGAME.ONLINE,
-                [game.enemy.name]: game.enemy.connection
-            }
+                [game.enemy.name]: game.enemy.connection,
+            };
 
-            client.to(`game-${gameId}`).emit(GAME_EVENT_NAME.PLAYERS_ONLINE_UPDATED, playersOnline)
+            client
+                .to(`game-${gameId}`)
+                .emit(GAME_EVENT_NAME.PLAYERS_ONLINE_UPDATED, playersOnline);
 
-            const activeTimer = await this.gameStateService.getActiveTimer(gameId);
-            
+            const activeTimer =
+                await this.gameStateService.getActiveTimer(gameId);
+
             let timerInfo;
             if (activeTimer) {
-                timerInfo = await this.gameStateService.getTimerInfo(gameId, activeTimer);
+                timerInfo = await this.gameStateService.getTimerInfo(
+                    gameId,
+                    activeTimer,
+                );
             }
 
             if (callback) {
@@ -283,21 +367,27 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
                         playersOnline: playersOnline,
                         timer: timerInfo ?? null,
                     },
-                    message: "Вы успешно подключились к игре"
+                    message: 'Вы успешно подключились к игре',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(GAME_EVENT_NAME.GET_GAME_STATE)
-    async handleGetGameState(client: Socket, gameId: string, callback: Function): Promise<void> {
+    async handleGetGameState(
+        client: Socket,
+        gameId: string,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
-            const game = await this.gameStateService.getGameForClientById(gameId, userId);
+            const game = await this.gameStateService.getGameForClientById(
+                gameId,
+                userId,
+            );
 
             if (game === null) {
                 throw new GameException(GAME_ERROR_CODE.GAME_NOT_FOUND);
@@ -307,13 +397,12 @@ export class GameStateGateway implements OnGatewayInit, OnGatewayDisconnect {
                 callback({
                     success: true,
                     data: {
-                        gameState: game
+                        gameState: game,
                     },
-                    message: "Вы успешно получили игровое состояние"
+                    message: 'Вы успешно получили игровое состояние',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }

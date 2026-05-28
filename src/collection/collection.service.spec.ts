@@ -1,6 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource, Repository, QueryRunner, EntityManager, SelectQueryBuilder } from 'typeorm';
+import {
+    DataSource,
+    Repository,
+    QueryRunner,
+    EntityManager,
+    SelectQueryBuilder,
+} from 'typeorm';
 import { CollectionService } from './collection.service';
 import { UsersService } from '../users/users.service';
 import { Card } from './entities/card.entity';
@@ -21,16 +27,44 @@ jest.mock('../artifact/constants/artifacts');
 jest.mock('../artifact/constants/skills');
 
 const mockArtifacts = {
-    'arcane_shield': { id: 'arcane_shield', hp: 30, type: 'defense', skills: ['shield'], price: 100, isForSale: true },
-    'moon_staff': { id: 'moon_staff', hp: 25, type: 'magic', skills: ['heal'], price: 150, isForSale: true },
-    'axe_of_the_berserker': { id: 'axe_of_the_berserker', hp: 40, type: 'attack', skills: ['rage'], price: 200, isForSale: true },
-    'ring_of_light': { id: 'ring_of_light', hp: 20, type: 'support', skills: null, price: 80, isForSale: true },
+    arcane_shield: {
+        id: 'arcane_shield',
+        hp: 30,
+        type: 'defense',
+        skills: ['shield'],
+        price: 100,
+        isForSale: true,
+    },
+    moon_staff: {
+        id: 'moon_staff',
+        hp: 25,
+        type: 'magic',
+        skills: ['heal'],
+        price: 150,
+        isForSale: true,
+    },
+    axe_of_the_berserker: {
+        id: 'axe_of_the_berserker',
+        hp: 40,
+        type: 'attack',
+        skills: ['rage'],
+        price: 200,
+        isForSale: true,
+    },
+    ring_of_light: {
+        id: 'ring_of_light',
+        hp: 20,
+        type: 'support',
+        skills: null,
+        price: 80,
+        isForSale: true,
+    },
 };
 
 const mockSkills = {
-    'shield': { cost: 2 },
-    'heal': { cost: 3 },
-    'rage': { cost: 1 },
+    shield: { cost: 2 },
+    heal: { cost: 3 },
+    rage: { cost: 1 },
 };
 
 describe('CollectionService', () => {
@@ -130,12 +164,14 @@ describe('CollectionService', () => {
 
     beforeEach(async () => {
         jest.clearAllMocks();
-        
+
         (ARTIFACTS as any) = mockArtifacts;
         (SKILLS as any) = mockSkills;
 
-        mockDataSource.createQueryRunner.mockReturnValue(createMockQueryRunner());
-        
+        mockDataSource.createQueryRunner.mockReturnValue(
+            createMockQueryRunner(),
+        );
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 CollectionService,
@@ -182,13 +218,21 @@ describe('CollectionService', () => {
                 innerCardId: artifact,
             }));
 
-            mockCardRepository.findOne.mockImplementation(({ where: { innerCardId } }: any) => {
-                const card = mockCards.find(c => c.innerCardId === innerCardId);
-                return Promise.resolve(card as Card);
-            });
+            mockCardRepository.findOne.mockImplementation(
+                ({ where: { innerCardId } }: any) => {
+                    const card = mockCards.find(
+                        (c) => c.innerCardId === innerCardId,
+                    );
+                    return Promise.resolve(card as Card);
+                },
+            );
 
-            mockCollectionRepository.create.mockImplementation((data) => data as UserCollection);
-            mockCollectionRepository.save.mockResolvedValue({} as UserCollection);
+            mockCollectionRepository.create.mockImplementation(
+                (data) => data as UserCollection,
+            );
+            mockCollectionRepository.save.mockResolvedValue(
+                {} as UserCollection,
+            );
 
             await service.createForNewUser(userId);
 
@@ -217,28 +261,51 @@ describe('CollectionService', () => {
                 { id: 2, userId, cardId: 2 },
             ];
             const mockAllCards = [
-                { id: 1, innerCardId: 'arcane_shield', isForSale: true, price: 100 },
-                { id: 2, innerCardId: 'moon_staff', isForSale: true, price: 150 },
-                { id: 3, innerCardId: 'axe_of_the_berserker', isForSale: false, price: 200 },
+                {
+                    id: 1,
+                    innerCardId: 'arcane_shield',
+                    isForSale: true,
+                    price: 100,
+                },
+                {
+                    id: 2,
+                    innerCardId: 'moon_staff',
+                    isForSale: true,
+                    price: 150,
+                },
+                {
+                    id: 3,
+                    innerCardId: 'axe_of_the_berserker',
+                    isForSale: false,
+                    price: 200,
+                },
             ];
 
             mockUsersService.findOne.mockResolvedValue(mockUser as any);
-            mockCollectionRepository.find.mockResolvedValue(mockCollectionCards as any);
+            mockCollectionRepository.find.mockResolvedValue(
+                mockCollectionCards as any,
+            );
             mockCardRepository.find.mockResolvedValue(mockAllCards as any);
 
             const result = await service.getUserCollection(userId);
 
             expect(usersService.findOne).toHaveBeenCalledWith(userId);
-            expect(collectionRepository.find).toHaveBeenCalledWith({ where: { userId } });
+            expect(collectionRepository.find).toHaveBeenCalledWith({
+                where: { userId },
+            });
             expect(cardRepository.find).toHaveBeenCalled();
             expect(result.cards).toHaveLength(2);
             expect(result.cards[0].hasCard).toBe(true);
         });
 
         it('should throw UserNotFoundException if user not found', async () => {
-            mockUsersService.findOne.mockRejectedValue(new UserNotFoundException());
+            mockUsersService.findOne.mockRejectedValue(
+                new UserNotFoundException(),
+            );
 
-            await expect(service.getUserCollection(userId)).rejects.toThrow(UserNotFoundException);
+            await expect(service.getUserCollection(userId)).rejects.toThrow(
+                UserNotFoundException,
+            );
         });
     });
 
@@ -263,10 +330,14 @@ describe('CollectionService', () => {
             (queryRunner.manager.createQueryBuilder as jest.Mock)
                 .mockReturnValueOnce(mockQueryBuilder)
                 .mockReturnValueOnce(mockQueryBuilder);
-            mockQueryBuilder.getOne.mockResolvedValueOnce(mockUser).mockResolvedValueOnce(mockCard);
-            
+            mockQueryBuilder.getOne
+                .mockResolvedValueOnce(mockUser)
+                .mockResolvedValueOnce(mockCard);
+
             (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null);
-            (queryRunner.manager.create as jest.Mock).mockReturnValue(mockNewCollectionRow);
+            (queryRunner.manager.create as jest.Mock).mockReturnValue(
+                mockNewCollectionRow,
+            );
             (queryRunner.manager.save as jest.Mock).mockResolvedValue({});
 
             await service.buyCard(userId, cardId);
@@ -279,23 +350,27 @@ describe('CollectionService', () => {
 
         it('should throw UserNotFoundException if user not found', async () => {
             const queryRunner = dataSource.createQueryRunner();
-            
+
             const mockQueryBuilder = {
                 setLock: jest.fn().mockReturnThis(),
                 where: jest.fn().mockReturnThis(),
                 getOne: jest.fn().mockResolvedValue(null),
             };
 
-            (queryRunner.manager.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+            (
+                queryRunner.manager.createQueryBuilder as jest.Mock
+            ).mockReturnValue(mockQueryBuilder);
 
-            await expect(service.buyCard(userId, cardId)).rejects.toThrow(UserNotFoundException);
+            await expect(service.buyCard(userId, cardId)).rejects.toThrow(
+                UserNotFoundException,
+            );
             expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
         });
 
         it('should throw CardNotFoundException if card not found', async () => {
             const queryRunner = dataSource.createQueryRunner();
             const mockUser = { id: userId, gold: userGold };
-            
+
             const mockQueryBuilder = {
                 setLock: jest.fn().mockReturnThis(),
                 where: jest.fn().mockReturnThis(),
@@ -309,7 +384,9 @@ describe('CollectionService', () => {
                 .mockResolvedValueOnce(mockUser)
                 .mockResolvedValueOnce(null);
 
-            await expect(service.buyCard(userId, cardId)).rejects.toThrow(CardNotFoundException);
+            await expect(service.buyCard(userId, cardId)).rejects.toThrow(
+                CardNotFoundException,
+            );
             expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
         });
 
@@ -331,10 +408,14 @@ describe('CollectionService', () => {
             mockQueryBuilder.getOne
                 .mockResolvedValueOnce(mockUser)
                 .mockResolvedValueOnce(mockCard);
-            
-            (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(existingCollection);
 
-            await expect(service.buyCard(userId, cardId)).rejects.toThrow(CardAlreadyExistException);
+            (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(
+                existingCollection,
+            );
+
+            await expect(service.buyCard(userId, cardId)).rejects.toThrow(
+                CardAlreadyExistException,
+            );
             expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
         });
 
@@ -355,10 +436,12 @@ describe('CollectionService', () => {
             mockQueryBuilder.getOne
                 .mockResolvedValueOnce(mockUser)
                 .mockResolvedValueOnce(mockCard);
-            
+
             (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null);
 
-            await expect(service.buyCard(userId, cardId)).rejects.toThrow(NotEnoughGoldException);
+            await expect(service.buyCard(userId, cardId)).rejects.toThrow(
+                NotEnoughGoldException,
+            );
             expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
         });
 
@@ -379,10 +462,12 @@ describe('CollectionService', () => {
             mockQueryBuilder.getOne
                 .mockResolvedValueOnce(mockUser)
                 .mockResolvedValueOnce(mockCard);
-            
+
             (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null);
 
-            await expect(service.buyCard(userId, cardId)).rejects.toThrow(CardNotForSaleException);
+            await expect(service.buyCard(userId, cardId)).rejects.toThrow(
+                CardNotForSaleException,
+            );
             expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
         });
     });
@@ -401,7 +486,9 @@ describe('CollectionService', () => {
                 getOne: jest.fn().mockResolvedValue(mockUser),
             };
 
-            (queryRunner.manager.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+            (
+                queryRunner.manager.createQueryBuilder as jest.Mock
+            ).mockReturnValue(mockQueryBuilder);
             (queryRunner.manager.save as jest.Mock).mockResolvedValue({});
 
             await service.giveGold(userId, amount);
@@ -415,16 +502,20 @@ describe('CollectionService', () => {
 
         it('should throw UserNotFoundException if user not found', async () => {
             const queryRunner = dataSource.createQueryRunner();
-            
+
             const mockQueryBuilder = {
                 setLock: jest.fn().mockReturnThis(),
                 where: jest.fn().mockReturnThis(),
                 getOne: jest.fn().mockResolvedValue(null),
             };
 
-            (queryRunner.manager.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+            (
+                queryRunner.manager.createQueryBuilder as jest.Mock
+            ).mockReturnValue(mockQueryBuilder);
 
-            await expect(service.giveGold(userId, amount)).rejects.toThrow(UserNotFoundException);
+            await expect(service.giveGold(userId, amount)).rejects.toThrow(
+                UserNotFoundException,
+            );
             expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
         });
     });

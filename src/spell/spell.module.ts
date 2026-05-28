@@ -37,7 +37,7 @@ const ACTION_HANDLER_PROVIDERS = [
     ResurrectionStrategy,
     InspirationStrategy,
     SharpeningStrategy,
-    VolcanoStrategy
+    VolcanoStrategy,
 ];
 
 @Module({
@@ -52,6 +52,10 @@ const ACTION_HANDLER_PROVIDERS = [
         },
     ],
     exports: [SpellService, SpellStrategyFactory],
-    imports: [forwardRef(() => ActionModule), forwardRef(() => GameMechanicsModule), forwardRef(() => ArtifactModule) ]
+    imports: [
+        forwardRef(() => ActionModule),
+        forwardRef(() => GameMechanicsModule),
+        forwardRef(() => ArtifactModule),
+    ],
 })
 export class SpellModule {}

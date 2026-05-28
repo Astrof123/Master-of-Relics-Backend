@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsNotEmpty, IsString, MinLength, MaxLength, IsOptional, IsInt, Min, Max, IsBoolean } from 'class-validator';
+import {
+    IsNumber,
+    IsNotEmpty,
+    IsString,
+    MinLength,
+    MaxLength,
+    IsOptional,
+    IsInt,
+    Min,
+    Max,
+    IsBoolean,
+} from 'class-validator';
 import type { ReportType } from '../types/report';
 import { Transform, Type } from 'class-transformer';
 
@@ -21,7 +32,10 @@ export class GetUsersDto {
     @IsString()
     userId?: string;
 
-    @ApiPropertyOptional({ description: 'Забанен ли пользователь', example: false })
+    @ApiPropertyOptional({
+        description: 'Забанен ли пользователь',
+        example: false,
+    })
     @IsOptional()
     @Transform(({ value }) => {
         if (value === undefined || value === null || value === '') {
@@ -38,7 +52,10 @@ export class GetUsersDto {
     @IsBoolean()
     isBanned?: boolean;
 
-    @ApiPropertyOptional({ description: 'Админ ли пользователь', example: false })
+    @ApiPropertyOptional({
+        description: 'Админ ли пользователь',
+        example: false,
+    })
     @IsOptional()
     @Transform(({ value }) => {
         if (value === undefined || value === null || value === '') {

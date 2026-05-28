@@ -17,12 +17,11 @@ const createMockRequest = (userId: string = 'user-123'): any => ({
     get: jest.fn(),
 });
 
-
 const createMockCardResponse = (
     id: number,
     innerCardId: string,
     position: number,
-    hasCard: boolean = true
+    hasCard: boolean = true,
 ): CardResponseDto => ({
     id,
     innerCardId,
@@ -35,12 +34,11 @@ const createMockCardResponse = (
     position,
 });
 
-
 const createMockDeckResponse = (
     id: number,
     indexNumber: number,
     isActive: boolean,
-    cards: CardResponseDto[]
+    cards: CardResponseDto[],
 ): DeckResponseDto => ({
     id,
     indexNumber,
@@ -48,8 +46,9 @@ const createMockDeckResponse = (
     cards,
 });
 
-
-const createMockGetDecksResponse = (decks: DeckResponseDto[]): GetDecksResponseDto => ({
+const createMockGetDecksResponse = (
+    decks: DeckResponseDto[],
+): GetDecksResponseDto => ({
     decks,
 });
 
@@ -73,9 +72,9 @@ describe('DeckController', () => {
                 },
             ],
         })
-        .overrideGuard(JwtAuthGuard)
-        .useValue({ canActivate: jest.fn(() => true) })
-        .compile();
+            .overrideGuard(JwtAuthGuard)
+            .useValue({ canActivate: jest.fn(() => true) })
+            .compile();
 
         controller = module.get<DeckController>(DeckController);
         deckService = module.get(DeckService);
@@ -144,7 +143,7 @@ describe('DeckController', () => {
     describe('changeDeckCards', () => {
         const userId = 'user-123';
         const deckId = 1;
-        
+
         const createCards = (): CardPosition[] => {
             const cards: CardPosition[] = [];
             for (let i = 1; i <= 14; i++) {
@@ -165,7 +164,10 @@ describe('DeckController', () => {
 
             await controller.changeDeckCards(request, changeDeckCardsDto);
 
-            expect(deckService.changeDeckCards).toHaveBeenCalledWith(userId, changeDeckCardsDto);
+            expect(deckService.changeDeckCards).toHaveBeenCalledWith(
+                userId,
+                changeDeckCardsDto,
+            );
             expect(deckService.changeDeckCards).toHaveBeenCalledTimes(1);
         });
 
@@ -175,7 +177,9 @@ describe('DeckController', () => {
 
             deckService.changeDeckCards.mockRejectedValue(error);
 
-            await expect(controller.changeDeckCards(request, changeDeckCardsDto)).rejects.toThrow(error);
+            await expect(
+                controller.changeDeckCards(request, changeDeckCardsDto),
+            ).rejects.toThrow(error);
         });
 
         it('should handle invalid deck cards error', async () => {
@@ -184,7 +188,9 @@ describe('DeckController', () => {
 
             deckService.changeDeckCards.mockRejectedValue(error);
 
-            await expect(controller.changeDeckCards(request, changeDeckCardsDto)).rejects.toThrow(error);
+            await expect(
+                controller.changeDeckCards(request, changeDeckCardsDto),
+            ).rejects.toThrow(error);
         });
 
         it('should handle card not found error', async () => {
@@ -193,7 +199,9 @@ describe('DeckController', () => {
 
             deckService.changeDeckCards.mockRejectedValue(error);
 
-            await expect(controller.changeDeckCards(request, changeDeckCardsDto)).rejects.toThrow(error);
+            await expect(
+                controller.changeDeckCards(request, changeDeckCardsDto),
+            ).rejects.toThrow(error);
         });
     });
 
@@ -208,7 +216,10 @@ describe('DeckController', () => {
 
             await controller.changeActiveDeck(request, changeActiveDeckDto);
 
-            expect(deckService.changeActiveDeck).toHaveBeenCalledWith(userId, changeActiveDeckDto);
+            expect(deckService.changeActiveDeck).toHaveBeenCalledWith(
+                userId,
+                changeActiveDeckDto,
+            );
             expect(deckService.changeActiveDeck).toHaveBeenCalledTimes(1);
         });
 
@@ -218,7 +229,9 @@ describe('DeckController', () => {
 
             deckService.changeActiveDeck.mockRejectedValue(error);
 
-            await expect(controller.changeActiveDeck(request, changeActiveDeckDto)).rejects.toThrow(error);
+            await expect(
+                controller.changeActiveDeck(request, changeActiveDeckDto),
+            ).rejects.toThrow(error);
         });
 
         it('should handle current active deck not found error', async () => {
@@ -227,22 +240,38 @@ describe('DeckController', () => {
 
             deckService.changeActiveDeck.mockRejectedValue(error);
 
-            await expect(controller.changeActiveDeck(request, changeActiveDeckDto)).rejects.toThrow(error);
+            await expect(
+                controller.changeActiveDeck(request, changeActiveDeckDto),
+            ).rejects.toThrow(error);
         });
     });
 
     describe('Error handling', () => {
         it('should propagate JwtAuthGuard errors', async () => {
-            const guards = Reflect.getMetadata('__guards__', DeckController.prototype.getDecks);
+            const guards = Reflect.getMetadata(
+                '__guards__',
+                DeckController.prototype.getDecks,
+            );
             expect(guards).toBeDefined();
-            expect(guards.some((guard: any) => guard.name === 'JwtAuthGuard')).toBe(true);
+            expect(
+                guards.some((guard: any) => guard.name === 'JwtAuthGuard'),
+            ).toBe(true);
         });
 
         it('should have all endpoints protected by JwtAuthGuard', () => {
-            const getDecksGuards = Reflect.getMetadata('__guards__', DeckController.prototype.getDecks);
-            const changeDeckCardsGuards = Reflect.getMetadata('__guards__', DeckController.prototype.changeDeckCards);
-            const changeActiveDeckGuards = Reflect.getMetadata('__guards__', DeckController.prototype.changeActiveDeck);
-            
+            const getDecksGuards = Reflect.getMetadata(
+                '__guards__',
+                DeckController.prototype.getDecks,
+            );
+            const changeDeckCardsGuards = Reflect.getMetadata(
+                '__guards__',
+                DeckController.prototype.changeDeckCards,
+            );
+            const changeActiveDeckGuards = Reflect.getMetadata(
+                '__guards__',
+                DeckController.prototype.changeActiveDeck,
+            );
+
             expect(getDecksGuards).toBeDefined();
             expect(changeDeckCardsGuards).toBeDefined();
             expect(changeActiveDeckGuards).toBeDefined();
@@ -309,7 +338,9 @@ describe('DeckController', () => {
             };
             const mockResponse = { decks: [mockDeck] };
 
-            deckService.getUserDecks.mockResolvedValue(mockResponse as GetDecksResponseDto);
+            deckService.getUserDecks.mockResolvedValue(
+                mockResponse as GetDecksResponseDto,
+            );
 
             const result = await controller.getDecks(request);
 
@@ -362,9 +393,9 @@ describe('DeckController (validation)', () => {
                 },
             ],
         })
-        .overrideGuard(JwtAuthGuard)
-        .useValue({ canActivate: jest.fn(() => true) })
-        .compile();
+            .overrideGuard(JwtAuthGuard)
+            .useValue({ canActivate: jest.fn(() => true) })
+            .compile();
 
         controller = module.get<DeckController>(DeckController);
         deckService = module.get(DeckService);
@@ -399,7 +430,10 @@ describe('DeckController (validation)', () => {
 
             await controller.changeDeckCards(request, changeDeckCardsDto);
 
-            expect(deckService.changeDeckCards).toHaveBeenCalledWith(userId, changeDeckCardsDto);
+            expect(deckService.changeDeckCards).toHaveBeenCalledWith(
+                userId,
+                changeDeckCardsDto,
+            );
         });
 
         it('POST /decks should call changeActiveDeck with correct parameters', async () => {
@@ -410,7 +444,10 @@ describe('DeckController (validation)', () => {
 
             await controller.changeActiveDeck(request, changeActiveDeckDto);
 
-            expect(deckService.changeActiveDeck).toHaveBeenCalledWith(userId, changeActiveDeckDto);
+            expect(deckService.changeActiveDeck).toHaveBeenCalledWith(
+                userId,
+                changeActiveDeckDto,
+            );
         });
     });
 

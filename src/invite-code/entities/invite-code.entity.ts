@@ -13,8 +13,10 @@ import {
 import { Exclude } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from 'src/users/entities/user.entity';
-import { INVITE_CODE_STATUS, type InviteCodeStatus } from '../types/invite-code';
-
+import {
+    INVITE_CODE_STATUS,
+    type InviteCodeStatus,
+} from '../types/invite-code';
 
 @Entity('invite-codes')
 export class InviteCode {
@@ -33,7 +35,10 @@ export class InviteCode {
     @Column({ nullable: true })
     userId?: string;
 
-    @ApiProperty({ example: INVITE_CODE_STATUS.FREE, default: INVITE_CODE_STATUS.FREE })
+    @ApiProperty({
+        example: INVITE_CODE_STATUS.FREE,
+        default: INVITE_CODE_STATUS.FREE,
+    })
     @Column()
     status!: InviteCodeStatus;
 

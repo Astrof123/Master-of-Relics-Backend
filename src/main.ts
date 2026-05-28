@@ -10,16 +10,18 @@ async function bootstrap() {
 
     app.enableCors({
         origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-        credentials: true
+        credentials: true,
     });
-  
+
     app.use(cookieParser());
 
-    app.useGlobalPipes(new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-    }));
+    app.useGlobalPipes(
+        new ValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+        }),
+    );
 
     const config = new DocumentBuilder()
         .setTitle('Master of Relics')
@@ -41,8 +43,8 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document, {
         swaggerOptions: {
-            persistAuthorization: true
-        }
+            persistAuthorization: true,
+        },
     });
 
     try {

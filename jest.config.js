@@ -12,5 +12,7 @@ module.exports = {
     '^src/(.*)$': '<rootDir>/$1',
     '^@/(.*)$': '<rootDir>/$1',
   },
-  transformIgnorePatterns: ['/node_modules/'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(uuid|@nestjs|socket.io|engine.io)/)',
+  ],
 };

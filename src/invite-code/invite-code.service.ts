@@ -24,49 +24,54 @@ export class InviteCodeService {
         const startDate = data.startDate;
         const endDate = data.endDate;
         const status = data.status;
-        
+
         const skip = (page - 1) * limit;
-        
+
         const queryBuilder = this.inviteCodeRepository
             .createQueryBuilder('inviteCode')
             .leftJoinAndSelect('inviteCode.user', 'user');
 
         if (inviteCodeId) {
-            queryBuilder.andWhere('CAST(inviteCode.id AS TEXT) LIKE :inviteCodeId', 
-                { inviteCodeId: `%${inviteCodeId}%` });
+            queryBuilder.andWhere(
+                'CAST(inviteCode.id AS TEXT) LIKE :inviteCodeId',
+                { inviteCodeId: `%${inviteCodeId}%` },
+            );
         }
 
         if (status) {
-            queryBuilder.andWhere('inviteCode.status = :status', 
-                { status: status });
+            queryBuilder.andWhere('inviteCode.status = :status', {
+                status: status,
+            });
         }
 
         if (startDate) {
             const startDateTime = new Date(startDate);
             startDateTime.setHours(0, 0, 0, 0);
-            queryBuilder.andWhere('inviteCode.createdAt >= :startDate', 
-                { startDate: startDateTime });
+            queryBuilder.andWhere('inviteCode.createdAt >= :startDate', {
+                startDate: startDateTime,
+            });
         }
 
         if (endDate) {
             const endDateTime = new Date(endDate);
             endDateTime.setHours(23, 59, 59, 999);
-            queryBuilder.andWhere('inviteCode.createdAt <= :endDate', 
-                { endDate: endDateTime });
+            queryBuilder.andWhere('inviteCode.createdAt <= :endDate', {
+                endDate: endDateTime,
+            });
         }
 
         queryBuilder.orderBy(`inviteCode.createdAt`, 'DESC');
 
         queryBuilder.skip(skip).take(limit);
-        
+
         const [inviteCodes, total] = await queryBuilder.getManyAndCount();
-            
+
         return {
             data: inviteCodes,
             total: total,
             page: page,
             limit: limit,
-            totalPages: Math.ceil(total / limit)
+            totalPages: Math.ceil(total / limit),
         };
     }
 
@@ -74,7 +79,7 @@ export class InviteCodeService {
         const invideCodes: InviteCode[] = [];
         for (let i = 0; i < data.count; i++) {
             const inviteCode = await this.inviteCodeRepository.create({
-                status: INVITE_CODE_STATUS.FREE
+                status: INVITE_CODE_STATUS.FREE,
             });
             await this.inviteCodeRepository.save(inviteCode);
             invideCodes.push(inviteCode);
@@ -84,9 +89,9 @@ export class InviteCodeService {
     }
 
     async changeStatus(data: ChangeStatusDto) {
-        const inviteCode = await this.inviteCodeRepository.findOne(
-            {where: { id: data.inviteCodeId }}
-        );
+        const inviteCode = await this.inviteCodeRepository.findOne({
+            where: { id: data.inviteCodeId },
+        });
 
         if (!inviteCode) {
             throw new InviteCodeNotFoundException();
@@ -97,9 +102,9 @@ export class InviteCodeService {
     }
 
     async deleteInviteCode(id: string) {
-        const inviteCode = await this.inviteCodeRepository.findOne(
-            {where: { id: id }}
-        );
+        const inviteCode = await this.inviteCodeRepository.findOne({
+            where: { id: id },
+        });
 
         if (!inviteCode) {
             throw new InviteCodeNotFoundException();

@@ -1,14 +1,13 @@
-import { Restriction, TargetRestriction } from "src/action/types/restriction";
-import { RESOURCE, ResourceType } from "src/game-mechanics/types/resource";
+import { Restriction, TargetRestriction } from 'src/action/types/restriction';
+import { RESOURCE, ResourceType } from 'src/game-mechanics/types/resource';
 
-export const SPELLTYPE  = {
+export const SPELLTYPE = {
     DARK: 'dark',
     LIGHT: 'light',
     DESTRUCTION: 'destruction',
 };
 
-export type SpellType  = typeof SPELLTYPE [keyof typeof SPELLTYPE];
-
+export type SpellType = (typeof SPELLTYPE)[keyof typeof SPELLTYPE];
 
 export interface SpellDataType {
     id: Spell;
@@ -23,7 +22,7 @@ export interface SpellDataType {
     targetRestrictions: TargetRestriction[];
 }
 
-export const SPELL  = {
+export const SPELL = {
     PIERCING_BOLT: 'piercing_bolt',
     TOUCH_OF_LIGHT: 'touch_of_light',
     METEOR_SHOWER: 'meteor_shower',
@@ -41,5 +40,4 @@ export const SPELL  = {
     SHARPENING: 'sharpening',
 };
 
-export type Spell  = typeof SPELL [keyof typeof SPELL];
-
+export type Spell = (typeof SPELL)[keyof typeof SPELL];

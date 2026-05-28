@@ -10,13 +10,13 @@ export class WebSocketAuthMiddleware {
     async use(socket: Socket, next: (err?: Error) => void) {
         try {
             const token = this.extractToken(socket);
-            
+
             if (!token) {
                 throw new WsException('Требуется аутентификация');
             }
 
             const payload = await this.tokenService.verifyAccessToken(token);
-            
+
             if (!payload) {
                 throw new WsException('Невалидный токен');
             }

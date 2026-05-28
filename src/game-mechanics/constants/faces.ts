@@ -1,9 +1,9 @@
-import { Face, FACE, FaceDataType } from "../types/face";
+import { Face, FACE, FaceDataType } from '../types/face';
 
 export const FACES: Record<Face, FaceDataType> = {
     [FACE.AGILITY]: {
         id: FACE.AGILITY,
-        description: "Восстановить 10 единиц ловкости",
+        description: 'Восстановить 10 единиц ловкости',
         target: 0,
         sword: 0,
         agility: 10,
@@ -11,11 +11,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.LIGHT_MANA]: {
         id: FACE.LIGHT_MANA,
-        description: "Восстановить 10 единиц маны света",
+        description: 'Восстановить 10 единиц маны света',
         target: 0,
         sword: 0,
         agility: 0,
@@ -23,11 +23,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 10,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.RAGE]: {
         id: FACE.RAGE,
-        description: "Восстановить 10 единиц ярости",
+        description: 'Восстановить 10 единиц ярости',
         target: 0,
         sword: 0,
         agility: 0,
@@ -35,11 +35,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.DARK_MANA]: {
         id: FACE.DARK_MANA,
-        description: "Восстановить 10 маны тьмы",
+        description: 'Восстановить 10 маны тьмы',
         target: 0,
         sword: 0,
         agility: 0,
@@ -47,11 +47,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 10,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.DESTRUCTION_MANA]: {
         id: FACE.DESTRUCTION_MANA,
-        description: "Восстановить 10 маны разрушения",
+        description: 'Восстановить 10 маны разрушения',
         target: 0,
         sword: 0,
         agility: 0,
@@ -59,11 +59,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 10,
-        heal: 0
+        heal: 0,
     },
     [FACE.SWORD]: {
         id: FACE.SWORD,
-        description: "Нанести 10 единиц ближнего урона вражескому артефакту",
+        description: 'Нанести 10 единиц ближнего урона вражескому артефакту',
         target: 0,
         sword: 10,
         agility: 0,
@@ -71,11 +71,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TARGET]: {
         id: FACE.TARGET,
-        description: "Нанести 10 единиц дальнего урона вражескому артефакту",
+        description: 'Нанести 10 единиц дальнего урона вражескому артефакту',
         target: 10,
         sword: 0,
         agility: 0,
@@ -83,11 +83,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.HEAL]: {
         id: FACE.HEAL,
-        description: "Восстановить 10 единиц прочности союзному артефакту",
+        description: 'Восстановить 10 единиц прочности союзному артефакту',
         target: 0,
         sword: 0,
         agility: 0,
@@ -95,11 +95,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 10
+        heal: 10,
     },
     [FACE.THREE_SWORD]: {
         id: FACE.THREE_SWORD,
-        description: "Нанести 30 единиц ближнего урона вражескому артефакту",
+        description: 'Нанести 30 единиц ближнего урона вражескому артефакту',
         target: 0,
         sword: 30,
         agility: 0,
@@ -107,11 +107,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_SWORD]: {
         id: FACE.TWO_SWORD,
-        description: "Нанести 20 единиц ближнего урона вражескому артефакту",
+        description: 'Нанести 20 единиц ближнего урона вражескому артефакту',
         target: 0,
         sword: 20,
         agility: 0,
@@ -119,11 +119,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.THREE_DARK_MANA]: {
         id: FACE.THREE_DARK_MANA,
-        description: "Восстановить 30 единиц маны тьмы",
+        description: 'Восстановить 30 единиц маны тьмы',
         target: 0,
         sword: 0,
         agility: 0,
@@ -131,11 +131,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 30,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.THREE_LIGHT_MANA]: {
         id: FACE.THREE_LIGHT_MANA,
-        description: "Восстановить 30 единиц маны света",
+        description: 'Восстановить 30 единиц маны света',
         target: 0,
         sword: 0,
         agility: 0,
@@ -143,11 +143,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 30,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.THREE_DESTRUCTION_MANA]: {
         id: FACE.THREE_DESTRUCTION_MANA,
-        description: "Восстановить 30 единиц маны разрушения",
+        description: 'Восстановить 30 единиц маны разрушения',
         target: 0,
         sword: 0,
         agility: 0,
@@ -155,11 +155,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 30,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_EVERY_MANA]: {
         id: FACE.ONE_EVERY_MANA,
-        description: "Восстановить 10 единиц маны каждой школы",
+        description: 'Восстановить 10 единиц маны каждой школы',
         target: 0,
         sword: 0,
         agility: 0,
@@ -167,11 +167,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 10,
         dark_mana: 10,
         destruction_mana: 10,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_RAGE_TWO_TARGET]: {
         id: FACE.ONE_RAGE_TWO_TARGET,
-        description: "Восстановить 10 единиц ярости и нанести 20 единиц дальнего урона вражескому артефакту",
+        description:
+            'Восстановить 10 единиц ярости и нанести 20 единиц дальнего урона вражескому артефакту',
         target: 20,
         sword: 0,
         agility: 0,
@@ -179,11 +180,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_RAGE_ONE_TARGET]: {
         id: FACE.TWO_RAGE_ONE_TARGET,
-        description: "Восстановить 20 единиц ярости и нанести 10 единиц дальнего урона вражескому артефакту",
+        description:
+            'Восстановить 20 единиц ярости и нанести 10 единиц дальнего урона вражескому артефакту',
         target: 10,
         sword: 0,
         agility: 0,
@@ -191,11 +193,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.THREE_HEART]: {
         id: FACE.THREE_HEART,
-        description: "Восстановить 30 единиц прочности союзному артефакту",
+        description: 'Восстановить 30 единиц прочности союзному артефакту',
         target: 0,
         sword: 0,
         agility: 0,
@@ -203,11 +205,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 30
+        heal: 30,
     },
     [FACE.ONE_RAGE_TWO_HEART]: {
         id: FACE.ONE_RAGE_TWO_HEART,
-        description: "Восстановить 10 единиц ярости и восстановить 20 единиц прочности союзному артефакту",
+        description:
+            'Восстановить 10 единиц ярости и восстановить 20 единиц прочности союзному артефакту',
         target: 0,
         sword: 0,
         agility: 0,
@@ -215,11 +218,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 20
+        heal: 20,
     },
     [FACE.THREE_AGILITY]: {
         id: FACE.THREE_AGILITY,
-        description: "Восстановить 30 единиц ловкости",
+        description: 'Восстановить 30 единиц ловкости',
         target: 0,
         sword: 0,
         agility: 30,
@@ -227,11 +230,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.THREE_RAGE]: {
         id: FACE.THREE_RAGE,
-        description: "Восстановить 30 единиц ярости",
+        description: 'Восстановить 30 единиц ярости',
         target: 0,
         sword: 0,
         agility: 0,
@@ -239,11 +242,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_HEART]: {
         id: FACE.TWO_HEART,
-        description: "Восстановить 20 единиц прочности союзному артефакту",
+        description: 'Восстановить 20 единиц прочности союзному артефакту',
         target: 0,
         sword: 0,
         agility: 0,
@@ -251,11 +254,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 20
+        heal: 20,
     },
     [FACE.TWO_LIGHT_MANA]: {
         id: FACE.TWO_LIGHT_MANA,
-        description: "Восстановить 20 единиц маны света",
+        description: 'Восстановить 20 единиц маны света',
         target: 0,
         sword: 0,
         agility: 0,
@@ -263,11 +266,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 20,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_DESTRUCTION_MANA]: {
         id: FACE.TWO_DESTRUCTION_MANA,
-        description: "Восстановить 20 единиц маны разрушения",
+        description: 'Восстановить 20 единиц маны разрушения',
         target: 0,
         sword: 0,
         agility: 0,
@@ -275,11 +278,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 20,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_DARK_MANA]: {
         id: FACE.TWO_DARK_MANA,
-        description: "Восстановить 20 единиц маны тьмы",
+        description: 'Восстановить 20 единиц маны тьмы',
         target: 0,
         sword: 0,
         agility: 0,
@@ -287,11 +290,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 20,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_RAGE]: {
         id: FACE.TWO_RAGE,
-        description: "Восстановить 20 единиц ярости",
+        description: 'Восстановить 20 единиц ярости',
         target: 0,
         sword: 0,
         agility: 0,
@@ -299,11 +302,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_DARK_MANA_ONE_RAGE]: {
         id: FACE.TWO_DARK_MANA_ONE_RAGE,
-        description: "Восстановить 10 единиц ярости и 20 единиц маны тьмы",
+        description: 'Восстановить 10 единиц ярости и 20 единиц маны тьмы',
         target: 0,
         sword: 0,
         agility: 0,
@@ -311,11 +314,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 20,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_RAGE_ONE_TARGET]: {
         id: FACE.ONE_RAGE_ONE_TARGET,
-        description: "Восстановить 10 единиц ярости и нанести 10 единиц дальнего урона вражескому артефакту",
+        description:
+            'Восстановить 10 единиц ярости и нанести 10 единиц дальнего урона вражескому артефакту',
         target: 10,
         sword: 0,
         agility: 0,
@@ -323,11 +327,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_SWORD_ONE_DARK_MANA]: {
         id: FACE.ONE_SWORD_ONE_DARK_MANA,
-        description: "Восстановить 10 единиц маны тьмы и нанести 10 единиц ближнего урона вражескому артефакту",
+        description:
+            'Восстановить 10 единиц маны тьмы и нанести 10 единиц ближнего урона вражескому артефакту',
         target: 0,
         sword: 10,
         agility: 0,
@@ -335,11 +340,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 10,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_SWORD_ONE_DESTRUCTION_MANA]: {
         id: FACE.ONE_SWORD_ONE_DESTRUCTION_MANA,
-        description: "Восстановить 10 единиц маны разрушения и нанести 10 единиц ближнего урона вражескому артефакту",
+        description:
+            'Восстановить 10 единиц маны разрушения и нанести 10 единиц ближнего урона вражескому артефакту',
         target: 0,
         sword: 10,
         agility: 0,
@@ -347,11 +353,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 10,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_SWORD_ONE_RAGE]: {
         id: FACE.ONE_SWORD_ONE_RAGE,
-        description: "Восстановить 10 единиц ярости и нанести 10 единиц ближнего урона вражескому артефакту",
+        description:
+            'Восстановить 10 единиц ярости и нанести 10 единиц ближнего урона вражескому артефакту',
         target: 0,
         sword: 10,
         agility: 0,
@@ -359,11 +366,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_SWORD_ONE_AGILITY]: {
         id: FACE.ONE_SWORD_ONE_AGILITY,
-        description: "Восстановить 10 единиц ловкости и нанести 10 единиц ближнего урона вражескому артефакту",
+        description:
+            'Восстановить 10 единиц ловкости и нанести 10 единиц ближнего урона вражескому артефакту',
         target: 0,
         sword: 10,
         agility: 10,
@@ -371,11 +379,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_SWORD_ONE_LIGHT_MANA]: {
         id: FACE.ONE_SWORD_ONE_LIGHT_MANA,
-        description: "Восстановить 10 единиц маны света и нанести 10 единиц ближнего урона вражескому артефакту",
+        description:
+            'Восстановить 10 единиц маны света и нанести 10 единиц ближнего урона вражескому артефакту',
         target: 0,
         sword: 10,
         agility: 0,
@@ -383,11 +392,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 10,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_TARGET_ONE_DESTRUCTION_MANA]: {
         id: FACE.ONE_TARGET_ONE_DESTRUCTION_MANA,
-        description: "Восстановить 10 единиц маны разрушения и нанести 10 единиц дальнего урона вражескому артефакту",
+        description:
+            'Восстановить 10 единиц маны разрушения и нанести 10 единиц дальнего урона вражескому артефакту',
         target: 10,
         sword: 0,
         agility: 0,
@@ -395,11 +405,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 10,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_TARGET_ONE_AGILITY]: {
         id: FACE.ONE_TARGET_ONE_AGILITY,
-        description: "Восстановить 10 единиц ловкости и нанести 10 единиц дальнего урона вражескому артефакту",
+        description:
+            'Восстановить 10 единиц ловкости и нанести 10 единиц дальнего урона вражескому артефакту',
         target: 10,
         sword: 0,
         agility: 10,
@@ -407,11 +418,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_LIGHT_MANA_ONE_TARGET]: {
         id: FACE.TWO_LIGHT_MANA_ONE_TARGET,
-        description: "Восстановить 20 единиц маны света и нанести 10 единиц дальнего урона вражескому артефакту",
+        description:
+            'Восстановить 20 единиц маны света и нанести 10 единиц дальнего урона вражескому артефакту',
         target: 10,
         sword: 0,
         agility: 0,
@@ -419,11 +431,12 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 20,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_TARGET_ONE_LIGHT_MANA]: {
         id: FACE.TWO_TARGET_ONE_LIGHT_MANA,
-        description: "Восстановить 10 единиц маны света и нанести 20 единиц дальнего урона вражескому артефакту",
+        description:
+            'Восстановить 10 единиц маны света и нанести 20 единиц дальнего урона вражескому артефакту',
         target: 20,
         sword: 0,
         agility: 0,
@@ -431,11 +444,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 10,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.FOUR_TARGET]: {
         id: FACE.FOUR_TARGET,
-        description: "Нанести 40 единиц дальнего урона вражескому артефакту",
+        description: 'Нанести 40 единиц дальнего урона вражескому артефакту',
         target: 40,
         sword: 0,
         agility: 0,
@@ -443,11 +456,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_AGILITY]: {
         id: FACE.TWO_AGILITY,
-        description: "Восстановить 20 единиц ловкости",
+        description: 'Восстановить 20 единиц ловкости',
         target: 0,
         sword: 0,
         agility: 20,
@@ -455,11 +468,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_RAGE_ONE_LIGHT_MANA]: {
         id: FACE.TWO_RAGE_ONE_LIGHT_MANA,
-        description: "Восстановить 20 единиц ярости и 10 единиц маны света",
+        description: 'Восстановить 20 единиц ярости и 10 единиц маны света',
         target: 0,
         sword: 0,
         agility: 0,
@@ -467,11 +480,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 10,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.TWO_TARGET]: {
         id: FACE.TWO_TARGET,
-        description: "Нанести 20 единиц дальнего урона вражескому артефакту",
+        description: 'Нанести 20 единиц дальнего урона вражескому артефакту',
         target: 20,
         sword: 0,
         agility: 0,
@@ -479,11 +492,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.THREE_TARGET]: {
         id: FACE.THREE_TARGET,
-        description: "Нанести 30 единиц дальнего урона вражескому артефакту",
+        description: 'Нанести 30 единиц дальнего урона вражескому артефакту',
         target: 30,
         sword: 0,
         agility: 0,
@@ -491,11 +504,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 0,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
-    [FACE.ONE_DARK_ONE_DESTRUCTION_MANA ]: {
+    [FACE.ONE_DARK_ONE_DESTRUCTION_MANA]: {
         id: FACE.ONE_DARK_ONE_DESTRUCTION_MANA,
-        description: "Восстановить 10 маны тьмы и 10 маны разрушения",
+        description: 'Восстановить 10 маны тьмы и 10 маны разрушения',
         target: 0,
         sword: 0,
         agility: 0,
@@ -503,11 +516,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 0,
         dark_mana: 10,
         destruction_mana: 10,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_DARK_ONE_LIGHT_MANA]: {
         id: FACE.ONE_DARK_ONE_LIGHT_MANA,
-        description: "Восстановить 10 маны тьмы и 10 маны света",
+        description: 'Восстановить 10 маны тьмы и 10 маны света',
         target: 0,
         sword: 0,
         agility: 0,
@@ -515,11 +528,11 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 10,
         dark_mana: 10,
         destruction_mana: 0,
-        heal: 0
+        heal: 0,
     },
     [FACE.ONE_DESTRUCTION_ONE_LIGHT_MANA]: {
         id: FACE.ONE_DESTRUCTION_ONE_LIGHT_MANA,
-        description: "Восстановить 10 маны разрушения и 10 маны света",
+        description: 'Восстановить 10 маны разрушения и 10 маны света',
         target: 0,
         sword: 0,
         agility: 0,
@@ -527,7 +540,19 @@ export const FACES: Record<Face, FaceDataType> = {
         light_mana: 10,
         dark_mana: 0,
         destruction_mana: 10,
-        heal: 0
+        heal: 0,
+    },
+    [FACE.ONE_TARGET_ONE_HEART]: {
+        id: FACE.ONE_TARGET_ONE_HEART,
+        description:
+            'Восстановить 10 единиц прочности и нанести 10 единиц дальнего урона вражескому артефакту',
+        target: 10,
+        sword: 0,
+        agility: 0,
+        rage: 0,
+        light_mana: 0,
+        dark_mana: 0,
+        destruction_mana: 0,
+        heal: 10,
     },
 };
-

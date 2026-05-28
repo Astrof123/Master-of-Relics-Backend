@@ -1,4 +1,3 @@
-// socket-connection.gateway.spec.ts - исправленная версия
 import { Test, TestingModule } from '@nestjs/testing';
 import { SocketConnectionGateway } from './socket-connection.gateway';
 import { SocketConnectionService } from './socket-connection.service';
@@ -7,224 +6,307 @@ import { Server, Socket } from 'socket.io';
 import { LOBBY_ROOMS_NAME } from '../lobby/types/lobby-rooms-name';
 import { LOBBY_EVENT_NAME } from '../lobby/types/lobby-events-name';
 
-// Mock Socket
-const createMockSocket = (userId: string = 'user-123', id: string = 'socket-123'): any => ({
-  id,
-  data: { userId },
-  handshake: {
-    headers: {},
-    query: {},
-  },
-  on: jest.fn(),
-  emit: jest.fn(),
-  to: jest.fn().mockReturnThis(),
-  join: jest.fn(),
-  leave: jest.fn(),
+const createMockSocket = (
+    userId: string = 'user-123',
+    id: string = 'socket-123',
+): any => ({
+    id,
+    data: { userId },
+    handshake: {
+        headers: {},
+        query: {},
+    },
+    on: jest.fn(),
+    emit: jest.fn(),
+    to: jest.fn().mockReturnThis(),
+    join: jest.fn(),
+    leave: jest.fn(),
 });
 
 describe('SocketConnectionGateway', () => {
-  let gateway: SocketConnectionGateway;
-  let socketConnectionService: jest.Mocked<SocketConnectionService>;
-  let webSocketAuthMiddleware: jest.Mocked<WebSocketAuthMiddleware>;
-  let mockServer: Server;
+    let gateway: SocketConnectionGateway;
+    let socketConnectionService: jest.Mocked<SocketConnectionService>;
+    let webSocketAuthMiddleware: jest.Mocked<WebSocketAuthMiddleware>;
+    let mockServer: Server;
 
-  const mockSocketConnectionService = {
-    setPlayerOnline: jest.fn(),
-    setPlayerOffline: jest.fn(),
-    getOnlinePlayers: jest.fn(),
-  };
+    const mockSocketConnectionService = {
+        setPlayerOnline: jest.fn(),
+        setPlayerOffline: jest.fn(),
+        getOnlinePlayers: jest.fn(),
+    };
 
-  const mockWebSocketAuthMiddleware = {
-    use: jest.fn(),
-  };
+    const mockWebSocketAuthMiddleware = {
+        use: jest.fn(),
+    };
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
+    beforeEach(async () => {
+        jest.clearAllMocks();
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SocketConnectionGateway,
-        {
-          provide: SocketConnectionService,
-          useValue: mockSocketConnectionService,
-        },
-        {
-          provide: WebSocketAuthMiddleware,
-          useValue: mockWebSocketAuthMiddleware,
-        },
-      ],
-    }).compile();
+        const module: TestingModule = await Test.createTestingModule({
+            providers: [
+                SocketConnectionGateway,
+                {
+                    provide: SocketConnectionService,
+                    useValue: mockSocketConnectionService,
+                },
+                {
+                    provide: WebSocketAuthMiddleware,
+                    useValue: mockWebSocketAuthMiddleware,
+                },
+            ],
+        }).compile();
 
-    gateway = module.get<SocketConnectionGateway>(SocketConnectionGateway);
-    socketConnectionService = module.get(SocketConnectionService);
-    webSocketAuthMiddleware = module.get(WebSocketAuthMiddleware);
+        gateway = module.get<SocketConnectionGateway>(SocketConnectionGateway);
+        socketConnectionService = module.get(SocketConnectionService);
+        webSocketAuthMiddleware = module.get(WebSocketAuthMiddleware);
 
-    // Создаем мок сервера
-    mockServer = {
-      to: jest.fn().mockReturnThis(),
-      emit: jest.fn(),
-      in: jest.fn().mockReturnThis(),
-      use: jest.fn(),
-    } as any;
-    gateway.server = mockServer;
-  });
-
-  it('should be defined', () => {
-    expect(gateway).toBeDefined();
-  });
-
-  describe('afterInit', () => {
-    it('should set up WebSocket middleware', () => {
-      const server = { use: jest.fn() } as any;
-      const next = jest.fn();
-      const socket = createMockSocket();
-
-      gateway.afterInit(server);
-
-      expect(server.use).toHaveBeenCalled();
-      
-      const middleware = server.use.mock.calls[0][0];
-      middleware(socket, next);
-      
-      expect(webSocketAuthMiddleware.use).toHaveBeenCalledWith(socket, next);
-    });
-  });
-
-  describe('handleConnection', () => {
-    const userId = 'user-123';
-    const mockSocket = createMockSocket(userId);
-    const onlinePlayersCount = 5;
-
-    beforeEach(() => {
-      mockSocketConnectionService.setPlayerOnline.mockResolvedValue(undefined);
-      mockSocketConnectionService.getOnlinePlayers.mockResolvedValue(['user1', 'user2', 'user3', 'user4', 'user5']);
+        mockServer = {
+            to: jest.fn().mockReturnThis(),
+            emit: jest.fn(),
+            in: jest.fn().mockReturnThis(),
+            use: jest.fn(),
+        } as any;
+        gateway.server = mockServer;
     });
 
-    it('should handle connection successfully', async () => {
-      await gateway.handleConnection(mockSocket);
-
-      expect(mockSocketConnectionService.setPlayerOnline).toHaveBeenCalledWith(userId);
-      expect(mockSocketConnectionService.getOnlinePlayers).toHaveBeenCalled();
-      expect(mockServer.to).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
-      expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED, onlinePlayersCount);
+    it('should be defined', () => {
+        expect(gateway).toBeDefined();
     });
 
-    it('should handle connection when getOnlinePlayers returns empty array', async () => {
-      mockSocketConnectionService.getOnlinePlayers.mockResolvedValue([]);
+    describe('afterInit', () => {
+        it('should set up WebSocket middleware', () => {
+            const server = { use: jest.fn() } as any;
+            const next = jest.fn();
+            const socket = createMockSocket();
 
-      await gateway.handleConnection(mockSocket);
+            gateway.afterInit(server);
 
-      expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED, 0);
+            expect(server.use).toHaveBeenCalled();
+
+            const middleware = server.use.mock.calls[0][0];
+            middleware(socket, next);
+
+            expect(webSocketAuthMiddleware.use).toHaveBeenCalledWith(
+                socket,
+                next,
+            );
+        });
     });
 
-    it('should handle errors from setPlayerOnline', async () => {
-      const error = new Error('Redis error');
-      mockSocketConnectionService.setPlayerOnline.mockRejectedValue(error);
+    describe('handleConnection', () => {
+        const userId = 'user-123';
+        const mockSocket = createMockSocket(userId);
+        const onlinePlayersCount = 5;
 
-      await expect(gateway.handleConnection(mockSocket)).rejects.toThrow(error);
-    });
-  });
+        beforeEach(() => {
+            mockSocketConnectionService.setPlayerOnline.mockResolvedValue(
+                undefined,
+            );
+            mockSocketConnectionService.getOnlinePlayers.mockResolvedValue([
+                'user1',
+                'user2',
+                'user3',
+                'user4',
+                'user5',
+            ]);
+        });
 
-  describe('handleDisconnect', () => {
-    const userId = 'user-123';
-    const mockSocket = createMockSocket(userId);
-    const onlinePlayersCount = 4;
+        it('should handle connection successfully', async () => {
+            await gateway.handleConnection(mockSocket);
 
-    beforeEach(() => {
-      mockSocketConnectionService.setPlayerOffline.mockResolvedValue(undefined);
-      mockSocketConnectionService.getOnlinePlayers.mockResolvedValue(['user1', 'user2', 'user3', 'user4']);
-    });
+            expect(
+                mockSocketConnectionService.setPlayerOnline,
+            ).toHaveBeenCalledWith(userId);
+            expect(
+                mockSocketConnectionService.getOnlinePlayers,
+            ).toHaveBeenCalled();
+            expect(mockServer.to).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED,
+                onlinePlayersCount,
+            );
+        });
 
-    it('should handle disconnect successfully', async () => {
-      await gateway.handleDisconnect(mockSocket);
+        it('should handle connection when getOnlinePlayers returns empty array', async () => {
+            mockSocketConnectionService.getOnlinePlayers.mockResolvedValue([]);
 
-      expect(mockSocketConnectionService.setPlayerOffline).toHaveBeenCalledWith(userId);
-      expect(mockSocketConnectionService.getOnlinePlayers).toHaveBeenCalled();
-      expect(mockServer.to).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
-      expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED, onlinePlayersCount);
-    });
+            await gateway.handleConnection(mockSocket);
 
-    it('should handle disconnect when getOnlinePlayers returns empty array', async () => {
-      mockSocketConnectionService.getOnlinePlayers.mockResolvedValue([]);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED,
+                0,
+            );
+        });
 
-      await gateway.handleDisconnect(mockSocket);
+        it('should handle errors from setPlayerOnline', async () => {
+            const error = new Error('Redis error');
+            mockSocketConnectionService.setPlayerOnline.mockRejectedValue(
+                error,
+            );
 
-      expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED, 0);
-    });
-
-    it('should handle errors from setPlayerOffline', async () => {
-      const error = new Error('Redis error');
-      mockSocketConnectionService.setPlayerOffline.mockRejectedValue(error);
-
-      await expect(gateway.handleDisconnect(mockSocket)).rejects.toThrow(error);
-    });
-  });
-
-  describe('Integration with multiple connections', () => {
-    it('should update online players count after multiple connections', async () => {
-      const socket1 = createMockSocket('user-1', 'socket-1');
-      const socket2 = createMockSocket('user-2', 'socket-2');
-      const socket3 = createMockSocket('user-3', 'socket-3');
-
-      // Настраиваем моки для каждого вызова
-      mockSocketConnectionService.setPlayerOnline.mockResolvedValue(undefined);
-      mockSocketConnectionService.getOnlinePlayers
-        .mockResolvedValueOnce(['user-1'])
-        .mockResolvedValueOnce(['user-1', 'user-2'])
-        .mockResolvedValueOnce(['user-1', 'user-2', 'user-3']);
-
-      await gateway.handleConnection(socket1);
-      expect(mockServer.emit).toHaveBeenNthCalledWith(1, LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED, 1);
-
-      await gateway.handleConnection(socket2);
-      expect(mockServer.emit).toHaveBeenNthCalledWith(2, LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED, 2);
-
-      await gateway.handleConnection(socket3);
-      expect(mockServer.emit).toHaveBeenNthCalledWith(3, LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED, 3);
+            await expect(gateway.handleConnection(mockSocket)).rejects.toThrow(
+                error,
+            );
+        });
     });
 
-    it('should update online players count after multiple disconnects', async () => {
-      const socket1 = createMockSocket('user-1', 'socket-1');
-      const socket2 = createMockSocket('user-2', 'socket-2');
+    describe('handleDisconnect', () => {
+        const userId = 'user-123';
+        const mockSocket = createMockSocket(userId);
+        const onlinePlayersCount = 4;
 
-      // Настраиваем моки для каждого вызова
-      mockSocketConnectionService.setPlayerOffline.mockResolvedValue(undefined);
-      mockSocketConnectionService.getOnlinePlayers
-        .mockResolvedValueOnce(['user-2'])
-        .mockResolvedValueOnce([]);
+        beforeEach(() => {
+            mockSocketConnectionService.setPlayerOffline.mockResolvedValue(
+                undefined,
+            );
+            mockSocketConnectionService.getOnlinePlayers.mockResolvedValue([
+                'user1',
+                'user2',
+                'user3',
+                'user4',
+            ]);
+        });
 
-      await gateway.handleDisconnect(socket1);
-      expect(mockServer.emit).toHaveBeenNthCalledWith(1, LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED, 1);
+        it('should handle disconnect successfully', async () => {
+            await gateway.handleDisconnect(mockSocket);
 
-      await gateway.handleDisconnect(socket2);
-      expect(mockServer.emit).toHaveBeenNthCalledWith(2, LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED, 0);
+            expect(
+                mockSocketConnectionService.setPlayerOffline,
+            ).toHaveBeenCalledWith(userId);
+            expect(
+                mockSocketConnectionService.getOnlinePlayers,
+            ).toHaveBeenCalled();
+            expect(mockServer.to).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED,
+                onlinePlayersCount,
+            );
+        });
+
+        it('should handle disconnect when getOnlinePlayers returns empty array', async () => {
+            mockSocketConnectionService.getOnlinePlayers.mockResolvedValue([]);
+
+            await gateway.handleDisconnect(mockSocket);
+
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED,
+                0,
+            );
+        });
+
+        it('should handle errors from setPlayerOffline', async () => {
+            const error = new Error('Redis error');
+            mockSocketConnectionService.setPlayerOffline.mockRejectedValue(
+                error,
+            );
+
+            await expect(gateway.handleDisconnect(mockSocket)).rejects.toThrow(
+                error,
+            );
+        });
     });
-  });
 
-  describe('Error handling', () => {
-    it('should handle connection with undefined userId', async () => {
-      const socketWithoutUser = { data: {}, id: 'socket-no-user' } as Socket;
-      const error = new Error('User ID is required');
-      
-      mockSocketConnectionService.setPlayerOnline.mockRejectedValue(error);
+    describe('Integration with multiple connections', () => {
+        it('should update online players count after multiple connections', async () => {
+            const socket1 = createMockSocket('user-1', 'socket-1');
+            const socket2 = createMockSocket('user-2', 'socket-2');
+            const socket3 = createMockSocket('user-3', 'socket-3');
 
-      await expect(gateway.handleConnection(socketWithoutUser)).rejects.toThrow(error);
+            mockSocketConnectionService.setPlayerOnline.mockResolvedValue(
+                undefined,
+            );
+            mockSocketConnectionService.getOnlinePlayers
+                .mockResolvedValueOnce(['user-1'])
+                .mockResolvedValueOnce(['user-1', 'user-2'])
+                .mockResolvedValueOnce(['user-1', 'user-2', 'user-3']);
+
+            await gateway.handleConnection(socket1);
+            expect(mockServer.emit).toHaveBeenNthCalledWith(
+                1,
+                LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED,
+                1,
+            );
+
+            await gateway.handleConnection(socket2);
+            expect(mockServer.emit).toHaveBeenNthCalledWith(
+                2,
+                LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED,
+                2,
+            );
+
+            await gateway.handleConnection(socket3);
+            expect(mockServer.emit).toHaveBeenNthCalledWith(
+                3,
+                LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED,
+                3,
+            );
+        });
+
+        it('should update online players count after multiple disconnects', async () => {
+            const socket1 = createMockSocket('user-1', 'socket-1');
+            const socket2 = createMockSocket('user-2', 'socket-2');
+
+            mockSocketConnectionService.setPlayerOffline.mockResolvedValue(
+                undefined,
+            );
+            mockSocketConnectionService.getOnlinePlayers
+                .mockResolvedValueOnce(['user-2'])
+                .mockResolvedValueOnce([]);
+
+            await gateway.handleDisconnect(socket1);
+            expect(mockServer.emit).toHaveBeenNthCalledWith(
+                1,
+                LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED,
+                1,
+            );
+
+            await gateway.handleDisconnect(socket2);
+            expect(mockServer.emit).toHaveBeenNthCalledWith(
+                2,
+                LOBBY_EVENT_NAME.COUNT_ONLINE_PLAYERS_UPDATED,
+                0,
+            );
+        });
     });
 
-    it('should handle disconnect with undefined userId', async () => {
-      const socketWithoutUser = { data: {}, id: 'socket-no-user' } as Socket;
-      const error = new Error('User ID is required');
-      
-      mockSocketConnectionService.setPlayerOffline.mockRejectedValue(error);
+    describe('Error handling', () => {
+        it('should handle connection with undefined userId', async () => {
+            const socketWithoutUser = {
+                data: {},
+                id: 'socket-no-user',
+            } as Socket;
+            const error = new Error('User ID is required');
 
-      await expect(gateway.handleDisconnect(socketWithoutUser)).rejects.toThrow(error);
-    });
-  });
+            mockSocketConnectionService.setPlayerOnline.mockRejectedValue(
+                error,
+            );
 
-  describe('WebSocketServer', () => {
-    it('should have server property set', () => {
-      expect(gateway.server).toBeDefined();
-      expect(gateway.server).toBe(mockServer);
+            await expect(
+                gateway.handleConnection(socketWithoutUser),
+            ).rejects.toThrow(error);
+        });
+
+        it('should handle disconnect with undefined userId', async () => {
+            const socketWithoutUser = {
+                data: {},
+                id: 'socket-no-user',
+            } as Socket;
+            const error = new Error('User ID is required');
+
+            mockSocketConnectionService.setPlayerOffline.mockRejectedValue(
+                error,
+            );
+
+            await expect(
+                gateway.handleDisconnect(socketWithoutUser),
+            ).rejects.toThrow(error);
+        });
     });
-  });
+
+    describe('WebSocketServer', () => {
+        it('should have server property set', () => {
+            expect(gateway.server).toBeDefined();
+            expect(gateway.server).toBe(mockServer);
+        });
+    });
 });

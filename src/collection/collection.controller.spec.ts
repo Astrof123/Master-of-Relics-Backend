@@ -6,7 +6,6 @@ import { CollectionResponseDto } from './dto/collection-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CardResponseDto } from './dto/card-response.dto';
 
-
 const createMockRequest = (userId: string = 'user-123'): any => ({
     user: { userId },
     headers: {},
@@ -16,13 +15,17 @@ const createMockRequest = (userId: string = 'user-123'): any => ({
     get: jest.fn(),
 });
 
-
-const createMockCollectionResponse = (cards: Partial<CardResponseDto>[] = []): CollectionResponseDto => ({
+const createMockCollectionResponse = (
+    cards: Partial<CardResponseDto>[] = [],
+): CollectionResponseDto => ({
     cards: cards as CardResponseDto[],
 });
 
-
-const createMockCardResponse = (id: number, innerCardId: string, hasCard: boolean = false): CardResponseDto => ({
+const createMockCardResponse = (
+    id: number,
+    innerCardId: string,
+    hasCard: boolean = false,
+): CardResponseDto => ({
     id,
     innerCardId,
     price: 100,
@@ -54,9 +57,9 @@ describe('CollectionController', () => {
                 },
             ],
         })
-        .overrideGuard(JwtAuthGuard)
-        .useValue({ canActivate: jest.fn(() => true) })
-        .compile();
+            .overrideGuard(JwtAuthGuard)
+            .useValue({ canActivate: jest.fn(() => true) })
+            .compile();
 
         controller = module.get<CollectionController>(CollectionController);
         collectionService = module.get(CollectionService);
@@ -82,11 +85,15 @@ describe('CollectionController', () => {
             ];
             const mockCollection = createMockCollectionResponse(mockCards);
 
-            collectionService.getUserCollection.mockResolvedValue(mockCollection);
+            collectionService.getUserCollection.mockResolvedValue(
+                mockCollection,
+            );
 
             const result = await controller.me(request);
 
-            expect(collectionService.getUserCollection).toHaveBeenCalledWith(userId);
+            expect(collectionService.getUserCollection).toHaveBeenCalledWith(
+                userId,
+            );
             expect(result).toEqual(mockCollection);
             expect(result.cards).toHaveLength(3);
         });
@@ -95,7 +102,9 @@ describe('CollectionController', () => {
             const request = createMockRequest(userId);
             const mockCollection = createMockCollectionResponse([]);
 
-            collectionService.getUserCollection.mockResolvedValue(mockCollection);
+            collectionService.getUserCollection.mockResolvedValue(
+                mockCollection,
+            );
 
             const result = await controller.me(request);
 
@@ -124,15 +133,24 @@ describe('CollectionController', () => {
                 createMockCardResponse(2, 'moon_staff', true),
                 createMockCardResponse(5, 'new_card', true),
             ];
-            const mockCollection = createMockCollectionResponse(mockCardsAfterPurchase);
+            const mockCollection = createMockCollectionResponse(
+                mockCardsAfterPurchase,
+            );
 
             collectionService.buyCard.mockResolvedValue(undefined);
-            collectionService.getUserCollection.mockResolvedValue(mockCollection);
+            collectionService.getUserCollection.mockResolvedValue(
+                mockCollection,
+            );
 
             const result = await controller.buyCard(request, buyCardDto);
 
-            expect(collectionService.buyCard).toHaveBeenCalledWith(userId, cardId);
-            expect(collectionService.getUserCollection).toHaveBeenCalledWith(userId);
+            expect(collectionService.buyCard).toHaveBeenCalledWith(
+                userId,
+                cardId,
+            );
+            expect(collectionService.getUserCollection).toHaveBeenCalledWith(
+                userId,
+            );
             expect(result).toEqual(mockCollection);
             expect(result.cards).toHaveLength(3);
         });
@@ -143,7 +161,9 @@ describe('CollectionController', () => {
 
             collectionService.buyCard.mockRejectedValue(error);
 
-            await expect(controller.buyCard(request, buyCardDto)).rejects.toThrow(error);
+            await expect(
+                controller.buyCard(request, buyCardDto),
+            ).rejects.toThrow(error);
             expect(collectionService.getUserCollection).not.toHaveBeenCalled();
         });
 
@@ -153,7 +173,9 @@ describe('CollectionController', () => {
 
             collectionService.buyCard.mockRejectedValue(error);
 
-            await expect(controller.buyCard(request, buyCardDto)).rejects.toThrow(error);
+            await expect(
+                controller.buyCard(request, buyCardDto),
+            ).rejects.toThrow(error);
             expect(collectionService.getUserCollection).not.toHaveBeenCalled();
         });
 
@@ -163,7 +185,9 @@ describe('CollectionController', () => {
 
             collectionService.buyCard.mockRejectedValue(error);
 
-            await expect(controller.buyCard(request, buyCardDto)).rejects.toThrow(error);
+            await expect(
+                controller.buyCard(request, buyCardDto),
+            ).rejects.toThrow(error);
         });
 
         it('should handle card not for sale error', async () => {
@@ -172,7 +196,9 @@ describe('CollectionController', () => {
 
             collectionService.buyCard.mockRejectedValue(error);
 
-            await expect(controller.buyCard(request, buyCardDto)).rejects.toThrow(error);
+            await expect(
+                controller.buyCard(request, buyCardDto),
+            ).rejects.toThrow(error);
         });
 
         it('should handle user not found error', async () => {
@@ -182,21 +208,34 @@ describe('CollectionController', () => {
 
             collectionService.buyCard.mockRejectedValue(error);
 
-            await expect(controller.buyCard(request, buyCardDtoLocal)).rejects.toThrow(error);
+            await expect(
+                controller.buyCard(request, buyCardDtoLocal),
+            ).rejects.toThrow(error);
         });
     });
 
     describe('Error handling', () => {
         it('should propagate JwtAuthGuard errors', async () => {
-            const guards = Reflect.getMetadata('__guards__', CollectionController.prototype.me);
+            const guards = Reflect.getMetadata(
+                '__guards__',
+                CollectionController.prototype.me,
+            );
             expect(guards).toBeDefined();
-            expect(guards.some((guard: any) => guard.name === 'JwtAuthGuard')).toBe(true);
+            expect(
+                guards.some((guard: any) => guard.name === 'JwtAuthGuard'),
+            ).toBe(true);
         });
 
         it('should have both endpoints protected by JwtAuthGuard', () => {
-            const meGuards = Reflect.getMetadata('__guards__', CollectionController.prototype.me);
-            const buyCardGuards = Reflect.getMetadata('__guards__', CollectionController.prototype.buyCard);
-            
+            const meGuards = Reflect.getMetadata(
+                '__guards__',
+                CollectionController.prototype.me,
+            );
+            const buyCardGuards = Reflect.getMetadata(
+                '__guards__',
+                CollectionController.prototype.buyCard,
+            );
+
             expect(meGuards).toBeDefined();
             expect(buyCardGuards).toBeDefined();
         });
@@ -209,7 +248,9 @@ describe('CollectionController', () => {
                 createMockCardResponse(1, 'test_card', true),
             ]);
 
-            collectionService.getUserCollection.mockResolvedValue(mockCollection);
+            collectionService.getUserCollection.mockResolvedValue(
+                mockCollection,
+            );
 
             const result = await controller.me(request);
 
@@ -225,7 +266,9 @@ describe('CollectionController', () => {
             ]);
 
             collectionService.buyCard.mockResolvedValue(undefined);
-            collectionService.getUserCollection.mockResolvedValue(mockCollection);
+            collectionService.getUserCollection.mockResolvedValue(
+                mockCollection,
+            );
 
             const result = await controller.buyCard(request, buyCardDtoLocal);
 
@@ -247,7 +290,9 @@ describe('CollectionController', () => {
             };
             const mockCollection = createMockCollectionResponse([mockCard]);
 
-            collectionService.getUserCollection.mockResolvedValue(mockCollection);
+            collectionService.getUserCollection.mockResolvedValue(
+                mockCollection,
+            );
 
             const result = await controller.me(request);
 
@@ -272,7 +317,9 @@ describe('CollectionController', () => {
 
             collectionService.buyCard.mockRejectedValue(error);
 
-            await expect(controller.buyCard(request, invalidDto)).rejects.toThrow(error);
+            await expect(
+                controller.buyCard(request, invalidDto),
+            ).rejects.toThrow(error);
         });
 
         it('should handle buying card when user has no gold', async () => {
@@ -282,7 +329,9 @@ describe('CollectionController', () => {
 
             collectionService.buyCard.mockRejectedValue(error);
 
-            await expect(controller.buyCard(request, buyCardDtoLocal)).rejects.toThrow(error);
+            await expect(
+                controller.buyCard(request, buyCardDtoLocal),
+            ).rejects.toThrow(error);
         });
 
         it('should handle service timeout errors', async () => {
@@ -315,9 +364,9 @@ describe('CollectionController (validation)', () => {
                 },
             ],
         })
-        .overrideGuard(JwtAuthGuard)
-        .useValue({ canActivate: jest.fn(() => true) })
-        .compile();
+            .overrideGuard(JwtAuthGuard)
+            .useValue({ canActivate: jest.fn(() => true) })
+            .compile();
 
         controller = module.get<CollectionController>(CollectionController);
         collectionService = module.get(CollectionService);
@@ -332,11 +381,15 @@ describe('CollectionController (validation)', () => {
             const request = createMockRequest('user-123');
             const mockCollection = createMockCollectionResponse([]);
 
-            collectionService.getUserCollection.mockResolvedValue(mockCollection);
+            collectionService.getUserCollection.mockResolvedValue(
+                mockCollection,
+            );
 
             await controller.me(request);
 
-            expect(collectionService.getUserCollection).toHaveBeenCalledWith('user-123');
+            expect(collectionService.getUserCollection).toHaveBeenCalledWith(
+                'user-123',
+            );
         });
 
         it('POST /collection/purchase should call buyCard and then getUserCollection', async () => {
@@ -345,12 +398,19 @@ describe('CollectionController (validation)', () => {
             const mockCollection = createMockCollectionResponse([]);
 
             collectionService.buyCard.mockResolvedValue(undefined);
-            collectionService.getUserCollection.mockResolvedValue(mockCollection);
+            collectionService.getUserCollection.mockResolvedValue(
+                mockCollection,
+            );
 
             await controller.buyCard(request, buyCardDtoLocal);
 
-            expect(collectionService.buyCard).toHaveBeenCalledWith('user-123', 10);
-            expect(collectionService.getUserCollection).toHaveBeenCalledWith('user-123');
+            expect(collectionService.buyCard).toHaveBeenCalledWith(
+                'user-123',
+                10,
+            );
+            expect(collectionService.getUserCollection).toHaveBeenCalledWith(
+                'user-123',
+            );
         });
     });
 });

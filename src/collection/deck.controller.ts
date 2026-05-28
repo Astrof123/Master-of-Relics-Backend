@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Param,
+    Post,
+    Req,
+    UseGuards,
+    ValidationPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import type AuthenticatedRequest from 'src/shared/types/authenticated-request';
@@ -18,7 +27,9 @@ export class DeckController {
     @ApiOperation({ summary: 'Получить свои колоды' })
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
-    async getDecks(@Req() request: AuthenticatedRequest): Promise<GetDecksResponseDto> {
+    async getDecks(
+        @Req() request: AuthenticatedRequest,
+    ): Promise<GetDecksResponseDto> {
         const userId = request.user.userId;
         const decks = await this.deckService.getUserDecks(userId);
 
@@ -30,8 +41,8 @@ export class DeckController {
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     async changeDeckCards(
-        @Req() request: AuthenticatedRequest, 
-        @Body(ValidationPipe) data: ChangeDeckCardsDto
+        @Req() request: AuthenticatedRequest,
+        @Body(ValidationPipe) data: ChangeDeckCardsDto,
     ) {
         const userId = request.user.userId;
         await this.deckService.changeDeckCards(userId, data);
@@ -42,8 +53,8 @@ export class DeckController {
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     async changeActiveDeck(
-        @Req() request: AuthenticatedRequest, 
-        @Body(ValidationPipe) data: ChangeActiveDeckDto
+        @Req() request: AuthenticatedRequest,
+        @Body(ValidationPipe) data: ChangeActiveDeckDto,
     ) {
         const userId = request.user.userId;
         await this.deckService.changeActiveDeck(userId, data);

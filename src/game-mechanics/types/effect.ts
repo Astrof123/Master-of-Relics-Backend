@@ -1,33 +1,32 @@
-
-export const EFFECT_DURATION  = {
+export const EFFECT_DURATION = {
     ALWAYS: 'always',
     ONE_USE: 'one_use',
-    CURRENT_ROUND: 'current_round'
+    CURRENT_ROUND: 'current_round',
 };
 
-export type EffectDuration  = typeof EFFECT_DURATION [keyof typeof EFFECT_DURATION];
-
+export type EffectDuration =
+    (typeof EFFECT_DURATION)[keyof typeof EFFECT_DURATION];
 
 export interface EffectType {
     id: Effect;
     name: string;
     duration: EffectDuration;
-    type: "positive" | "negative";
+    type: 'positive' | 'negative';
     number: number | null;
     dispellType: DispellType;
     effectCasterGameId?: string;
 }
 
-export const DISPELL_TYPE  = {
+export const DISPELL_TYPE = {
     NORMAL: 'normal',
     STRONG: 'strong',
-    NEVER: "never",
-    PASSIVE: "passive"
+    NEVER: 'never',
+    PASSIVE: 'passive',
 };
 
-export type DispellType  = typeof DISPELL_TYPE [keyof typeof DISPELL_TYPE];
+export type DispellType = (typeof DISPELL_TYPE)[keyof typeof DISPELL_TYPE];
 
-export const EFFECT  = {
+export const EFFECT = {
     SINGLE_CHARGE: 'single_charge',
     EXTRA_MOVE: 'extra_move',
     USED_SKILL_CHARGES: 'used_skill_charges',
@@ -52,6 +51,11 @@ export const EFFECT  = {
     RUST: 'rust',
     DIVINE_GUARD: 'divine_guard',
     SHARP: 'sharp',
+    SHIV: 'shiv',
+    LIGHT_BLIGHT: 'light_blight',
+    DARK_BLIGHT: 'dark_blight',
+    DESTRUCTION_BLIGHT: 'destruction_blight',
+    PIERCE: 'pierce',
 };
 
-export type Effect  = typeof EFFECT [keyof typeof EFFECT];
+export type Effect = (typeof EFFECT)[keyof typeof EFFECT];

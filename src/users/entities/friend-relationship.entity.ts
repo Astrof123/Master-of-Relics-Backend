@@ -14,7 +14,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { User } from './user.entity';
 import type { Relationship } from '../types/friend';
 
-
 @Entity('friend_relationships')
 export class FriendRelationShip {
     @ApiProperty({ example: 1 })
@@ -43,7 +42,7 @@ export class FriendRelationShip {
     @Column()
     addresseeId!: string;
 
-    @ApiProperty({ example: "friend" })
+    @ApiProperty({ example: 'friend' })
     @Column()
     status!: Relationship;
 

@@ -1,15 +1,14 @@
-export const PHASE  = {
+export const PHASE = {
     PICK_HERO: 'pick_hero',
     DRAFT: 'draft',
-    BATTLE: 'battle'
+    BATTLE: 'battle',
 } as const;
 
-export type Phase  = typeof PHASE [keyof typeof PHASE];
+export type Phase = (typeof PHASE)[keyof typeof PHASE];
 
-
-export const MINIPHASE  = {
+export const MINIPHASE = {
     MOVEMENT: 'movement',
-    BATTLE: 'battle'
+    BATTLE: 'battle',
 } as const;
 
-export type MiniPhase  = typeof MINIPHASE [keyof typeof MINIPHASE];
+export type MiniPhase = (typeof MINIPHASE)[keyof typeof MINIPHASE];

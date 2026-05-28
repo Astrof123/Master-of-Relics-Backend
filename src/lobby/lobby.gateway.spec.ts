@@ -8,7 +8,6 @@ import { LOBBY_EVENT_NAME } from './types/lobby-events-name';
 import { LOBBY_ROOMS_NAME } from './types/lobby-rooms-name';
 import { LOBBY_STATE_TYPE } from './types/lobby';
 
-
 const createMockSocket = (userId: string = 'user-123'): any => ({
     data: { userId },
     join: jest.fn().mockResolvedValue(undefined),
@@ -76,7 +75,11 @@ describe('LobbyGateway', () => {
         gameStateService = module.get(GameStateService);
         socketConnectionService = module.get(SocketConnectionService);
 
-        mockServer = { to: jest.fn().mockReturnThis(), emit: jest.fn(), in: jest.fn().mockReturnThis() } as any;
+        mockServer = {
+            to: jest.fn().mockReturnThis(),
+            emit: jest.fn(),
+            in: jest.fn().mockReturnThis(),
+        } as any;
         gateway.server = mockServer;
     });
 
@@ -93,7 +96,10 @@ describe('LobbyGateway', () => {
             mockLobbyService.getAllLobbies.mockResolvedValue([]);
             mockLobbyService.getLobbyByUserId.mockResolvedValue(null);
             mockLobbyService.getInvitations.mockResolvedValue([]);
-            mockSocketConnectionService.getOnlinePlayers.mockResolvedValue(['user-1', 'user-2']);
+            mockSocketConnectionService.getOnlinePlayers.mockResolvedValue([
+                'user-1',
+                'user-2',
+            ]);
         });
 
         it('should successfully join hall', async () => {
@@ -102,7 +108,9 @@ describe('LobbyGateway', () => {
             expect(mockSocket.join).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
             expect(mockSocket.join).toHaveBeenCalledWith(`user:${userId}`);
             expect(mockLobbyService.getAllLobbies).toHaveBeenCalledWith(userId);
-            expect(mockLobbyService.getLobbyByUserId).toHaveBeenCalledWith(userId);
+            expect(mockLobbyService.getLobbyByUserId).toHaveBeenCalledWith(
+                userId,
+            );
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: {
@@ -111,17 +119,21 @@ describe('LobbyGateway', () => {
                     onlinePlayers: 2,
                     invitations: [],
                 },
-                message: "Вы успешно вошли в холл",
+                message: 'Вы успешно вошли в холл',
             });
         });
 
         it('should join lobby room if user already in lobby', async () => {
             const mockLobby = { id: 'lobby-123', name: 'Test Lobby' };
-            mockLobbyService.getLobbyByUserId.mockResolvedValue(mockLobby as any);
+            mockLobbyService.getLobbyByUserId.mockResolvedValue(
+                mockLobby as any,
+            );
 
             await gateway.handleJoinHall(mockSocket, null, mockCallback);
 
-            expect(mockSocket.join).toHaveBeenCalledWith(`lobby-${mockLobby.id}`);
+            expect(mockSocket.join).toHaveBeenCalledWith(
+                `lobby-${mockLobby.id}`,
+            );
         });
 
         it('should handle errors', async () => {
@@ -130,9 +142,11 @@ describe('LobbyGateway', () => {
 
             await gateway.handleJoinHall(mockSocket, null, mockCallback);
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
@@ -143,7 +157,9 @@ describe('LobbyGateway', () => {
 
         it('should return lobby list', async () => {
             const mockLobbies = [{ id: 'lobby-1' }, { id: 'lobby-2' }];
-            mockLobbyService.getAllLobbies.mockResolvedValue(mockLobbies as any);
+            mockLobbyService.getAllLobbies.mockResolvedValue(
+                mockLobbies as any,
+            );
 
             await gateway.handleGetLobbyList(mockSocket, null, mockCallback);
 
@@ -151,7 +167,7 @@ describe('LobbyGateway', () => {
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: { lobbies: mockLobbies },
-                message: "Вы успешно получили лобби",
+                message: 'Вы успешно получили лобби',
             });
         });
 
@@ -161,9 +177,11 @@ describe('LobbyGateway', () => {
 
             await gateway.handleGetLobbyList(mockSocket, null, mockCallback);
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
@@ -187,18 +205,30 @@ describe('LobbyGateway', () => {
             mockLobbyService.createLobby.mockResolvedValue(lobbyId);
             mockLobbyService.getLobbyById.mockResolvedValue(mockLobby as any);
 
-            await gateway.handleCreateLobby(mockSocket, createLobbyData, mockCallback);
+            await gateway.handleCreateLobby(
+                mockSocket,
+                createLobbyData,
+                mockCallback,
+            );
 
-            expect(mockLobbyService.createLobby).toHaveBeenCalledWith(createLobbyData, userId);
+            expect(mockLobbyService.createLobby).toHaveBeenCalledWith(
+                createLobbyData,
+                userId,
+            );
             expect(mockServer.to).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
-            expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED,
+            );
             expect(mockSocket.join).toHaveBeenCalledWith(`lobby-${lobbyId}`);
             expect(mockServer.to).toHaveBeenCalledWith(`lobby-${lobbyId}`);
-            expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.LOBBY_UPDATE, mockLobby);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.LOBBY_UPDATE,
+                mockLobby,
+            );
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: null,
-                message: "Вы успешно создали лобби",
+                message: 'Вы успешно создали лобби',
             });
         });
 
@@ -206,11 +236,17 @@ describe('LobbyGateway', () => {
             const error = new Error('Test error');
             mockLobbyService.createLobby.mockRejectedValue(error);
 
-            await gateway.handleCreateLobby(mockSocket, createLobbyData, mockCallback);
+            await gateway.handleCreateLobby(
+                mockSocket,
+                createLobbyData,
+                mockCallback,
+            );
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
@@ -233,15 +269,24 @@ describe('LobbyGateway', () => {
             mockLobbyService.updateOptionsLobby.mockResolvedValue(lobbyId);
             mockLobbyService.getLobbyById.mockResolvedValue(mockLobby as any);
 
-            await gateway.handleUpdateOptionsLobby(mockSocket, updateData, mockCallback);
+            await gateway.handleUpdateOptionsLobby(
+                mockSocket,
+                updateData,
+                mockCallback,
+            );
 
-            expect(mockLobbyService.updateOptionsLobby).toHaveBeenCalledWith(updateData, userId);
+            expect(mockLobbyService.updateOptionsLobby).toHaveBeenCalledWith(
+                updateData,
+                userId,
+            );
             expect(mockServer.to).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
-            expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED,
+            );
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: null,
-                message: "Вы успешно поменяли настройки лобби",
+                message: 'Вы успешно поменяли настройки лобби',
             });
         });
 
@@ -249,11 +294,17 @@ describe('LobbyGateway', () => {
             const error = new Error('Test error');
             mockLobbyService.updateOptionsLobby.mockRejectedValue(error);
 
-            await gateway.handleUpdateOptionsLobby(mockSocket, updateData, mockCallback);
+            await gateway.handleUpdateOptionsLobby(
+                mockSocket,
+                updateData,
+                mockCallback,
+            );
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
@@ -271,14 +322,19 @@ describe('LobbyGateway', () => {
 
             await gateway.handleJoinLobby(mockSocket, lobbyId, mockCallback);
 
-            expect(mockLobbyService.joinLobby).toHaveBeenCalledWith(lobbyId, userId);
+            expect(mockLobbyService.joinLobby).toHaveBeenCalledWith(
+                lobbyId,
+                userId,
+            );
             expect(mockServer.to).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
-            expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED,
+            );
             expect(mockSocket.join).toHaveBeenCalledWith(`lobby-${lobbyId}`);
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: null,
-                message: "Вы успешно вошли в лобби",
+                message: 'Вы успешно вошли в лобби',
             });
         });
 
@@ -288,9 +344,11 @@ describe('LobbyGateway', () => {
 
             await gateway.handleJoinLobby(mockSocket, lobbyId, mockCallback);
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
@@ -310,11 +368,14 @@ describe('LobbyGateway', () => {
             await gateway.handleJoinLobbyByCode(mockSocket, code, mockCallback);
 
             expect(mockLobbyService.getLobbyByCode).toHaveBeenCalledWith(code);
-            expect(mockLobbyService.joinLobby).toHaveBeenCalledWith(mockLobby.id, userId);
+            expect(mockLobbyService.joinLobby).toHaveBeenCalledWith(
+                mockLobby.id,
+                userId,
+            );
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: null,
-                message: "Вы успешно вошли в лобби",
+                message: 'Вы успешно вошли в лобби',
             });
         });
 
@@ -326,7 +387,7 @@ describe('LobbyGateway', () => {
             expect(mockCallback).toHaveBeenCalledWith({
                 success: false,
                 data: null,
-                message: "Лобби не найдено",
+                message: 'Лобби не найдено',
             });
             expect(mockLobbyService.joinLobby).not.toHaveBeenCalled();
         });
@@ -337,9 +398,11 @@ describe('LobbyGateway', () => {
 
             await gateway.handleJoinLobbyByCode(mockSocket, code, mockCallback);
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
@@ -355,15 +418,24 @@ describe('LobbyGateway', () => {
             mockLobbyService.toggleReadyLobby.mockResolvedValue(undefined);
             mockLobbyService.getLobbyById.mockResolvedValue(mockLobby as any);
 
-            await gateway.handleToggleReadyLobby(mockSocket, lobbyId, mockCallback);
+            await gateway.handleToggleReadyLobby(
+                mockSocket,
+                lobbyId,
+                mockCallback,
+            );
 
-            expect(mockLobbyService.toggleReadyLobby).toHaveBeenCalledWith(lobbyId, userId);
+            expect(mockLobbyService.toggleReadyLobby).toHaveBeenCalledWith(
+                lobbyId,
+                userId,
+            );
             expect(mockServer.to).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
-            expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED,
+            );
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: null,
-                message: "Вы успешно переключили готовность",
+                message: 'Вы успешно переключили готовность',
             });
         });
 
@@ -371,11 +443,17 @@ describe('LobbyGateway', () => {
             const error = new Error('Test error');
             mockLobbyService.toggleReadyLobby.mockRejectedValue(error);
 
-            await gateway.handleToggleReadyLobby(mockSocket, lobbyId, mockCallback);
+            await gateway.handleToggleReadyLobby(
+                mockSocket,
+                lobbyId,
+                mockCallback,
+            );
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
@@ -393,14 +471,19 @@ describe('LobbyGateway', () => {
 
             await gateway.handleLeaveLobby(mockSocket, lobbyId, mockCallback);
 
-            expect(mockLobbyService.leaveLobby).toHaveBeenCalledWith(lobbyId, userId);
+            expect(mockLobbyService.leaveLobby).toHaveBeenCalledWith(
+                lobbyId,
+                userId,
+            );
             expect(mockServer.to).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
-            expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED,
+            );
             expect(mockSocket.leave).toHaveBeenCalledWith(`lobby-${lobbyId}`);
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: null,
-                message: "Вы успешно вышли из лобби",
+                message: 'Вы успешно вышли из лобби',
             });
         });
 
@@ -410,9 +493,11 @@ describe('LobbyGateway', () => {
 
             await gateway.handleLeaveLobby(mockSocket, lobbyId, mockCallback);
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
@@ -427,18 +512,32 @@ describe('LobbyGateway', () => {
             const mockInvitations = [{ id: 'inv-1' }];
 
             mockLobbyService.inviteFriend.mockResolvedValue(undefined);
-            mockLobbyService.getInvitations.mockResolvedValue(mockInvitations as any);
+            mockLobbyService.getInvitations.mockResolvedValue(
+                mockInvitations as any,
+            );
 
-            await gateway.handleInviteFriend(mockSocket, inviteData, mockCallback);
+            await gateway.handleInviteFriend(
+                mockSocket,
+                inviteData,
+                mockCallback,
+            );
 
-            expect(mockLobbyService.inviteFriend).toHaveBeenCalledWith(inviteData, userId);
-            expect(mockLobbyService.getInvitations).toHaveBeenCalledWith(friendId);
+            expect(mockLobbyService.inviteFriend).toHaveBeenCalledWith(
+                inviteData,
+                userId,
+            );
+            expect(mockLobbyService.getInvitations).toHaveBeenCalledWith(
+                friendId,
+            );
             expect(mockServer.to).toHaveBeenCalledWith(`user:${friendId}`);
-            expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.YOU_INVITED, mockInvitations);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.YOU_INVITED,
+                mockInvitations,
+            );
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: null,
-                message: "Вы успешно пригласили друга",
+                message: 'Вы успешно пригласили друга',
             });
         });
 
@@ -446,11 +545,17 @@ describe('LobbyGateway', () => {
             const error = new Error('Test error');
             mockLobbyService.inviteFriend.mockRejectedValue(error);
 
-            await gateway.handleInviteFriend(mockSocket, inviteData, mockCallback);
+            await gateway.handleInviteFriend(
+                mockSocket,
+                inviteData,
+                mockCallback,
+            );
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
@@ -461,15 +566,23 @@ describe('LobbyGateway', () => {
 
         it('should return friends for invite', async () => {
             const mockFriends = [{ friendId: 'friend-1', status: 'offer' }];
-            mockLobbyService.getFriendsForInvite.mockResolvedValue(mockFriends as any);
+            mockLobbyService.getFriendsForInvite.mockResolvedValue(
+                mockFriends as any,
+            );
 
-            await gateway.handleGetFriendsForInvite(mockSocket, null, mockCallback);
+            await gateway.handleGetFriendsForInvite(
+                mockSocket,
+                null,
+                mockCallback,
+            );
 
-            expect(mockLobbyService.getFriendsForInvite).toHaveBeenCalledWith(userId);
+            expect(mockLobbyService.getFriendsForInvite).toHaveBeenCalledWith(
+                userId,
+            );
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: mockFriends,
-                message: "Вы успешно получили список друзей для приглашения",
+                message: 'Вы успешно получили список друзей для приглашения',
             });
         });
 
@@ -477,17 +590,27 @@ describe('LobbyGateway', () => {
             const error = new Error('Test error');
             mockLobbyService.getFriendsForInvite.mockRejectedValue(error);
 
-            await gateway.handleGetFriendsForInvite(mockSocket, null, mockCallback);
+            await gateway.handleGetFriendsForInvite(
+                mockSocket,
+                null,
+                mockCallback,
+            );
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
     describe('handleDeclineInvitation', () => {
         const userId = 'user-123';
-        const lobbyInvitation = { id: 'inv-1', addresseeId: userId, lobbyId: 'lobby-123' };
+        const lobbyInvitation = {
+            id: 'inv-1',
+            addresseeId: userId,
+            lobbyId: 'lobby-123',
+        };
         const mockSocket = createMockSocket(userId);
         const mockCallback = jest.fn();
 
@@ -495,18 +618,33 @@ describe('LobbyGateway', () => {
             const mockInvitations = [{ id: 'inv-2' }];
 
             mockLobbyService.deleteInvitation.mockResolvedValue(undefined);
-            mockLobbyService.getInvitations.mockResolvedValue(mockInvitations as any);
+            mockLobbyService.getInvitations.mockResolvedValue(
+                mockInvitations as any,
+            );
 
-            await gateway.handleDeclineInvitation(mockSocket, lobbyInvitation as any, mockCallback);
+            await gateway.handleDeclineInvitation(
+                mockSocket,
+                lobbyInvitation as any,
+                mockCallback,
+            );
 
-            expect(mockLobbyService.deleteInvitation).toHaveBeenCalledWith(lobbyInvitation);
-            expect(mockLobbyService.getInvitations).toHaveBeenCalledWith(userId);
-            expect(mockServer.to).toHaveBeenCalledWith(`user:${lobbyInvitation.addresseeId}`);
-            expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.YOU_INVITED, mockInvitations);
+            expect(mockLobbyService.deleteInvitation).toHaveBeenCalledWith(
+                lobbyInvitation,
+            );
+            expect(mockLobbyService.getInvitations).toHaveBeenCalledWith(
+                userId,
+            );
+            expect(mockServer.to).toHaveBeenCalledWith(
+                `user:${lobbyInvitation.addresseeId}`,
+            );
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.YOU_INVITED,
+                mockInvitations,
+            );
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: null,
-                message: "Вы успешно отклонили предложение",
+                message: 'Вы успешно отклонили предложение',
             });
         });
 
@@ -514,11 +652,17 @@ describe('LobbyGateway', () => {
             const error = new Error('Test error');
             mockLobbyService.deleteInvitation.mockRejectedValue(error);
 
-            await gateway.handleDeclineInvitation(mockSocket, lobbyInvitation as any, mockCallback);
+            await gateway.handleDeclineInvitation(
+                mockSocket,
+                lobbyInvitation as any,
+                mockCallback,
+            );
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 
@@ -529,28 +673,52 @@ describe('LobbyGateway', () => {
         const mockCallback = jest.fn();
 
         it('should join lobby by invitation successfully', async () => {
-            const mockInvitation = { id: invitationId, lobbyId: 'lobby-123', addresseeId: userId };
+            const mockInvitation = {
+                id: invitationId,
+                lobbyId: 'lobby-123',
+                addresseeId: userId,
+            };
             const mockLobby = { id: 'lobby-123', name: 'Test Lobby' };
             const mockInvitations = [{ id: 'inv-2' }];
 
-            mockLobbyService.joinLobbyByInvitation.mockResolvedValue(mockInvitation as any);
+            mockLobbyService.joinLobbyByInvitation.mockResolvedValue(
+                mockInvitation as any,
+            );
             mockLobbyService.joinLobby.mockResolvedValue(undefined);
             mockLobbyService.deleteInvitation.mockResolvedValue(undefined);
-            mockLobbyService.getInvitations.mockResolvedValue(mockInvitations as any);
+            mockLobbyService.getInvitations.mockResolvedValue(
+                mockInvitations as any,
+            );
             mockLobbyService.getLobbyById.mockResolvedValue(mockLobby as any);
 
-            await gateway.handleJoinLobbyByInvitation(mockSocket, invitationId, mockCallback);
+            await gateway.handleJoinLobbyByInvitation(
+                mockSocket,
+                invitationId,
+                mockCallback,
+            );
 
-            expect(mockLobbyService.joinLobbyByInvitation).toHaveBeenCalledWith(invitationId, userId);
-            expect(mockLobbyService.joinLobby).toHaveBeenCalledWith(mockInvitation.lobbyId, userId);
-            expect(mockLobbyService.deleteInvitation).toHaveBeenCalledWith(mockInvitation);
+            expect(mockLobbyService.joinLobbyByInvitation).toHaveBeenCalledWith(
+                invitationId,
+                userId,
+            );
+            expect(mockLobbyService.joinLobby).toHaveBeenCalledWith(
+                mockInvitation.lobbyId,
+                userId,
+            );
+            expect(mockLobbyService.deleteInvitation).toHaveBeenCalledWith(
+                mockInvitation,
+            );
             expect(mockServer.to).toHaveBeenCalledWith(LOBBY_ROOMS_NAME.HALL);
-            expect(mockServer.emit).toHaveBeenCalledWith(LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED);
-            expect(mockSocket.join).toHaveBeenCalledWith(`lobby-${mockInvitation.lobbyId}`);
+            expect(mockServer.emit).toHaveBeenCalledWith(
+                LOBBY_EVENT_NAME.LOBBY_LIST_UPDATED,
+            );
+            expect(mockSocket.join).toHaveBeenCalledWith(
+                `lobby-${mockInvitation.lobbyId}`,
+            );
             expect(mockCallback).toHaveBeenCalledWith({
                 success: true,
                 data: null,
-                message: "Вы успешно вошли в лобби",
+                message: 'Вы успешно вошли в лобби',
             });
         });
 
@@ -558,11 +726,17 @@ describe('LobbyGateway', () => {
             const error = new Error('Test error');
             mockLobbyService.joinLobbyByInvitation.mockRejectedValue(error);
 
-            await gateway.handleJoinLobbyByInvitation(mockSocket, invitationId, mockCallback);
+            await gateway.handleJoinLobbyByInvitation(
+                mockSocket,
+                invitationId,
+                mockCallback,
+            );
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-                success: false,
-            }));
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                }),
+            );
         });
     });
 });

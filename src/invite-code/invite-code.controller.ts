@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseIntPipe,
+    Post,
+    Query,
+    Req,
+    UseGuards,
+    ValidationPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import type AuthenticatedRequest from 'src/shared/types/authenticated-request';
@@ -14,17 +26,15 @@ import { DeleteInviteCodeDto } from './dtos/delete-invite-code.dto';
 
 @Controller('invite-codes')
 export class InviteCodeController {
-    constructor(
-        private readonly inviteCodeService: InviteCodeService
-    ) {}
+    constructor(private readonly inviteCodeService: InviteCodeService) {}
 
-    @Post("status")
+    @Post('status')
     @ApiOperation({ summary: 'Изменить статус инвайт-кода' })
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     async changeStatus(
         @Req() request: AuthenticatedRequest,
-        @Body(ValidationPipe) data: ChangeStatusDto
+        @Body(ValidationPipe) data: ChangeStatusDto,
     ) {
         await this.inviteCodeService.changeStatus(data);
     }
@@ -35,17 +45,18 @@ export class InviteCodeController {
     @ApiBearerAuth('access-token')
     async getInviteCodes(
         @Req() request: AuthenticatedRequest,
-        @Query(ValidationPipe) getInviteCodesDto: GetInviteCodesDto
+        @Query(ValidationPipe) getInviteCodesDto: GetInviteCodesDto,
     ) {
-        const result = await this.inviteCodeService.getInviteCodes(getInviteCodesDto);
+        const result =
+            await this.inviteCodeService.getInviteCodes(getInviteCodesDto);
         const resultDto: GetInviteCodesResponseDto = {
             ...result,
-            data: result.data.map(inviteCode => 
+            data: result.data.map((inviteCode) =>
                 plainToInstance(InviteCodeDto, inviteCode, {
                     excludeExtraneousValues: true,
-                })
-            )
-        }
+                }),
+            ),
+        };
 
         return resultDto;
     }
@@ -56,27 +67,25 @@ export class InviteCodeController {
     @ApiBearerAuth('access-token')
     async createInviteCodes(
         @Req() request: AuthenticatedRequest,
-        @Body(ValidationPipe) data: CreateInviteCodesDto
+        @Body(ValidationPipe) data: CreateInviteCodesDto,
     ) {
         const result = await this.inviteCodeService.createInviteCodes(data);
-        const resultDto: InviteCodeDto[] = result.map(inviteCode => 
+        const resultDto: InviteCodeDto[] = result.map((inviteCode) =>
             plainToInstance(InviteCodeDto, inviteCode, {
                 excludeExtraneousValues: true,
-            })
-        )
+            }),
+        );
 
         return resultDto;
     }
 
-
-
-    @Delete("/:id")
+    @Delete('/:id')
     @ApiOperation({ summary: 'Удалить инвайт-код' })
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('access-token')
     async deleteInviteCode(
         @Req() request: AuthenticatedRequest,
-        @Param('id') id: string
+        @Param('id') id: string,
     ) {
         await this.inviteCodeService.deleteInviteCode(id);
     }

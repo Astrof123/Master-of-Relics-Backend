@@ -5,7 +5,12 @@ import { UserCollection } from './entities/collection.entity';
 import { DataSource, Repository } from 'typeorm';
 import { DEFAULT_COLLECTION } from './constants/default_collection';
 import { CollectionResponseDto } from './dto/collection-response.dto';
-import { CardAlreadyExistException, CardNotForSaleException, CardNotFoundException, NotEnoughGoldException } from './exceptions/collection.exception';
+import {
+    CardAlreadyExistException,
+    CardNotForSaleException,
+    CardNotFoundException,
+    NotEnoughGoldException,
+} from './exceptions/collection.exception';
 import { UsersService } from 'src/users/users.service';
 import { User } from 'src/users/entities/user.entity';
 import { UserNotFoundException } from 'src/users/exceptions/users.exception';
@@ -20,20 +25,22 @@ export class CollectionService {
         private collectionRepository: Repository<UserCollection>,
         @InjectRepository(Card)
         private cardRepository: Repository<Card>,
-        private usersService: UsersService
+        private usersService: UsersService,
     ) {}
 
     async createForNewUser(userId: string): Promise<void> {
         for (const artifact of DEFAULT_COLLECTION) {
-            const card = await this.cardRepository.findOne({ where: { innerCardId: artifact }})
-            
+            const card = await this.cardRepository.findOne({
+                where: { innerCardId: artifact },
+            });
+
             if (card == null) {
                 continue;
             }
 
             const newCollectionRow = this.collectionRepository.create({
                 userId: userId,
-                cardId: card.id
+                cardId: card.id,
             });
 
             await this.collectionRepository.save(newCollectionRow);
@@ -43,11 +50,13 @@ export class CollectionService {
     async getUserCollection(userId: string): Promise<CollectionResponseDto> {
         await this.usersService.findOne(userId);
 
-        const collectionCards = await this.collectionRepository.find({ where: { userId }});
+        const collectionCards = await this.collectionRepository.find({
+            where: { userId },
+        });
         const allCards = await this.cardRepository.find();
         const response: CollectionResponseDto = {
-            cards: []
-        }
+            cards: [],
+        };
 
         for (const card of allCards) {
             if (!card.isForSale) {
@@ -55,7 +64,10 @@ export class CollectionService {
             }
 
             let skillCost: number | null = null;
-            if (ARTIFACTS[card.innerCardId].skills && ARTIFACTS[card.innerCardId].skills!.length > 0) {
+            if (
+                ARTIFACTS[card.innerCardId].skills &&
+                ARTIFACTS[card.innerCardId].skills!.length > 0
+            ) {
                 const skill = ARTIFACTS[card.innerCardId].skills![0];
                 skillCost = SKILLS[skill].cost;
             }
@@ -65,11 +77,13 @@ export class CollectionService {
                 innerCardId: card.innerCardId,
                 isForSale: card.isForSale,
                 price: card.price,
-                hasCard: collectionCards.find(c => c.cardId == card.id) ? true : false,
+                hasCard: collectionCards.find((c) => c.cardId == card.id)
+                    ? true
+                    : false,
                 maxHp: ARTIFACTS[card.innerCardId].hp,
                 skillCost: skillCost,
-                type: ARTIFACTS[card.innerCardId].type
-            })
+                type: ARTIFACTS[card.innerCardId].type,
+            });
         }
 
         return response;
@@ -86,13 +100,13 @@ export class CollectionService {
                 .setLock('pessimistic_write')
                 .where('user.id = :userId', { userId })
                 .getOne();
-                
+
             const card = await queryRunner.manager
                 .createQueryBuilder(Card, 'card')
                 .setLock('pessimistic_write')
                 .where('card.id = :cardId', { cardId })
                 .getOne();
-             
+
             if (!user) {
                 throw new UserNotFoundException();
             }
@@ -101,10 +115,13 @@ export class CollectionService {
                 throw new CardNotFoundException();
             }
 
-            const existingCollection = await queryRunner.manager.findOne(UserCollection, {
-                where: { userId, cardId }
-            });
-            
+            const existingCollection = await queryRunner.manager.findOne(
+                UserCollection,
+                {
+                    where: { userId, cardId },
+                },
+            );
+
             if (existingCollection) {
                 throw new CardAlreadyExistException();
             }
@@ -117,18 +134,20 @@ export class CollectionService {
                 throw new CardNotForSaleException();
             }
 
-            const newCollectionRow = queryRunner.manager.create(UserCollection, {
-                userId: userId,
-                cardId: card.id
-            });
+            const newCollectionRow = queryRunner.manager.create(
+                UserCollection,
+                {
+                    userId: userId,
+                    cardId: card.id,
+                },
+            );
             await queryRunner.manager.save(newCollectionRow);
 
             user.gold -= card.price;
             await queryRunner.manager.save(User, user);
-            
+
             await queryRunner.commitTransaction();
-        }
-        catch (error) {
+        } catch (error) {
             await queryRunner.rollbackTransaction();
             throw error;
         } finally {
@@ -147,7 +166,7 @@ export class CollectionService {
                 .setLock('pessimistic_write')
                 .where('user.id = :userId', { userId })
                 .getOne();
-                
+
             if (!user) {
                 throw new UserNotFoundException();
             }
@@ -155,8 +174,7 @@ export class CollectionService {
             user.gold += amount;
             await queryRunner.manager.save(User, user);
             await queryRunner.commitTransaction();
-        }
-        catch (error) {
+        } catch (error) {
             await queryRunner.rollbackTransaction();
             throw error;
         } finally {

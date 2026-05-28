@@ -16,7 +16,6 @@ import { UserStats } from './entities/user-stats.entity';
 import { FriendRelationShip } from './entities/friend-relationship.entity';
 import { UserProfileResponseDto } from './dto/user-profile-response.dto';
 
-
 const createMockRequest = (userId: string): any => ({
     user: { userId },
     headers: {},
@@ -27,7 +26,11 @@ const createMockRequest = (userId: string): any => ({
     header: jest.fn(),
 });
 
-const createMockUser = (id: string, nickname: string, options?: Partial<User>): User => {
+const createMockUser = (
+    id: string,
+    nickname: string,
+    options?: Partial<User>,
+): User => {
     const user = new User();
     user.id = id;
     user.nickname = nickname;
@@ -48,11 +51,11 @@ const createMockUser = (id: string, nickname: string, options?: Partial<User>): 
     user.stats = null as any;
     user.requester = [];
     user.addressee = [];
-    
+
     if (options) {
         Object.assign(user, options);
     }
-    
+
     return user;
 };
 
@@ -67,7 +70,12 @@ const createMockUserStats = (userId: string): UserStats => {
     return stats;
 };
 
-const createMockReport = (id: number, text: string, reportedUserId: string, requesterUserId: string): Report => {
+const createMockReport = (
+    id: number,
+    text: string,
+    reportedUserId: string,
+    requesterUserId: string,
+): Report => {
     const report = new Report();
     report.id = id;
     report.text = text;
@@ -81,7 +89,11 @@ const createMockReport = (id: number, text: string, reportedUserId: string, requ
     return report;
 };
 
-const createMockGetAllUsersResponse = (users: User[], page: number = 1, limit: number = 10) => ({
+const createMockGetAllUsersResponse = (
+    users: User[],
+    page: number = 1,
+    limit: number = 10,
+) => ({
     data: users,
     total: users.length,
     page,
@@ -89,7 +101,11 @@ const createMockGetAllUsersResponse = (users: User[], page: number = 1, limit: n
     totalPages: Math.ceil(users.length / limit),
 });
 
-const createMockGetReportsResponse = (reports: Report[], page: number = 1, limit: number = 10) => ({
+const createMockGetReportsResponse = (
+    reports: Report[],
+    page: number = 1,
+    limit: number = 10,
+) => ({
     data: reports,
     total: reports.length,
     page,
@@ -144,7 +160,10 @@ describe('UsersController', () => {
             const request = createMockRequest('user-1');
             const getUsersDto: GetUsersDto = { page: 1, limit: 10 };
             const mockUsers = [
-                createMockUser('user-1', 'User1', { gold: 100, isAdmin: false }),
+                createMockUser('user-1', 'User1', {
+                    gold: 100,
+                    isAdmin: false,
+                }),
                 createMockUser('user-2', 'User2', { gold: 200, isAdmin: true }),
             ];
             const mockResponse = createMockGetAllUsersResponse(mockUsers);
@@ -180,7 +199,11 @@ describe('UsersController', () => {
             const request = createMockRequest('user-1');
             const getUsersDto: GetUsersDto = { page: 2, limit: 20 };
             const mockUsers = [createMockUser('user-3', 'User3')];
-            const mockResponse = createMockGetAllUsersResponse(mockUsers, 2, 20);
+            const mockResponse = createMockGetAllUsersResponse(
+                mockUsers,
+                2,
+                20,
+            );
 
             usersService.getAllUsers.mockResolvedValue(mockResponse);
 
@@ -194,7 +217,10 @@ describe('UsersController', () => {
     describe('setAdmin', () => {
         it('should set admin status', async () => {
             const request = createMockRequest('admin-1');
-            const setAdminDto: SetAdminDto = { userId: 'user-2', isAdmin: true };
+            const setAdminDto: SetAdminDto = {
+                userId: 'user-2',
+                isAdmin: true,
+            };
 
             usersService.setAdmin.mockResolvedValue(undefined);
 
@@ -205,7 +231,10 @@ describe('UsersController', () => {
 
         it('should remove admin status', async () => {
             const request = createMockRequest('admin-1');
-            const setAdminDto: SetAdminDto = { userId: 'user-2', isAdmin: false };
+            const setAdminDto: SetAdminDto = {
+                userId: 'user-2',
+                isAdmin: false,
+            };
 
             usersService.setAdmin.mockResolvedValue(undefined);
 
@@ -245,8 +274,14 @@ describe('UsersController', () => {
                 reportedUserId: 'user-3',
                 isProcessed: false,
             };
-            const mockReports = [createMockReport(1, 'Report 1', 'user-3', 'user-1')];
-            const mockResponse = createMockGetReportsResponse(mockReports, 2, 5);
+            const mockReports = [
+                createMockReport(1, 'Report 1', 'user-3', 'user-1'),
+            ];
+            const mockResponse = createMockGetReportsResponse(
+                mockReports,
+                2,
+                5,
+            );
 
             usersService.getReports.mockResolvedValue(mockResponse);
 
@@ -261,7 +296,10 @@ describe('UsersController', () => {
     describe('me', () => {
         it('should return current user data', async () => {
             const request = createMockRequest('user-1');
-            const mockUser = createMockUser('user-1', 'TestUser', { gold: 500, isAdmin: false });
+            const mockUser = createMockUser('user-1', 'TestUser', {
+                gold: 500,
+                isAdmin: false,
+            });
 
             usersService.findOne.mockResolvedValue(mockUser);
 
@@ -300,7 +338,10 @@ describe('UsersController', () => {
 
             const result = await controller.getProfile(request, profileId);
 
-            expect(usersService.profile).toHaveBeenCalledWith(profileId, 'user-1');
+            expect(usersService.profile).toHaveBeenCalledWith(
+                profileId,
+                'user-1',
+            );
             expect(result).toEqual(mockProfile);
         });
     });
@@ -316,9 +357,15 @@ describe('UsersController', () => {
 
             usersService.findFriends.mockResolvedValue(mockUsers);
 
-            const result = await controller.findAllForFriends(request, findFriendsDto);
+            const result = await controller.findAllForFriends(
+                request,
+                findFriendsDto,
+            );
 
-            expect(usersService.findFriends).toHaveBeenCalledWith(findFriendsDto, 'user-1');
+            expect(usersService.findFriends).toHaveBeenCalledWith(
+                findFriendsDto,
+                'user-1',
+            );
             expect(result).toHaveLength(2);
             expect(result[0]).toBeInstanceOf(UserResponseDto);
         });
@@ -329,7 +376,10 @@ describe('UsersController', () => {
 
             usersService.findFriends.mockResolvedValue([]);
 
-            const result = await controller.findAllForFriends(request, findFriendsDto);
+            const result = await controller.findAllForFriends(
+                request,
+                findFriendsDto,
+            );
 
             expect(result).toEqual([]);
         });
@@ -344,7 +394,10 @@ describe('UsersController', () => {
 
             await controller.offerFriendship(request, friendId);
 
-            expect(usersService.offerFriendship).toHaveBeenCalledWith(friendId, 'user-1');
+            expect(usersService.offerFriendship).toHaveBeenCalledWith(
+                friendId,
+                'user-1',
+            );
         });
     });
 
@@ -357,7 +410,10 @@ describe('UsersController', () => {
 
             await controller.acceptFriendship(request, friendId);
 
-            expect(usersService.acceptFriendship).toHaveBeenCalledWith(friendId, 'user-1');
+            expect(usersService.acceptFriendship).toHaveBeenCalledWith(
+                friendId,
+                'user-1',
+            );
         });
     });
 
@@ -370,7 +426,10 @@ describe('UsersController', () => {
 
             await controller.declineFriendship(request, friendId);
 
-            expect(usersService.breakoffFriendship).toHaveBeenCalledWith(friendId, 'user-1');
+            expect(usersService.breakoffFriendship).toHaveBeenCalledWith(
+                friendId,
+                'user-1',
+            );
         });
     });
 
@@ -383,7 +442,10 @@ describe('UsersController', () => {
 
             await controller.breakoffFriendship(request, friendId);
 
-            expect(usersService.breakoffFriendship).toHaveBeenCalledWith(friendId, 'user-1');
+            expect(usersService.breakoffFriendship).toHaveBeenCalledWith(
+                friendId,
+                'user-1',
+            );
         });
     });
 
@@ -400,7 +462,10 @@ describe('UsersController', () => {
 
             await controller.reportPlayer(request, reportUserDto);
 
-            expect(usersService.reportUser).toHaveBeenCalledWith(reportUserDto, 'user-1');
+            expect(usersService.reportUser).toHaveBeenCalledWith(
+                reportUserDto,
+                'user-1',
+            );
         });
     });
 
@@ -457,7 +522,9 @@ describe('UsersController', () => {
 
             usersService.findOne.mockRejectedValue(error);
 
-            await expect(controller.me(request)).rejects.toThrow('Service error');
+            await expect(controller.me(request)).rejects.toThrow(
+                'Service error',
+            );
         });
 
         it('should handle not found error', async () => {
@@ -466,7 +533,9 @@ describe('UsersController', () => {
 
             usersService.findOne.mockRejectedValue(error);
 
-            await expect(controller.findUserById(userId)).rejects.toThrow('User not found');
+            await expect(controller.findUserById(userId)).rejects.toThrow(
+                'User not found',
+            );
         });
     });
 });

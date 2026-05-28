@@ -1,5 +1,5 @@
-import { ResourceType } from "src/game-mechanics/types/resource";
-import { Restriction } from "./restriction";
+import { ResourceType } from 'src/game-mechanics/types/resource';
+import { Restriction } from './restriction';
 
 export interface ExtraActionState {
     id: ExtraAction;
@@ -7,15 +7,15 @@ export interface ExtraActionState {
 }
 
 export const EXTRA_ACTION = {
-    THROW_DICE: "throw_dice",
-    EXTRA_MOVE: "extra_move",
-    RETURN_TO_BATTLE: "return_to_battle",
-    MOVE: "move",
-    REMOVE_ROOT: "remove_root",
-    DESTROY_ARTIFACT: "destroy_artifact"
-}
+    THROW_DICE: 'throw_dice',
+    EXTRA_MOVE: 'extra_move',
+    RETURN_TO_BATTLE: 'return_to_battle',
+    MOVE: 'move',
+    REMOVE_ROOT: 'remove_root',
+    DESTROY_ARTIFACT: 'destroy_artifact',
+};
 
-export type ExtraAction = typeof EXTRA_ACTION[keyof typeof EXTRA_ACTION];
+export type ExtraAction = (typeof EXTRA_ACTION)[keyof typeof EXTRA_ACTION];
 
 export interface ExtraActionDataType {
     id: ExtraAction;
@@ -23,6 +23,5 @@ export interface ExtraActionDataType {
     cost: number;
     resourceType: ResourceType;
     getDescription: (cost: number) => string;
-    restrictions: Restriction[]
+    restrictions: Restriction[];
 }
-

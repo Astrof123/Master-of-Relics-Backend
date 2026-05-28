@@ -26,14 +26,20 @@ import { ActionModule } from './action/action.module';
 import { CollectionModule } from './collection/collection.module';
 import { SpellModule } from './spell/spell.module';
 import redisConfig from './config/redis.config';
-
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
             envFilePath: '.env',
-            load: [jwtConfig, databaseConfig, redisConfig]
+            load: [jwtConfig, databaseConfig, redisConfig],
+        }),
+        PrometheusModule.register({
+            path: '/metrics',
+            defaultMetrics: {
+                enabled: true,
+            },
         }),
         PassportModule.register({ defaultStrategy: 'jwt' }),
         RedisModule,
@@ -46,7 +52,7 @@ import redisConfig from './config/redis.config';
             inject: [ConfigService],
             useFactory: async (configService: ConfigService) => ({
                 secret: configService.get('jwt.accessSecret'),
-                signOptions: { 
+                signOptions: {
                     expiresIn: configService.get('jwt.accessExpiresIn'),
                 },
             }),
@@ -64,8 +70,13 @@ import redisConfig from './config/redis.config';
         SpellModule,
     ],
     controllers: [AppController],
-    providers: [TokenService, AppService, JwtRefreshStrategy, JwtStrategy, JwtAuthGuard],
-    exports: [TokenService, JwtModule, JwtAuthGuard, PassportModule]
+    providers: [
+        TokenService,
+        AppService,
+        JwtRefreshStrategy,
+        JwtStrategy,
+        JwtAuthGuard,
+    ],
+    exports: [TokenService, JwtModule, JwtAuthGuard, PassportModule],
 })
-
 export class AppModule {}

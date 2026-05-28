@@ -1,7 +1,7 @@
-import { RESOURCE, ResourceType } from "src/game-mechanics/types/resource";
-import { Spell, SPELL, SPELLTYPE, SpellType } from "./types/spell";
-import { SpellGameState } from "src/game-state/types/game";
-import { SPELLS } from "./constants/spells";
+import { RESOURCE, ResourceType } from 'src/game-mechanics/types/resource';
+import { Spell, SPELL, SPELLTYPE, SpellType } from './types/spell';
+import { SpellGameState } from 'src/game-state/types/game';
+import { SPELLS } from './constants/spells';
 
 export class SpellHelper {
     static getResource(type: SpellType): ResourceType {
@@ -27,7 +27,7 @@ export class SpellHelper {
             possibleTargets: [],
             countAnyTarget: SPELLS[spellId].countAnyTarget,
             countTargetEnemy: SPELLS[spellId].countTargetEnemy,
-            countTargetAllies: SPELLS[spellId].countTargetAllies
-        }
+            countTargetAllies: SPELLS[spellId].countTargetAllies,
+        };
     }
 }

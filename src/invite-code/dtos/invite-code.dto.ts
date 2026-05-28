@@ -28,5 +28,4 @@ export class InviteCodeDto {
     @Expose()
     @ApiProperty()
     createdAt!: Date;
-
 }

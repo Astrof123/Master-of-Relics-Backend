@@ -1,0 +1,127 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run unit tests
+        run: npm run test:cov
+      
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+      
+      - name: Run type checking
+        run: npx tsc --noEmit
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+      
+      - name: Verify build
+        run: |
+          if [ -d "dist" ]; then
+            echo "Build successful!"
+            echo "Build contents:"
+            ls -la dist/
+            echo "Build size:"
+            du -sh dist/
+          else
+            echo "Build failed: dist directory not found"
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy to Server
+    runs-on: self-hosted
+    needs: build
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+      - name: Pull latest code
+        run: |
+          cd /app/Master-of-Relics-Backend
+          git pull origin master
+          echo "Latest code pulled"
+      
+      - name: Deploy with docker compose
+        run: |
+          cd /app
+          docker compose up -d --build backend
+          echo "Backend container restarted"
+      
+      - name: Clean up old images
+        run: |
+          docker image prune -f
+          echo "Old images cleaned"
+      
+      - name: Health check
+        run: |
+          echo "Waiting for backend to be ready..."
+          for i in {1..30}; do
+            if curl -s -f http://localhost:3000/health; then
+              echo "Backend is healthy!"
+              exit 0
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+          echo "Health check failed!"
+          exit 1
+      
+      - name: Show logs if failed
+        if: failure()
+        run: |
+          cd /app
+          echo "Deployment failed! Showing logs:"
+          docker compose logs --tail=50 backend

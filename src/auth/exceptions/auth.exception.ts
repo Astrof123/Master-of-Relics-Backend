@@ -3,7 +3,10 @@ import { CustomHttpException } from 'src/common/custom-http.exception';
 
 export class UserAlreadyExistsException extends CustomHttpException {
     constructor() {
-        super('Пользователь с таким логином уже существует', HttpStatus.CONFLICT);
+        super(
+            'Пользователь с таким логином уже существует',
+            HttpStatus.CONFLICT,
+        );
     }
 }
 

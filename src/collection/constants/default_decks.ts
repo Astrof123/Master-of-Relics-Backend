@@ -1,4 +1,4 @@
-import { Artifact, ARTIFACT } from "src/artifact/types/artifact";
+import { Artifact, ARTIFACT } from 'src/artifact/types/artifact';
 
 export const DEFAULT_DECK1: Artifact[] = [
     ARTIFACT.ARCANE_SHIELD,
@@ -14,8 +14,8 @@ export const DEFAULT_DECK1: Artifact[] = [
     ARTIFACT.HUNTMASTER,
     ARTIFACT.PURIFIER,
     ARTIFACT.VEILSTRIKE,
-    ARTIFACT.PALADINS_GLOVE
-]
+    ARTIFACT.PALADINS_GLOVE,
+];
 
 export const DEFAULT_DECK2: Artifact[] = [
     ARTIFACT.AXE_OF_THE_BERSERKER,
@@ -32,7 +32,7 @@ export const DEFAULT_DECK2: Artifact[] = [
     ARTIFACT.PLUNDER,
     ARTIFACT.SWIFT_BOOTS,
     ARTIFACT.DIVINE_STAFF,
-]
+];
 
 export const DEFAULT_DECK3: Artifact[] = [
     ARTIFACT.MOON_STAFF,
@@ -49,5 +49,4 @@ export const DEFAULT_DECK3: Artifact[] = [
     ARTIFACT.GRAPPLER,
     ARTIFACT.VOIDER,
     ARTIFACT.CONCEALER,
-]
-
+];

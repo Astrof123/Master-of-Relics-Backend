@@ -1,34 +1,56 @@
-import { GameForLogic } from "src/game-state/types/game-for-logic";
-import { SkillStrategy } from "../types/strategy";
-import { ARTIFACT_STATE, ArtifactGameState, LINE, Player } from "src/game-state/types/game";
-import { UseSkillData } from "src/action/types/action-evens-data";
-import { ANIMATION, AnimationData } from "src/action/types/animation";
-import { Injectable } from "@nestjs/common";
-import { Skill, SKILL } from "../types/skill";;
-import { ArtifactStateService } from "src/game-mechanics/artifact-state.service";
-import { CombatService } from "src/game-mechanics/combat.service";
-import { DAMAGE } from "src/game-mechanics/types/combat";
-import { LogHelper } from "src/action/helpers/logHelper";
-import { ARTIFACTS } from "../constants/artifacts";
+import { GameForLogic } from 'src/game-state/types/game-for-logic';
+import { SkillStrategy } from '../types/strategy';
+import {
+    ARTIFACT_STATE,
+    ArtifactGameState,
+    LINE,
+    Player,
+} from 'src/game-state/types/game';
+import { UseSkillData } from 'src/action/types/action-evens-data';
+import { ANIMATION, AnimationData } from 'src/action/types/animation';
+import { Injectable } from '@nestjs/common';
+import { Skill, SKILL } from '../types/skill';
+import { ArtifactStateService } from 'src/game-mechanics/artifact-state.service';
+import { CombatService } from 'src/game-mechanics/combat.service';
+import { DAMAGE } from 'src/game-mechanics/types/combat';
+import { LogHelper } from 'src/action/helpers/logHelper';
+import { ARTIFACTS } from '../constants/artifacts';
 
 @Injectable()
 export class DreamStrategy implements SkillStrategy {
     constructor(
         private readonly artifactStateService: ArtifactStateService,
-        private readonly combatService: CombatService
+        private readonly combatService: CombatService,
     ) {}
 
     getSkillType(): Skill {
         return SKILL.DREAM;
     }
 
-    execute(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, data: UseSkillData, animations: AnimationData[], logParts: string[]) {
-        const enemy = gameState.enemy.id === player.id ? gameState.player : gameState.enemy;
+    execute(
+        gameState: GameForLogic,
+        player: Player,
+        artifact: ArtifactGameState,
+        data: UseSkillData,
+        animations: AnimationData[],
+        logParts: string[],
+    ) {
+        const enemy =
+            gameState.enemy.id === player.id
+                ? gameState.player
+                : gameState.enemy;
         const enemyArtifact = enemy.artifacts[data.targets[1][0]];
-        this.artifactStateService.applyState(enemyArtifact, ARTIFACT_STATE.DREAM, logParts);
+        this.artifactStateService.applyState(
+            enemyArtifact,
+            ARTIFACT_STATE.DREAM,
+            logParts,
+        );
     }
 
-    death(gameState: GameForLogic, player: Player, artifact: ArtifactGameState, logParts: string[]) {
-        
-    }
+    death(
+        gameState: GameForLogic,
+        player: Player,
+        artifact: ArtifactGameState,
+        logParts: string[],
+    ) {}
 }

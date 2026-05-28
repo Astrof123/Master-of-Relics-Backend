@@ -1,4 +1,4 @@
-export const GAME_EVENT_NAME  = {
+export const GAME_EVENT_NAME = {
     JOIN_GAME: 'join-game',
     CREATE_GAME: 'create-game',
     CREATE_GAME_WITH_BOT: 'create-game-with-bot',
@@ -11,4 +11,5 @@ export const GAME_EVENT_NAME  = {
     NEW_NOTIFICATION: 'new_notification',
 };
 
-export type GameEventName  = typeof GAME_EVENT_NAME [keyof typeof GAME_EVENT_NAME];
+export type GameEventName =
+    (typeof GAME_EVENT_NAME)[keyof typeof GAME_EVENT_NAME];

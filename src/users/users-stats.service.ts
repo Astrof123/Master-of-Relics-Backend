@@ -1,20 +1,20 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { UserStats } from "./entities/user-stats.entity";
-import { Repository } from "typeorm";
-import { UserStatsNotFoundException } from "./exceptions/users.exception";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserStats } from './entities/user-stats.entity';
+import { Repository } from 'typeorm';
+import { UserStatsNotFoundException } from './exceptions/users.exception';
 
 @Injectable()
 export class UsersStatsService {
-    constructor (
+    constructor(
         @InjectRepository(UserStats)
         private userStatsRepository: Repository<UserStats>,
     ) {}
 
     async setWin(userId: string) {
         const userStats = await this.userStatsRepository.findOne({
-            where: { userId }
-        })
+            where: { userId },
+        });
 
         if (!userStats) {
             throw new UserStatsNotFoundException();
@@ -29,8 +29,8 @@ export class UsersStatsService {
 
     async setLose(userId: string) {
         const userStats = await this.userStatsRepository.findOne({
-            where: { userId }
-        })
+            where: { userId },
+        });
 
         if (!userStats) {
             throw new UserStatsNotFoundException();

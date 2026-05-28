@@ -12,7 +12,7 @@ import { RedisService } from './redis.service';
             provide: 'REDIS_CLIENT',
             useFactory: async (configService: ConfigService) => {
                 const logger = new Logger('Redis');
-                
+
                 const redisOptions = {
                     host: configService.get('redis.host'),
                     port: configService.get('redis.port'),
@@ -27,8 +27,10 @@ import { RedisService } from './redis.service';
                     connectTimeout: 10000,
                 };
 
-                logger.log(`Connecting to Redis at ${redisOptions.host}:${redisOptions.port}`);
-                
+                logger.log(
+                    `Connecting to Redis at ${redisOptions.host}:${redisOptions.port}`,
+                );
+
                 const client = new Redis(redisOptions);
 
                 await client.config('SET', 'notify-keyspace-events', 'Ex');
@@ -53,6 +55,4 @@ import { RedisService } from './redis.service';
     ],
     exports: ['REDIS_CLIENT', RedisService],
 })
-export class RedisModule {
-
-}
+export class RedisModule {}

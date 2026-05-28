@@ -1,4 +1,4 @@
-import { ARTIFACT, Artifact } from "src/artifact/types/artifact";
+import { ARTIFACT, Artifact } from 'src/artifact/types/artifact';
 
 export const DEFAULT_COLLECTION: Artifact[] = [
     ARTIFACT.ARCANE_SHIELD,
@@ -22,4 +22,4 @@ export const DEFAULT_COLLECTION: Artifact[] = [
     ARTIFACT.PLUNDER,
     ARTIFACT.SWIFT_BOOTS,
     ARTIFACT.DIVINE_STAFF,
-]
+];

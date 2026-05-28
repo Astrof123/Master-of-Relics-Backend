@@ -5,7 +5,12 @@ import { UsersStatsService } from './users-stats.service';
 import { UserStats } from './entities/user-stats.entity';
 import { UserStatsNotFoundException } from './exceptions/users.exception';
 
-const createMockUserStats = (userId: string, wins: number = 0, winSeries: number = 0, totalGames: number = 0): UserStats => {
+const createMockUserStats = (
+    userId: string,
+    wins: number = 0,
+    winSeries: number = 0,
+    totalGames: number = 0,
+): UserStats => {
     const stats = new UserStats();
     stats.id = 1;
     stats.userId = userId;
@@ -63,18 +68,20 @@ describe('UsersStatsService', () => {
             await service.setWin(userId);
 
             expect(mockUserStatsRepository.findOne).toHaveBeenCalledWith({
-                where: { userId }
+                where: { userId },
             });
             expect(initialStats.wins).toBe(6);
             expect(initialStats.winSeries).toBe(4);
             expect(initialStats.totalGames).toBe(11);
-            expect(mockUserStatsRepository.save).toHaveBeenCalledWith(initialStats);
+            expect(mockUserStatsRepository.save).toHaveBeenCalledWith(
+                initialStats,
+            );
         });
 
         it('should increment stats correctly when starting from zero', async () => {
             const userId = 'user-2';
             const initialStats = createMockUserStats(userId, 0, 0, 0);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockResolvedValue(initialStats);
 
@@ -88,7 +95,7 @@ describe('UsersStatsService', () => {
         it('should increment stats correctly when winSeries is high', async () => {
             const userId = 'user-3';
             const initialStats = createMockUserStats(userId, 10, 10, 20);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockResolvedValue(initialStats);
 
@@ -104,9 +111,11 @@ describe('UsersStatsService', () => {
 
             mockUserStatsRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.setWin(userId)).rejects.toThrow(UserStatsNotFoundException);
+            await expect(service.setWin(userId)).rejects.toThrow(
+                UserStatsNotFoundException,
+            );
             expect(mockUserStatsRepository.findOne).toHaveBeenCalledWith({
-                where: { userId }
+                where: { userId },
             });
             expect(mockUserStatsRepository.save).not.toHaveBeenCalled();
         });
@@ -119,7 +128,9 @@ describe('UsersStatsService', () => {
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockRejectedValue(dbError);
 
-            await expect(service.setWin(userId)).rejects.toThrow('Database connection error');
+            await expect(service.setWin(userId)).rejects.toThrow(
+                'Database connection error',
+            );
             expect(mockUserStatsRepository.findOne).toHaveBeenCalled();
             expect(mockUserStatsRepository.save).toHaveBeenCalled();
         });
@@ -137,18 +148,20 @@ describe('UsersStatsService', () => {
             await service.setLose(userId);
 
             expect(mockUserStatsRepository.findOne).toHaveBeenCalledWith({
-                where: { userId }
+                where: { userId },
             });
             expect(initialStats.winSeries).toBe(0);
             expect(initialStats.totalGames).toBe(11);
             expect(initialStats.wins).toBe(5);
-            expect(mockUserStatsRepository.save).toHaveBeenCalledWith(initialStats);
+            expect(mockUserStatsRepository.save).toHaveBeenCalledWith(
+                initialStats,
+            );
         });
 
         it('should reset winSeries from positive number to 0', async () => {
             const userId = 'user-2';
             const initialStats = createMockUserStats(userId, 10, 15, 25);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockResolvedValue(initialStats);
 
@@ -162,7 +175,7 @@ describe('UsersStatsService', () => {
         it('should handle winSeries already being 0', async () => {
             const userId = 'user-3';
             const initialStats = createMockUserStats(userId, 3, 0, 8);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockResolvedValue(initialStats);
 
@@ -176,7 +189,7 @@ describe('UsersStatsService', () => {
         it('should handle first game loss', async () => {
             const userId = 'user-4';
             const initialStats = createMockUserStats(userId, 0, 0, 0);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockResolvedValue(initialStats);
 
@@ -192,9 +205,11 @@ describe('UsersStatsService', () => {
 
             mockUserStatsRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.setLose(userId)).rejects.toThrow(UserStatsNotFoundException);
+            await expect(service.setLose(userId)).rejects.toThrow(
+                UserStatsNotFoundException,
+            );
             expect(mockUserStatsRepository.findOne).toHaveBeenCalledWith({
-                where: { userId }
+                where: { userId },
             });
             expect(mockUserStatsRepository.save).not.toHaveBeenCalled();
         });
@@ -207,7 +222,9 @@ describe('UsersStatsService', () => {
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockRejectedValue(dbError);
 
-            await expect(service.setLose(userId)).rejects.toThrow('Database connection error');
+            await expect(service.setLose(userId)).rejects.toThrow(
+                'Database connection error',
+            );
             expect(mockUserStatsRepository.findOne).toHaveBeenCalled();
             expect(mockUserStatsRepository.save).toHaveBeenCalled();
         });
@@ -217,7 +234,7 @@ describe('UsersStatsService', () => {
         it('should handle multiple wins in a row correctly', async () => {
             const userId = 'user-1';
             const initialStats = createMockUserStats(userId, 0, 0, 0);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockResolvedValue(initialStats);
 
@@ -240,7 +257,7 @@ describe('UsersStatsService', () => {
         it('should handle win after loss correctly', async () => {
             const userId = 'user-1';
             const initialStats = createMockUserStats(userId, 0, 0, 0);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockResolvedValue(initialStats);
 
@@ -258,7 +275,7 @@ describe('UsersStatsService', () => {
         it('should handle loss after win streak correctly', async () => {
             const userId = 'user-1';
             const initialStats = createMockUserStats(userId, 0, 0, 0);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockResolvedValue(initialStats);
 
@@ -278,7 +295,7 @@ describe('UsersStatsService', () => {
         it('should handle multiple operations on same user', async () => {
             const userId = 'user-1';
             const initialStats = createMockUserStats(userId, 0, 0, 0);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(initialStats);
             mockUserStatsRepository.save.mockResolvedValue(initialStats);
 
@@ -299,7 +316,7 @@ describe('UsersStatsService', () => {
         it('should call findOne with correct parameters for setWin', async () => {
             const userId = 'user-1';
             const stats = createMockUserStats(userId, 0, 0, 0);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(stats);
             mockUserStatsRepository.save.mockResolvedValue(stats);
 
@@ -307,14 +324,14 @@ describe('UsersStatsService', () => {
 
             expect(mockUserStatsRepository.findOne).toHaveBeenCalledTimes(1);
             expect(mockUserStatsRepository.findOne).toHaveBeenCalledWith({
-                where: { userId }
+                where: { userId },
             });
         });
 
         it('should call findOne with correct parameters for setLose', async () => {
             const userId = 'user-1';
             const stats = createMockUserStats(userId, 0, 0, 0);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(stats);
             mockUserStatsRepository.save.mockResolvedValue(stats);
 
@@ -322,14 +339,14 @@ describe('UsersStatsService', () => {
 
             expect(mockUserStatsRepository.findOne).toHaveBeenCalledTimes(1);
             expect(mockUserStatsRepository.findOne).toHaveBeenCalledWith({
-                where: { userId }
+                where: { userId },
             });
         });
 
         it('should call save exactly once for setWin', async () => {
             const userId = 'user-1';
             const stats = createMockUserStats(userId, 0, 0, 0);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(stats);
             mockUserStatsRepository.save.mockResolvedValue(stats);
 
@@ -341,7 +358,7 @@ describe('UsersStatsService', () => {
         it('should call save exactly once for setLose', async () => {
             const userId = 'user-1';
             const stats = createMockUserStats(userId, 0, 0, 0);
-            
+
             mockUserStatsRepository.findOne.mockResolvedValue(stats);
             mockUserStatsRepository.save.mockResolvedValue(stats);
 

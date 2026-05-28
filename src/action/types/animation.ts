@@ -1,10 +1,9 @@
 export const ANIMATION = {
-    HIT: "hit",
-    HEAL: "heal"
-}
+    HIT: 'hit',
+    HEAL: 'heal',
+};
 
-export type AnimationType = typeof ANIMATION[keyof typeof ANIMATION];
-
+export type AnimationType = (typeof ANIMATION)[keyof typeof ANIMATION];
 
 export interface AnimationData {
     playerId: string;

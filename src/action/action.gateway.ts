@@ -1,6 +1,6 @@
-import { 
-    WebSocketGateway, 
-    WebSocketServer, 
+import {
+    WebSocketGateway,
+    WebSocketServer,
     SubscribeMessage,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
@@ -9,267 +9,331 @@ import { WebSocketAuthGuard } from 'src/auth/guards/websocket-auth.guard';
 import { handleError } from 'src/common/utils/error-handler';
 import { GameStateService } from 'src/game-state/game-state.service';
 import { ACTION_EVENT_NAME } from './types/action-events-name';
-import type { EndRoundData, EndTurnData, ExtraActionData, ToggleReadyMovementData, UseFaceData, UseSkillData, UseSpellData } from './types/action-evens-data';
+import type {
+    EndRoundData,
+    EndTurnData,
+    ExtraActionData,
+    ToggleReadyMovementData,
+    UseFaceData,
+    UseSkillData,
+    UseSpellData,
+} from './types/action-evens-data';
 import { ActionService } from './action.service';
 import { GAME_EVENT_NAME } from 'src/game-state/types/game-events-name';
 import { AnimationData } from './types/animation';
 
-
 @WebSocketGateway()
-export class ActionGateway  {
-    constructor(
-        private readonly actionService: ActionService
-    ) {}
+export class ActionGateway {
+    constructor(private readonly actionService: ActionService) {}
 
     @WebSocketServer()
     server!: Server;
 
-    
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.USE_FACE)
-    async handleUseFace(client: Socket, data: UseFaceData, callback: Function): Promise<void> {
+    async handleUseFace(
+        client: Socket,
+        data: UseFaceData,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
             const animations: AnimationData[] = [];
 
             await this.actionService.useFace(data, userId, animations);
 
-            this.server.to(`game-${data.gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, data.gameId)
-            
-            animations.forEach(animation => {
-                this.server.to(`game-${data.gameId}`).emit(ACTION_EVENT_NAME.ANIMATION, animation)
+            this.server
+                .to(`game-${data.gameId}`)
+                .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, data.gameId);
+
+            animations.forEach((animation) => {
+                this.server
+                    .to(`game-${data.gameId}`)
+                    .emit(ACTION_EVENT_NAME.ANIMATION, animation);
             });
 
             if (callback) {
                 callback({
                     success: true,
                     data: null,
-                    message: "Вы успешно использовали грань"
+                    message: 'Вы успешно использовали грань',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.USE_SKILL)
-    async handleSkill(client: Socket, data: UseSkillData, callback: Function): Promise<void> {
+    async handleSkill(
+        client: Socket,
+        data: UseSkillData,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
             const animations: AnimationData[] = [];
 
             await this.actionService.useSkill(data, userId, animations);
 
-            this.server.to(`game-${data.gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, data.gameId)
-            
-            animations.forEach(animation => {
-                this.server.to(`game-${data.gameId}`).emit(ACTION_EVENT_NAME.ANIMATION, animation)
+            this.server
+                .to(`game-${data.gameId}`)
+                .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, data.gameId);
+
+            animations.forEach((animation) => {
+                this.server
+                    .to(`game-${data.gameId}`)
+                    .emit(ACTION_EVENT_NAME.ANIMATION, animation);
             });
 
             if (callback) {
                 callback({
                     success: true,
                     data: null,
-                    message: "Вы успешно использовали грань"
+                    message: 'Вы успешно использовали грань',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.USE_SPELL)
-    async handleSpell(client: Socket, data: UseSpellData, callback: Function): Promise<void> {
+    async handleSpell(
+        client: Socket,
+        data: UseSpellData,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
             const animations: AnimationData[] = [];
 
             await this.actionService.useSpell(data, userId, animations);
 
-            this.server.to(`game-${data.gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, data.gameId)
-            
-            animations.forEach(animation => {
-                this.server.to(`game-${data.gameId}`).emit(ACTION_EVENT_NAME.ANIMATION, animation)
+            this.server
+                .to(`game-${data.gameId}`)
+                .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, data.gameId);
+
+            animations.forEach((animation) => {
+                this.server
+                    .to(`game-${data.gameId}`)
+                    .emit(ACTION_EVENT_NAME.ANIMATION, animation);
             });
 
             if (callback) {
                 callback({
                     success: true,
                     data: null,
-                    message: "Вы успешно использовали заклинание"
+                    message: 'Вы успешно использовали заклинание',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.END_TURN)
-    async handleEndTurn(client: Socket, gameId: string, callback: Function): Promise<void> {
+    async handleEndTurn(
+        client: Socket,
+        gameId: string,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
             const animations: AnimationData[] = [];
             await this.actionService.endTurn(gameId, userId, animations);
 
-            this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
+            this.server
+                .to(`game-${gameId}`)
+                .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId);
 
-            animations.forEach(animation => {
-                this.server.to(`game-${gameId}`).emit(ACTION_EVENT_NAME.ANIMATION, animation)
+            animations.forEach((animation) => {
+                this.server
+                    .to(`game-${gameId}`)
+                    .emit(ACTION_EVENT_NAME.ANIMATION, animation);
             });
 
             if (callback) {
                 callback({
                     success: true,
                     data: null,
-                    message: "Вы успешно закончили ход"
+                    message: 'Вы успешно закончили ход',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.GIVE_UP)
-    async handleGiveUp(client: Socket, gameId: string, callback: Function): Promise<void> {
+    async handleGiveUp(
+        client: Socket,
+        gameId: string,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
             await this.actionService.giveUp(gameId, userId);
 
-            this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
+            this.server
+                .to(`game-${gameId}`)
+                .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId);
 
             if (callback) {
                 callback({
                     success: true,
                     data: null,
-                    message: "Вы успешно сдались"
+                    message: 'Вы успешно сдались',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.OFFER_DRAW)
-    async handleOfferDraw(client: Socket, gameId: string, callback: Function): Promise<void> {
+    async handleOfferDraw(
+        client: Socket,
+        gameId: string,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
             await this.actionService.offerDraw(gameId, userId);
 
-            this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
+            this.server
+                .to(`game-${gameId}`)
+                .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId);
 
             if (callback) {
                 callback({
                     success: true,
                     data: null,
-                    message: "Вы успешно предложили ничью"
+                    message: 'Вы успешно предложили ничью',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.CANCEL_DRAW)
-    async handleCancelDraw(client: Socket, gameId: string, callback: Function): Promise<void> {
+    async handleCancelDraw(
+        client: Socket,
+        gameId: string,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
             await this.actionService.cancelDraw(gameId, userId);
 
-            this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
+            this.server
+                .to(`game-${gameId}`)
+                .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId);
 
             if (callback) {
                 callback({
                     success: true,
                     data: null,
-                    message: "Вы успешно отменили ничью"
+                    message: 'Вы успешно отменили ничью',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.END_ROUND)
-    async handleEndRound(client: Socket, gameId: string, callback: Function): Promise<void> {
+    async handleEndRound(
+        client: Socket,
+        gameId: string,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
             await this.actionService.endRound(gameId, userId);
 
-            this.server.to(`game-${gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId)
+            this.server
+                .to(`game-${gameId}`)
+                .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, gameId);
 
             if (callback) {
                 callback({
                     success: true,
                     data: null,
-                    message: "Вы успешно закончили ход"
+                    message: 'Вы успешно закончили ход',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.EXTRA_ACTION)
-    async handleExtraAction(client: Socket, data: ExtraActionData, callback: Function): Promise<void> {
+    async handleExtraAction(
+        client: Socket,
+        data: ExtraActionData,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
             const animations: AnimationData[] = [];
 
             await this.actionService.extraAction(data, userId, animations);
 
-            this.server.to(`game-${data.gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, data.gameId)
-            
-            animations.forEach(animation => {
-                this.server.to(`game-${data.gameId}`).emit(ACTION_EVENT_NAME.ANIMATION, animation)
+            this.server
+                .to(`game-${data.gameId}`)
+                .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, data.gameId);
+
+            animations.forEach((animation) => {
+                this.server
+                    .to(`game-${data.gameId}`)
+                    .emit(ACTION_EVENT_NAME.ANIMATION, animation);
             });
 
             if (callback) {
                 callback({
                     success: true,
                     data: null,
-                    message: "Вы успешно использовали дополнительное действие"
+                    message: 'Вы успешно использовали дополнительное действие',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }
 
     @UseGuards(WebSocketAuthGuard)
     @SubscribeMessage(ACTION_EVENT_NAME.TOGGLE_READY_MOVEMENT)
-    async handleToggleReadyMovement(client: Socket, data: ToggleReadyMovementData, callback: Function): Promise<void> {
+    async handleToggleReadyMovement(
+        client: Socket,
+        data: ToggleReadyMovementData,
+        callback: Function,
+    ): Promise<void> {
         try {
             const userId = client.data.userId;
             await this.actionService.toggleReadyMovement(data, userId);
 
-            this.server.to(`game-${data.gameId}`).emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, data.gameId)
-            
+            this.server
+                .to(`game-${data.gameId}`)
+                .emit(GAME_EVENT_NAME.GAME_STATE_UPDATED, data.gameId);
+
             if (callback) {
                 callback({
                     success: true,
                     data: null,
-                    message: "Вы успешно переключили готовность"
+                    message: 'Вы успешно переключили готовность',
                 });
             }
-        } 
-        catch (error) {
+        } catch (error) {
             handleError(error, callback);
         }
     }

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from "@nestjs/typeorm"
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
@@ -19,9 +19,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                 logging: configService.get('database.dbLogging') === 'true',
                 migrations: [__dirname + '/migrations/*{.ts,.js}'],
                 migrationsRun: false,
-                migrationsTableName: 'migrations', 
+                migrationsTableName: 'migrations',
             }),
-        })
-    ]
+        }),
+    ],
 })
 export class DatabaseModule {}

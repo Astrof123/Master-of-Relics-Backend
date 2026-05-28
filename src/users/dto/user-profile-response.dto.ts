@@ -26,11 +26,11 @@ export class UserProfileResponseDto {
 
     @Expose()
     @ApiProperty()
-    isReported!: boolean; 
+    isReported!: boolean;
 
     @Expose()
     @ApiProperty()
-    isBanned!: boolean; 
+    isBanned!: boolean;
 
     @Expose()
     @ApiProperty()
@@ -42,5 +42,5 @@ export class UserProfileResponseDto {
 
     @Expose()
     @ApiProperty()
-    offersFriendship!: OfferFriendship[] | null; 
+    offersFriendship!: OfferFriendship[] | null;
 }

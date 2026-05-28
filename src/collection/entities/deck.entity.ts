@@ -15,7 +15,6 @@ import { UserCollection } from './collection.entity';
 import { User } from 'src/users/entities/user.entity';
 import { DeckCard } from './deck-card.entity';
 
-
 @Entity('decks')
 export class Deck {
     @ApiProperty({ example: 1 })
@@ -32,7 +31,7 @@ export class Deck {
     @ApiProperty()
     @Column()
     userId!: string;
-    
+
     @ApiProperty({ example: false, description: 'Активна ли колода' })
     @Column()
     isActive!: boolean;

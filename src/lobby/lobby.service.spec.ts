@@ -5,7 +5,11 @@ import { UsersService } from 'src/users/users.service';
 import { LOBBY_STATE_TYPE } from './types/lobby';
 import { MAX_TIMER_VALUE, MIN_TIMER_VALUE } from './constants/settings';
 
-const createMockUser = (id: string, nickname: string, options?: Partial<any>): any => ({
+const createMockUser = (
+    id: string,
+    nickname: string,
+    options?: Partial<any>,
+): any => ({
     id,
     nickname,
     login: `login_${id}`,
@@ -95,14 +99,18 @@ describe('LobbyService', () => {
 
             await service.changeLobbyState(lobbyId, newState);
 
-            expect(mockRedisService.getJson).toHaveBeenCalledWith(`lobby:${lobbyId}`);
+            expect(mockRedisService.getJson).toHaveBeenCalledWith(
+                `lobby:${lobbyId}`,
+            );
             expect(mockRedisService.setJson).toHaveBeenCalled();
         });
 
         it('should throw LOBBY_NOT_FOUND if lobby does not exist', async () => {
             mockRedisService.getJson.mockResolvedValue(null);
 
-            await expect(service.changeLobbyState(lobbyId, newState)).rejects.toThrow();
+            await expect(
+                service.changeLobbyState(lobbyId, newState),
+            ).rejects.toThrow();
         });
     });
 
@@ -139,29 +147,42 @@ describe('LobbyService', () => {
 
         it('should throw error if name is too short', async () => {
             const invalidData = { ...createLobbyData, name: 'ab' };
-            await expect(service.createLobby(invalidData, userId)).rejects.toThrow();
+            await expect(
+                service.createLobby(invalidData, userId),
+            ).rejects.toThrow();
         });
 
         it('should throw error if name is too long', async () => {
             const invalidData = { ...createLobbyData, name: 'a'.repeat(21) };
-            await expect(service.createLobby(invalidData, userId)).rejects.toThrow();
+            await expect(
+                service.createLobby(invalidData, userId),
+            ).rejects.toThrow();
         });
 
         it('should throw error if user is banned', async () => {
-            const bannedUser = createMockUser(userId, 'TestUser', { bannedUntil: new Date() });
+            const bannedUser = createMockUser(userId, 'TestUser', {
+                bannedUntil: new Date(),
+            });
             mockUsersService.findOne.mockResolvedValue(bannedUser);
 
-            await expect(service.createLobby(createLobbyData, userId)).rejects.toThrow();
+            await expect(
+                service.createLobby(createLobbyData, userId),
+            ).rejects.toThrow();
         });
 
         it('should throw error if user already in lobby', async () => {
             const mockUser = createMockUser(userId, 'TestUser');
             mockUsersService.findOne.mockResolvedValue(mockUser);
-            
-            jest.spyOn(service, 'getLobbyByUserId').mockResolvedValue({ id: 'existing', players: { [userId]: {} } } as any);
 
-            await expect(service.createLobby(createLobbyData, userId)).rejects.toThrow();
-            
+            jest.spyOn(service, 'getLobbyByUserId').mockResolvedValue({
+                id: 'existing',
+                players: { [userId]: {} },
+            } as any);
+
+            await expect(
+                service.createLobby(createLobbyData, userId),
+            ).rejects.toThrow();
+
             jest.restoreAllMocks();
         });
 
@@ -180,7 +201,7 @@ describe('LobbyService', () => {
 
             const setJsonCall = mockRedisService.setJson.mock.calls[0];
             const lobbyData = setJsonCall[2];
-            
+
             expect(lobbyData.options.timerTurn).toBe(MIN_TIMER_VALUE);
             expect(lobbyData.options.timerMovement).toBe(MAX_TIMER_VALUE);
             expect(lobbyData.options.timerDraft).toBe(MIN_TIMER_VALUE);
@@ -207,7 +228,7 @@ describe('LobbyService', () => {
                 state: LOBBY_STATE_TYPE.WAITING,
                 players: {},
             };
-            
+
             mockRedisService.getJson.mockResolvedValue(mockLobby);
             mockUsersService.findOne.mockResolvedValue(mockUser);
 
@@ -216,21 +237,28 @@ describe('LobbyService', () => {
         });
 
         it('should throw error if user already in lobby', async () => {
-            jest.spyOn(service, 'getLobbyByUserId').mockResolvedValue({ id: 'other', players: { [userId]: {} } } as any);
-            
+            jest.spyOn(service, 'getLobbyByUserId').mockResolvedValue({
+                id: 'other',
+                players: { [userId]: {} },
+            } as any);
+
             await expect(service.joinLobby(lobbyId, userId)).rejects.toThrow();
         });
 
         it('should throw error if lobby does not exist', async () => {
             mockRedisService.getJson.mockResolvedValue(null);
-            
+
             await expect(service.joinLobby(lobbyId, userId)).rejects.toThrow();
         });
 
         it('should throw error if game already started', async () => {
-            const mockLobby = { id: lobbyId, state: LOBBY_STATE_TYPE.PLAYING, players: {} };
+            const mockLobby = {
+                id: lobbyId,
+                state: LOBBY_STATE_TYPE.PLAYING,
+                players: {},
+            };
             mockRedisService.getJson.mockResolvedValue(mockLobby);
-            
+
             await expect(service.joinLobby(lobbyId, userId)).rejects.toThrow();
         });
 
@@ -241,14 +269,20 @@ describe('LobbyService', () => {
                 players: { player1: {}, player2: {} },
             };
             mockRedisService.getJson.mockResolvedValue(mockLobby);
-            
+
             await expect(service.joinLobby(lobbyId, userId)).rejects.toThrow();
         });
 
         it('should throw error if user is banned', async () => {
-            const bannedUser = createMockUser(userId, 'TestUser', { bannedUntil: new Date() });
-            const mockLobby = { id: lobbyId, state: LOBBY_STATE_TYPE.WAITING, players: {} };
-            
+            const bannedUser = createMockUser(userId, 'TestUser', {
+                bannedUntil: new Date(),
+            });
+            const mockLobby = {
+                id: lobbyId,
+                state: LOBBY_STATE_TYPE.WAITING,
+                players: {},
+            };
+
             mockRedisService.getJson.mockResolvedValue(mockLobby);
             mockUsersService.findOne.mockResolvedValue(bannedUser);
 
@@ -337,19 +371,33 @@ describe('LobbyService', () => {
 
         it('should throw error if lobby does not exist', async () => {
             mockRedisService.getJson.mockResolvedValue(null);
-            await expect(service.toggleReadyLobby(lobbyId, userId)).rejects.toThrow();
+            await expect(
+                service.toggleReadyLobby(lobbyId, userId),
+            ).rejects.toThrow();
         });
 
         it('should throw error if game already started', async () => {
-            const mockLobby = { id: lobbyId, state: LOBBY_STATE_TYPE.PLAYING, players: {} };
+            const mockLobby = {
+                id: lobbyId,
+                state: LOBBY_STATE_TYPE.PLAYING,
+                players: {},
+            };
             mockRedisService.getJson.mockResolvedValue(mockLobby);
-            await expect(service.toggleReadyLobby(lobbyId, userId)).rejects.toThrow();
+            await expect(
+                service.toggleReadyLobby(lobbyId, userId),
+            ).rejects.toThrow();
         });
 
         it('should throw error if player not in lobby', async () => {
-            const mockLobby = { id: lobbyId, state: LOBBY_STATE_TYPE.WAITING, players: {} };
+            const mockLobby = {
+                id: lobbyId,
+                state: LOBBY_STATE_TYPE.WAITING,
+                players: {},
+            };
             mockRedisService.getJson.mockResolvedValue(mockLobby);
-            await expect(service.toggleReadyLobby(lobbyId, userId)).rejects.toThrow();
+            await expect(
+                service.toggleReadyLobby(lobbyId, userId),
+            ).rejects.toThrow();
         });
     });
 
@@ -365,7 +413,11 @@ describe('LobbyService', () => {
 
     describe('getLobbyById', () => {
         it('should return lobby if exists', async () => {
-            const mockLobby = { id: 'lobby-123', players: {}, state: LOBBY_STATE_TYPE.WAITING };
+            const mockLobby = {
+                id: 'lobby-123',
+                players: {},
+                state: LOBBY_STATE_TYPE.WAITING,
+            };
             mockRedisService.getJson.mockResolvedValue(mockLobby);
 
             const result = await service.getLobbyById('lobby-123');
@@ -418,7 +470,9 @@ describe('LobbyService', () => {
 
         it('should throw error if lobby does not exist', async () => {
             mockRedisService.getJson.mockResolvedValue(null);
-            await expect(service.inviteFriend(inviteData, currentUserId)).rejects.toThrow();
+            await expect(
+                service.inviteFriend(inviteData, currentUserId),
+            ).rejects.toThrow();
         });
     });
 });

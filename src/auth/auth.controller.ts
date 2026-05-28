@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards, ValidationPipe } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Post,
+    Req,
+    Res,
+    UnauthorizedException,
+    UseGuards,
+    ValidationPipe,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { TokenService } from './jwt/token.service';
 import { RegisterDto } from './dto/register.dto';
@@ -8,15 +20,17 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import express from 'express';
 import { ApiBearerAuth } from '@nestjs/swagger';
 
-
 @Controller('auth')
 export class AuthController {
     constructor(
         private readonly authService: AuthService,
         private readonly tokenService: TokenService,
-    ) {}    
+    ) {}
 
-    private setRefreshTokenCookie(response: express.Response, refreshToken: string) {
+    private setRefreshTokenCookie(
+        response: express.Response,
+        refreshToken: string,
+    ) {
         response.cookie('refresh_token', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -60,7 +74,7 @@ export class AuthController {
         @Res({ passthrough: true }) response: express.Response,
     ): Promise<{ accessToken: string }> {
         const refreshToken = request.cookies?.refresh_token;
-        
+
         if (!refreshToken) {
             throw new UnauthorizedException('Токен не найден');
         }

@@ -1,8 +1,11 @@
-import { COMMON_ERROR_CODE, CommonException } from "src/common/utils/error-handler";
-import { Inject, Injectable } from "@nestjs/common";
-import { SpellStrategy } from "./types/strategy";
-import { Spell } from "./types/spell";
-import { SPELL_TYPE_KEY } from "./constants/settings";
+import {
+    COMMON_ERROR_CODE,
+    CommonException,
+} from 'src/common/utils/error-handler';
+import { Inject, Injectable } from '@nestjs/common';
+import { SpellStrategy } from './types/strategy';
+import { Spell } from './types/spell';
+import { SPELL_TYPE_KEY } from './constants/settings';
 
 @Injectable()
 export class SpellStrategyFactory {
@@ -10,14 +13,14 @@ export class SpellStrategyFactory {
 
     constructor(
         @Inject(SPELL_TYPE_KEY)
-        private handlers: SpellStrategy[]
+        private handlers: SpellStrategy[],
     ) {
         this.buildHandlersMap();
     }
 
     private buildHandlersMap(): void {
         this.strategies = new Map(
-            this.handlers.map(handler => [handler.getSpellType(), handler])
+            this.handlers.map((handler) => [handler.getSpellType(), handler]),
         );
     }
 
