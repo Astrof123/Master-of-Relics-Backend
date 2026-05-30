@@ -36,6 +36,9 @@ import { SKILL } from '../artifact/types/skill';
 import { SPELL } from '../spell/types/spell';
 import { FACES } from '../game-mechanics/constants/faces';
 import { GameForLogic } from 'src/game-state/types/game-for-logic';
+import { CommonException } from 'src/common/utils/error-handler';
+import { EFFECT } from 'src/game-mechanics/types/effect';
+import { SPELLS } from 'src/spell/constants/spells';
 
 
 jest.mock('../game-mechanics/constants/faces', () => ({
@@ -82,9 +85,18 @@ jest.mock('../artifact/constants/skills', () => ({
 
 
 jest.mock('../spell/constants/spells', () => ({
-    SPELLS: {
-        piercing_bolt: { name: 'Piercing Bolt', type: 'destruction', cost: 15 },
+  SPELLS: {
+    piercing_bolt: { 
+      id: 'piercing_bolt',
+      name: 'Piercing Bolt', 
+      type: 'destruction', 
+      cost: 15,
+      countAnyTarget: 0,
+      countTargetEnemy: 1,
+      countTargetAllies: 0,
+      restrictions: [],
     },
+  },
 }));
 
 
@@ -180,7 +192,17 @@ describe('ActionResolverService', () => {
             light: {},
             dark: {},
             destruction: {
-                piercing_bolt: createMockSpellState(),
+            piercing_bolt: {
+                id: 'piercing_bolt',
+                description: 'Piercing Bolt',
+                cost: 15,
+                cooldown: false,
+                canUse: true,
+                possibleTargets: [[], []],
+                countAnyTarget: 0,
+                countTargetEnemy: 1,
+                countTargetAllies: 0,
+            },
             },
         },
         effects: [],
@@ -192,25 +214,46 @@ describe('ActionResolverService', () => {
         extraData: { skippedMoves: 0, countActionsSinceStartTurn: 0 },
     });
 
-    const createMockGameState = (): GameForLogic => ({
+    const createMockGameState = (): GameForLogic => {
+    const player = createMockPlayer('player-1', 'Player1');
+    player.spells = {
+        light: {},
+        dark: {},
+        destruction: {
+        [SPELL.PIERCING_BOLT]: {
+            id: SPELL.PIERCING_BOLT,
+            description: 'Piercing Bolt',
+            cost: 15,
+            cooldown: false,
+            canUse: true,
+            possibleTargets: [[], []],
+            countAnyTarget: 0,
+            countTargetEnemy: 1,
+            countTargetAllies: 0,
+        },
+        },
+    };
+    
+    return {
         id: 'game-123',
         phase: 'battle',
         name: 'Test Game',
         currentTurn: 'player-1',
         logs: [],
-        player: createMockPlayer('player-1', 'Player1'),
+        player,
         enemy: createMockPlayer('player-2', 'Player2'),
         end: null,
         miniPhase: MINIPHASE.MOVEMENT,
         constants: {
-            maxCountArtifactsOnLine: 6,
-            timerDraft: null,
-            timerMovement: null,
-            timerTurn: null,
-            isNewRound: false,
-            countActionsFromStartGame: 0,
+        maxCountArtifactsOnLine: 6,
+        timerDraft: null,
+        timerMovement: null,
+        timerTurn: null,
+        isNewRound: false,
+        countActionsFromStartGame: 0,
         },
-    });
+    };
+    };
 
     const mockResourceService = {
         addResource: jest.fn(),
@@ -255,6 +298,7 @@ describe('ActionResolverService', () => {
         countHeroEffect: jest.fn().mockReturnValue(0),
         removeHeroEffect: jest.fn(),
         countEffect: jest.fn().mockReturnValue(0),
+        getHeroEffect: jest.fn()
     };
 
     const mockArtifactService = {
@@ -691,4 +735,303 @@ describe('ActionResolverService', () => {
             expect(result).toBe(true);
         });
     });
+    describe('useFaceResolve - additional coverage', () => {
+    let gameState: GameForLogic;
+    let player: Player;
+    let artifact: ArtifactGameState;
+    let data: UseFaceData;
+    let animations: AnimationData[];
+
+    beforeEach(() => {
+        gameState = createMockGameState();
+        player = gameState.player;
+        artifact = player.artifacts['artifact-1'];
+        data = {
+        gameId: 'game-123',
+        artifactGameId: 'artifact-1',
+        attackTarget: 'enemy-artifact',
+        healTarget: null,
+        };
+        animations = [];
+    });
+
+    it('should handle case when availableActions is null (line 403)', () => {
+        artifact.availableActions = null;
+        
+        expect(() => service.useFaceResolve(gameState, player, artifact, data, animations)).toThrow(CommonException);
+    });
+
+    it('should handle case when face is null (line 402)', () => {
+        artifact.availableActions!.face = null;
+        
+        expect(() => service.useFaceResolve(gameState, player, artifact, data, animations)).toThrow(CommonException);
+    });
+
+    it('should handle all resource types in restoration (lines 368-402)', () => {
+        const mockFaces = require('../game-mechanics/constants/faces');
+        mockFaces.FACES = {
+        ...mockFaces.FACES,
+        full_face: {
+            sword: 0,
+            target: 0,
+            heal: 0,
+            description: 'Full resource face',
+            agility: 10,
+            rage: 10,
+            light_mana: 10,
+            dark_mana: 10,
+            destruction_mana: 10,
+        },
+        };
+        
+        artifact.face = 'full_face' as any;
+        artifact.availableActions!.face = {
+        id: 'full_face',
+        description: 'Full resource face',
+        attackTargets: null,
+        healTargets: null,
+        };
+        data.attackTarget = null;
+        
+        service.useFaceResolve(gameState, player, artifact, data, animations);
+        
+        expect(resourceService.addResource).toHaveBeenCalledTimes(5);
+    });
+    });
+
+
+
+    describe('useSpellResolve - line 487', () => {
+    let gameState: GameForLogic;
+    let data: UseSpellData;
+    let animations: AnimationData[];
+
+    beforeEach(() => {
+        gameState = createMockGameState();
+        
+        const spellId = 'piercing_bolt';
+        const spellType = 'destruction';
+        
+        if (!gameState.player.spells[spellType]) {
+            gameState.player.spells[spellType] = {};
+        }
+        gameState.player.spells[spellType][spellId] = {
+        id: spellId,
+        description: 'Piercing Bolt',
+        cost: 15,
+        cooldown: false,
+        canUse: true,
+        possibleTargets: [[], []],
+        countAnyTarget: 0,
+        countTargetEnemy: 1,
+        countTargetAllies: 0,
+        };
+        
+        data = {
+        spellId: 'piercing_bolt' as any,
+        gameId: 'game-123',
+        targets: [[], []],
+        };
+        animations = [];
+        gameEffectsService.getHeroEffect.mockReturnValue(undefined);
+        gameEffectsService.countHeroEffect.mockReturnValue(0);
+    });
+
+    it('should set spell cooldown to true (line 487)', () => {
+        const spellId = 'piercing_bolt';
+        const spellType = 'destruction';
+        
+        expect(gameState.player.spells[spellType][spellId].cooldown).toBe(false);
+        
+        service.useSpellResolve(gameState, data, animations);
+        
+        expect(gameState.player.spells[spellType][spellId].cooldown).toBe(true);
+    });
+    });
+
+    describe('useSpellResolve - line 502', () => {
+    let gameState: GameForLogic;
+    let data: UseSpellData;
+    let animations: AnimationData[];
+
+    beforeEach(() => {
+        gameState = createMockGameState();
+        
+        const spellId = 'piercing_bolt';
+        const spellType = 'destruction';
+        
+        if (!gameState.player.spells[spellType]) {
+        gameState.player.spells[spellType] = {};
+        }
+        gameState.player.spells[spellType][spellId] = {
+        id: spellId,
+        description: 'Piercing Bolt',
+        cost: 15,
+        cooldown: false,
+        canUse: true,
+        possibleTargets: [[], []],
+        countAnyTarget: 0,
+        countTargetEnemy: 1,
+        countTargetAllies: 0,
+        };
+        
+        data = {
+        spellId: 'piercing_bolt' as any,
+        gameId: 'game-123',
+        targets: [[], []],
+        };
+        animations = [];
+        gameEffectsService.getHeroEffect.mockReturnValue(undefined);
+        gameEffectsService.countHeroEffect.mockReturnValue(0);
+    });
+
+    it('should increment countActionsSinceStartTurn (line 502)', () => {
+        const initialCount = gameState.player.extraData.countActionsSinceStartTurn;
+        const initialGameActions = gameState.constants.countActionsFromStartGame;
+        
+        service.useSpellResolve(gameState, data, animations);
+        
+        expect(gameState.player.extraData.countActionsSinceStartTurn).toBe(initialCount + 1);
+        expect(gameState.constants.countActionsFromStartGame).toBe(initialGameActions + 1);
+    });
+    });
+
+
+        
+    describe('useSkillResolve - line 543', () => {
+    let gameState: GameForLogic;
+    let player: Player;
+    let artifact: ArtifactGameState;
+    let data: UseSkillData;
+    let animations: AnimationData[];
+
+    beforeEach(() => {
+        gameState = createMockGameState();
+        player = gameState.player;
+        artifact = player.artifacts['artifact-1'];
+        data = {
+        skillId: SKILL.FEAR,
+        gameId: 'game-123',
+        artifactGameId: 'artifact-1',
+        targets: [[], []],
+        };
+        animations = [];
+    });
+
+    it('should increment countActionsSinceStartTurn and countActionsFromStartGame (line 543)', () => {
+        const initialActionsCount = gameState.player.extraData.countActionsSinceStartTurn;
+        const initialGameActions = gameState.constants.countActionsFromStartGame;
+        
+        service.useSkillResolve(gameState, player, artifact, data, animations);
+        
+        expect(gameState.player.extraData.countActionsSinceStartTurn).toBe(initialActionsCount + 1);
+        expect(gameState.constants.countActionsFromStartGame).toBe(initialGameActions + 1);
+    });
+    });
+
+    describe('endTurnResolve - line coverage', () => {
+    let gameState: GameForLogic;
+    let player: Player;
+
+    beforeEach(() => {
+        gameState = createMockGameState();
+        player = gameState.player;
+    });
+
+    it('should reset countActionsSinceStartTurn to 0', async () => {
+        gameState.player.extraData.countActionsSinceStartTurn = 5;
+        
+        await service.endTurnResolve(gameState, player);
+        
+        expect(gameState.player.extraData.countActionsSinceStartTurn).toBe(0);
+        expect(gameState.constants.countActionsFromStartGame).toBe(1);
+    });
+
+    it('should increment countActionsFromStartGame', async () => {
+        const initialCount = gameState.constants.countActionsFromStartGame;
+        
+        await service.endTurnResolve(gameState, player);
+        
+        expect(gameState.constants.countActionsFromStartGame).toBe(initialCount + 1);
+    });
+    });
+
+    describe('extraActionResolve - edge cases', () => {
+    let gameState: GameForLogic;
+    let artifact: ArtifactGameState;
+    let animations: AnimationData[];
+
+    beforeEach(() => {
+        gameState = createMockGameState();
+        artifact = gameState.player.artifacts['artifact-1'];
+        animations = [];
+    });
+
+    it('should throw error when artifact.availableActions is null', () => {
+        artifact.availableActions = null;
+        const data: ExtraActionData = {
+        gameId: 'game-123',
+        artifactGameId: 'artifact-1',
+        type: EXTRA_ACTION.THROW_DICE,
+        details: null,
+        };
+        
+        expect(() => service.extraActionResolve(gameState, artifact, data, animations)).toThrow(CommonException);
+    });
+
+    it('should throw error when handler not found', () => {
+        mockExtraActionService.getHandler.mockReturnValue(null);
+        const data: ExtraActionData = {
+        gameId: 'game-123',
+        artifactGameId: 'artifact-1',
+        type: EXTRA_ACTION.THROW_DICE,
+        details: null,
+        };
+        
+        expect(() => service.extraActionResolve(gameState, artifact, data, animations)).toThrow(CommonException);
+    });
+
+    it('should handle GLIMPSE effect for MOVE action', () => {
+        gameEffectsService.countEffect.mockReturnValue(1);
+        const data: ExtraActionData = {
+        gameId: 'game-123',
+        artifactGameId: 'artifact-1',
+        type: EXTRA_ACTION.MOVE,
+        details: { newPosition: 1, newLine: 'front' },
+        };
+        const mockHandler = jest.fn();
+        mockExtraActionService.getHandler.mockReturnValue(mockHandler);
+        
+        service.extraActionResolve(gameState, artifact, data, animations);
+        
+        expect(resourceService.decreaseResource).toHaveBeenCalledWith(
+        gameState.player,
+        expect.any(String),
+        0,
+        expect.any(Array)
+        );
+    });
+
+    it('should handle GLIMPSE effect for RETURN_TO_BATTLE action', () => {
+        gameEffectsService.countEffect.mockReturnValue(1);
+        const data: ExtraActionData = {
+        gameId: 'game-123',
+        artifactGameId: 'artifact-1',
+        type: EXTRA_ACTION.RETURN_TO_BATTLE,
+        details: null,
+        };
+        const mockHandler = jest.fn();
+        mockExtraActionService.getHandler.mockReturnValue(mockHandler);
+        
+        service.extraActionResolve(gameState, artifact, data, animations);
+        
+        expect(resourceService.decreaseResource).toHaveBeenCalledWith(
+        gameState.player,
+        expect.any(String),
+        15,
+        expect.any(Array)
+        );
+    });
+    });
+
 });

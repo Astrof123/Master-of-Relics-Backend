@@ -48,7 +48,6 @@ import { DarkBlightStrategy } from './strategies/dark-blight.strategy';
 import { LightBlightStrategy } from './strategies/light-blight.strategy';
 import { DestructionBlightStrategy } from './strategies/destruction-blight.strategy';
 import { PierceStrategy } from './strategies/pierce.strategy';
-import { MultishotStrategy } from './strategies/multishot.strategy';
 
 const ACTION_HANDLER_PROVIDERS = [
     FearStrategy,

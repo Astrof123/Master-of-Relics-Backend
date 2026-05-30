@@ -1,9 +1,7 @@
-# Этап 1: Сборка
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Копируем файлы с зависимостями
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
@@ -11,13 +9,10 @@ COPY nest-cli.json ./
 
 RUN npm ci || npm install
 
-# Копируем исходный код
 COPY src ./src
 
-# Собираем приложение
 RUN npm run build
 
-# Этап 2: Production
 FROM node:20-alpine
 
 RUN apk add --no-cache tzdata

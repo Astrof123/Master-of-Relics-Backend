@@ -14,6 +14,7 @@ import {
 import { GameForLogic } from '../game-state/types/game-for-logic';
 import { ARTIFACT, SPAWN_POSITION } from './types/artifact';
 import { RESOURCE } from '../game-mechanics/types/resource';
+import { MAX_COUNT_ARTIFACTS_ON_LINE } from 'src/game-mechanics/constants/settings';
 
 jest.mock('uuid', () => ({
     v4: jest.fn(() => 'mock-uuid-1234'),
@@ -552,4 +553,416 @@ describe('ArtifactService', () => {
             );
         });
     });
+
+describe('ArtifactService - additional branch coverage', () => {
+    let service: ArtifactService;
+    let extraActionService: jest.Mocked<ExtraActionService>;
+    let restrictionService: jest.Mocked<RestrictionService>;
+    let gameEffectsService: jest.Mocked<GameEffectsService>;
+    let artifactStateService: jest.Mocked<ArtifactStateService>;
+
+    beforeEach(async () => {
+        jest.clearAllMocks();
+
+        const module: TestingModule = await Test.createTestingModule({
+            providers: [
+                ArtifactService,
+                {
+                    provide: ExtraActionService,
+                    useValue: mockExtraActionService,
+                },
+                {
+                    provide: RestrictionService,
+                    useValue: mockRestrictionService,
+                },
+                {
+                    provide: GameEffectsService,
+                    useValue: mockGameEffectsService,
+                },
+                {
+                    provide: ArtifactStateService,
+                    useValue: mockArtifactStateService,
+                },
+            ],
+        }).compile();
+
+        service = module.get<ArtifactService>(ArtifactService);
+        extraActionService = module.get(ExtraActionService);
+        restrictionService = module.get(RestrictionService);
+        gameEffectsService = module.get(GameEffectsService);
+        artifactStateService = module.get(ArtifactStateService);
+    });
+
+    describe('calculateAvailableActions - branch coverage for line 290', () => {
+        it('should apply rage discount with countDiscount >= 1 (reduce by 5)', () => {
+            const gameState = createMockGameState();
+            const player = gameState.player;
+            const enemy = gameState.enemy;
+            
+            gameEffectsService.countHeroEffect.mockReturnValue(2);
+            
+            service.calculateAvailableActions(gameState, player, enemy);
+            
+            for (const artifact of Object.values(player.artifacts)) {
+                if (artifact.artifactId === 'arcane_shield') {
+                    expect(artifact.skillCost).toBe(0);
+                }
+            }
+        });
+
+        it('should apply rage discount with countDiscount = 0 (no discount)', () => {
+            const gameState = createMockGameState();
+            const player = gameState.player;
+            const enemy = gameState.enemy;
+            
+            const testArtifact = createMockArtifact('test-art', 'arcane_shield', 'sword');
+            testArtifact.skillCost = 2;
+            player.artifacts['test-art'] = testArtifact;
+            
+            gameEffectsService.countHeroEffect.mockReturnValue(0);
+            
+            service.calculateAvailableActions(gameState, player, enemy);
+            
+            expect(testArtifact.skillCost).toBe(0);
+        });
+    });
+
+    describe('getFaceAction - branch coverage for lines 295, 298-313', () => {
+        let player: Player;
+        let enemy: Player;
+        let artifact: ArtifactGameState;
+
+        beforeEach(() => {
+            player = createMockPlayer();
+            enemy = createMockEnemy();
+            artifact = createMockArtifact('artifact-1', 'arcane_shield', 'sword');
+            restrictionService.getTargetsByRestrictions.mockReturnValue([['ally1'], ['enemy1', 'enemy2']]);
+        });
+
+        it('should handle heal action', () => {
+            artifact.face = 'heal';
+            const result = service.getFaceAction(artifact, player, enemy);
+            
+            expect(result.id).toBe('heal');
+            expect(result.attackTargets).toBeNull();
+            expect(result.healTargets).toEqual(['ally1']);
+        });
+
+        it('should handle BLINDLESS effect - clear attack targets', () => {
+            artifact.face = 'sword';
+            gameEffectsService.countEffect.mockReturnValue(1);
+            
+            const result = service.getFaceAction(artifact, player, enemy);
+            
+            expect(result.attackTargets).toEqual([]);
+        });
+    });
+
+    describe('getSkills - branch coverage for lines 317-318', () => {
+        let player: Player;
+        let enemy: Player;
+        let artifact: ArtifactGameState;
+
+        beforeEach(() => {
+            player = createMockPlayer();
+            enemy = createMockEnemy();
+            artifact = createMockArtifact('artifact-1', 'arcane_shield', 'sword');
+            player.resources[RESOURCE.RAGE] = 30;
+            restrictionService.checkGeneralRestrictions.mockReturnValue(true);
+            restrictionService.checkArtifactRestrictions.mockReturnValue(true);
+            restrictionService.getTargetsByRestrictions.mockReturnValue([['ally1'], ['enemy1']]);
+        });
+
+        it('should return empty array when artifact has no skills', () => {
+            artifact.artifactId = 'moon_staff';
+            const result = service.getSkills(player, enemy, artifact);
+            expect(result).toEqual([]);
+        });
+
+        it('should return empty array when artifact is silenced', () => {
+            gameEffectsService.countEffect.mockReturnValue(1);
+            const result = service.getSkills(player, enemy, artifact);
+            expect(result).toEqual([]);
+        });
+
+        it('should not add skill when not enough rage', () => {
+            player.resources[RESOURCE.RAGE] = 0;
+            const result = service.getSkills(player, enemy, artifact);
+            expect(result).toEqual([]);
+        });
+
+        it('should not add skill when general restrictions fail', () => {
+            restrictionService.checkGeneralRestrictions.mockReturnValue(false);
+            const result = service.getSkills(player, enemy, artifact);
+            expect(result).toEqual([]);
+        });
+
+        it('should not add skill when artifact restrictions fail', () => {
+            restrictionService.checkArtifactRestrictions.mockReturnValue(false);
+            const result = service.getSkills(player, enemy, artifact);
+            expect(result).toEqual([]);
+        });
+    });
+
+    describe('spawnArtifact - branch coverage for lines 436-437 (NEAR position)', () => {
+        let artifacts: Record<string, ArtifactGameState>;
+        let artifactToSpawn: ArtifactGameState;
+        const logParts: string[] = [];
+
+        beforeEach(() => {
+            artifacts = {};
+            artifactToSpawn = createMockArtifact('new-artifact', 'bone_knife', 'sword');
+            logParts.length = 0;
+        });
+
+        it('should spawn artifact NEAR with spawnerPosition = 0 (place at position 1)', () => {
+            const existingArtifact = createMockArtifact('existing', 'arcane_shield', 'sword');
+            existingArtifact.position = 0;
+            existingArtifact.line = LINE.FRONT;
+            artifacts['existing'] = existingArtifact;
+            
+            service.spawnArtifact(
+                artifactToSpawn,
+                SPAWN_POSITION.NEAR,
+                0,
+                LINE.FRONT,
+                artifacts,
+                logParts,
+            );
+            
+            expect(artifactToSpawn.position).toBe(1);
+            expect(artifactToSpawn.line).toBe(LINE.FRONT);
+            expect(logParts[0]).toContain('Создал');
+        });
+
+        it('should spawn artifact NEAR with spawnerPosition = MAX_COUNT - 1 (place at MAX_COUNT - 2)', () => {
+            const existingArtifact = createMockArtifact('existing', 'arcane_shield', 'sword');
+            existingArtifact.position = MAX_COUNT_ARTIFACTS_ON_LINE - 1;
+            existingArtifact.line = LINE.FRONT;
+            artifacts['existing'] = existingArtifact;
+            
+            service.spawnArtifact(
+                artifactToSpawn,
+                SPAWN_POSITION.NEAR,
+                MAX_COUNT_ARTIFACTS_ON_LINE - 1,
+                LINE.FRONT,
+                artifacts,
+                logParts,
+            );
+            
+            expect(artifactToSpawn.position).toBe(MAX_COUNT_ARTIFACTS_ON_LINE - 2);
+            expect(artifactToSpawn.line).toBe(LINE.FRONT);
+        });
+
+        it('should spawn artifact NEAR with random position (random = 0 - left side)', () => {
+            const crypto = require('crypto');
+            const originalRandomInt = crypto.randomInt;
+            crypto.randomInt = jest.fn().mockReturnValue(0);
+            
+            const existingArtifact = createMockArtifact('existing', 'arcane_shield', 'sword');
+            existingArtifact.position = 2;
+            existingArtifact.line = LINE.FRONT;
+            artifacts['existing'] = existingArtifact;
+            
+            service.spawnArtifact(
+                artifactToSpawn,
+                SPAWN_POSITION.NEAR,
+                2,
+                LINE.FRONT,
+                artifacts,
+                logParts,
+            );
+            
+            expect(artifactToSpawn.position).toBe(2);
+            expect(artifactToSpawn.line).toBe(LINE.FRONT);
+            
+            crypto.randomInt = originalRandomInt;
+        });
+
+        it('should spawn artifact NEAR with random position (random = 1 - right side)', () => {
+            const crypto = require('crypto');
+            const originalRandomInt = crypto.randomInt;
+            crypto.randomInt = jest.fn().mockReturnValue(1);
+            
+            const existingArtifact = createMockArtifact('existing', 'arcane_shield', 'sword');
+            existingArtifact.position = 2;
+            existingArtifact.line = LINE.FRONT;
+            artifacts['existing'] = existingArtifact;
+            
+            service.spawnArtifact(
+                artifactToSpawn,
+                SPAWN_POSITION.NEAR,
+                2,
+                LINE.FRONT,
+                artifacts,
+                logParts,
+            );
+            
+            expect(artifactToSpawn.position).toBe(3);
+            expect(artifactToSpawn.line).toBe(LINE.FRONT);
+            
+            crypto.randomInt = originalRandomInt;
+        });
+    });
+
+    describe('createArtifactState - branch coverage for line 290 (position calculation)', () => {
+        let playerArtifacts: Record<string, ArtifactGameState>;
+
+        beforeEach(() => {
+            playerArtifacts = {};
+        });
+
+        it('should place artifact on BACK line when less than MAX_COUNT artifacts', () => {
+            for (let i = 0; i < 3; i++) {
+                const artifact = createMockArtifact(`artifact-${i}`, 'arcane_shield', 'sword');
+                playerArtifacts[`artifact-${i}`] = artifact;
+            }
+            
+            const result = service.createArtifactState(playerArtifacts, ARTIFACT.ARCANE_SHIELD);
+            
+            expect(result.line).toBe(LINE.BACK);
+            expect(result.position).toBe(3 % MAX_COUNT_ARTIFACTS_ON_LINE);
+        });
+
+        it('should place artifact on FRONT line when more than MAX_COUNT artifacts', () => {
+            for (let i = 0; i < 7; i++) {
+                const artifact = createMockArtifact(`artifact-${i}`, 'arcane_shield', 'sword');
+                playerArtifacts[`artifact-${i}`] = artifact;
+            }
+            
+            const result = service.createArtifactState(playerArtifacts, ARTIFACT.ARCANE_SHIELD);
+            
+            expect(result.line).toBe(LINE.FRONT);
+            expect(result.position).toBe(7 % MAX_COUNT_ARTIFACTS_ON_LINE);
+        });
+    });
+
+    describe('destroyArtifact - branch coverage', () => {
+        let player: Player;
+        let artifact: ArtifactGameState;
+        const logParts: string[] = [];
+
+        beforeEach(() => {
+            player = createMockPlayer();
+            artifact = createMockArtifact('artifact-1', 'arcane_shield', 'sword');
+            artifact.position = 2;
+            artifact.line = LINE.FRONT;
+            player.artifacts = {};
+            player.artifacts['artifact-1'] = artifact;
+            logParts.length = 0;
+        });
+
+        it('should call moveArtifact before destroying', () => {
+            const moveArtifactSpy = jest.spyOn(service, 'moveArtifact');
+            
+            service.destroyArtifact(player, artifact, logParts);
+            
+            expect(moveArtifactSpy).toHaveBeenCalled();
+            expect(artifactStateService.applyState).toHaveBeenCalledWith(
+                artifact,
+                ARTIFACT_STATE.DESTROYED,
+                [],
+            );
+        });
+    });
+
+    describe('getNeighbors - branch coverage', () => {
+        let player: Player;
+        let artifact: ArtifactGameState;
+
+        beforeEach(() => {
+            player = createMockPlayer();
+            artifact = player.artifacts['artifact-1'];
+            artifact.position = 2;
+            artifact.line = LINE.FRONT;
+            player.artifacts = {};
+            player.artifacts['artifact-1'] = artifact;
+        });
+
+        it('should return null for neighbors when none exist', () => {
+            const result = service.getNeighbors(player, artifact);
+            
+            expect(result.left).toBeNull();
+            expect(result.right).toBeNull();
+        });
+
+        it('should find left neighbor (position - 1)', () => {
+            const leftArtifact = createMockArtifact('left-art', 'arcane_shield', 'sword');
+            leftArtifact.position = 1;
+            leftArtifact.line = LINE.FRONT;
+            player.artifacts['left-art'] = leftArtifact;
+            
+            const result = service.getNeighbors(player, artifact);
+            
+            expect(result.left).toBe(leftArtifact);
+            expect(result.right).toBeNull();
+        });
+
+        it('should find right neighbor (position + 1)', () => {
+            const rightArtifact = createMockArtifact('right-art', 'arcane_shield', 'sword');
+            rightArtifact.position = 3;
+            rightArtifact.line = LINE.FRONT;
+            player.artifacts['right-art'] = rightArtifact;
+            
+            const result = service.getNeighbors(player, artifact);
+            
+            expect(result.left).toBeNull();
+            expect(result.right).toBe(rightArtifact);
+        });
+
+        it('should find both left and right neighbors', () => {
+            const leftArtifact = createMockArtifact('left-art', 'arcane_shield', 'sword');
+            leftArtifact.position = 1;
+            leftArtifact.line = LINE.FRONT;
+            const rightArtifact = createMockArtifact('right-art', 'arcane_shield', 'sword');
+            rightArtifact.position = 3;
+            rightArtifact.line = LINE.FRONT;
+            
+            player.artifacts['left-art'] = leftArtifact;
+            player.artifacts['right-art'] = rightArtifact;
+            
+            const result = service.getNeighbors(player, artifact);
+            
+            expect(result.left).toBe(leftArtifact);
+            expect(result.right).toBe(rightArtifact);
+        });
+    });
+
+    describe('moveArtifact - branch coverage for position shifting', () => {
+        let artifacts: Record<string, ArtifactGameState>;
+        let artifactToMove: ArtifactGameState;
+        const logParts: string[] = [];
+
+        beforeEach(() => {
+            artifacts = {};
+            artifactToMove = createMockArtifact('artifact-1', 'arcane_shield', 'sword');
+            artifactToMove.position = 3;
+            artifactToMove.line = LINE.FRONT;
+            
+            const artifact2 = createMockArtifact('artifact-2', 'arcane_shield', 'sword');
+            artifact2.position = 4;
+            artifact2.line = LINE.FRONT;
+            const artifact3 = createMockArtifact('artifact-3', 'arcane_shield', 'sword');
+            artifact3.position = 2;
+            artifact3.line = LINE.FRONT;
+            
+            artifacts['artifact-1'] = artifactToMove;
+            artifacts['artifact-2'] = artifact2;
+            artifacts['artifact-3'] = artifact3;
+            
+            logParts.length = 0;
+        });
+
+        it('should shift artifacts with position > old position on same line', () => {
+            const oldPosition = artifactToMove.position;
+            
+            service.moveArtifact(1, artifactToMove, LINE.FRONT, artifacts, logParts);
+            
+            expect(artifacts['artifact-2'].position).toBe(4);
+            expect(artifacts['artifact-3'].position).toBe(3);
+            expect(artifactToMove.position).toBe(1);
+        });
+    });
 });
+});
+

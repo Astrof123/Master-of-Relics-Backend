@@ -1,8 +1,10 @@
-
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
+import { join } from 'path';
 
 config();
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 export default new DataSource({
   type: 'postgres',
@@ -11,8 +13,15 @@ export default new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'password',
   database: process.env.DB_DATABASE || 'test_db',
-  entities: ['src/**/*.entity.ts'],
-  migrations: ['src/database/migrations/*.ts'],
+  
+  entities: isProduction
+    ? ['dist/**/*.entity.js']
+    : ['src/**/*.entity.ts'],
+  
+  migrations: isProduction
+    ? ['dist/database/migrations/*.js']
+    : ['src/migrations/*.ts'],
+    
   synchronize: false,
   logging: true,
 });

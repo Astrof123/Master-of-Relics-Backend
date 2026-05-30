@@ -5,7 +5,26 @@ module.exports = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
-  collectCoverageFrom: ['**/*.(t|j)s'],
+    collectCoverageFrom: [
+    '**/*.(t|j)s',
+    '!**/*.module.ts',
+    '!**/*.dto.ts',
+    '!**/entities/**',
+    '!**/constants/**',
+    '!**/types/**',
+    '!**/exceptions/**',
+    '!**/migrations/**',
+    '!main.ts',
+    '!app.controller.ts',
+    '!app.service.ts',
+    '!config/**',
+    '!database/**',
+    '!auth/strategies/**',
+    '!auth/middlewares/**',
+    '!collection/cards.service.ts',
+    '!common/http-metrics.interceptor.ts',
+    '!spell/spell.helper.ts', // можно исключить, если не хотите тестировать
+  ],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
   moduleNameMapper: {

@@ -738,4 +738,577 @@ describe('GameStateService', () => {
             });
         });
     });
+    // Добавьте этот блок тестов в конец файла game-state.service.spec.ts
+
+describe('GameStateService - Additional Branch Coverage', () => {
+    let service: GameStateService;
+    let redisService: jest.Mocked<RedisService>;
+    let lobbyService: jest.Mocked<LobbyService>;
+    let gameTimerService: jest.Mocked<GameTimerService>;
+    let deckService: jest.Mocked<DeckService>;
+    let artifactStateService: jest.Mocked<ArtifactStateService>;
+
+    const mockRedisService = {
+        setJson: jest.fn(),
+        getJson: jest.fn(),
+        delete: jest.fn(),
+        addToSortedSet: jest.fn(),
+        removeFromSortedSet: jest.fn(),
+        getSortedSetRange: jest.fn(),
+        expire: jest.fn(),
+        ttl: jest.fn(),
+        jsonSetInTransaction: jest.fn(),
+    };
+
+    const mockLobbyService = {
+        getLobbyById: jest.fn(),
+        getLobbyKey: jest.fn(),
+        getLobbyIndexesKey: jest.fn(),
+    };
+
+    const mockGameTimerService = {
+        startTimer: jest.fn(),
+    };
+
+    const mockDeckService = {
+        getUserDecks: jest.fn(),
+        getBotGameDeck: jest.fn(),
+    };
+
+    const mockArtifactStateService = {
+        clearDestroyedArtifacts: jest.fn(),
+    };
+
+    beforeEach(async () => {
+        jest.clearAllMocks();
+
+        const module: TestingModule = await Test.createTestingModule({
+            providers: [
+                GameStateService,
+                {
+                    provide: RedisService,
+                    useValue: mockRedisService,
+                },
+                {
+                    provide: LobbyService,
+                    useValue: mockLobbyService,
+                },
+                {
+                    provide: GameTimerService,
+                    useValue: mockGameTimerService,
+                },
+                {
+                    provide: DeckService,
+                    useValue: mockDeckService,
+                },
+                {
+                    provide: ArtifactStateService,
+                    useValue: mockArtifactStateService,
+                },
+            ],
+        }).compile();
+
+        service = module.get<GameStateService>(GameStateService);
+        redisService = module.get(RedisService);
+        lobbyService = module.get(LobbyService);
+        gameTimerService = module.get(GameTimerService);
+        deckService = module.get(DeckService);
+        artifactStateService = module.get(ArtifactStateService);
+    });
+
+    describe('createGameSessionState - branch coverage for lines 314, 566, 570, 578', () => {
+        const lobbyId = 'lobby-123';
+        const userId = 'user-1';
+        const enemyId = 'user-2';
+
+        beforeEach(() => {
+            const mockLobby = {
+                id: lobbyId,
+                name: 'Test Lobby',
+                state: LOBBY_STATE_TYPE.WAITING,
+                players: {
+                    [userId]: { id: userId, nickname: 'Player1', isHost: true, isReady: true },
+                    [enemyId]: { id: enemyId, nickname: 'Player2', isHost: false, isReady: true },
+                },
+                options: {
+                    timerDraft: null,
+                    timerMovement: null,
+                    timerTurn: null,
+                },
+            };
+            mockLobbyService.getLobbyById.mockResolvedValue(mockLobby);
+            
+            const mockDeckResponse = {
+                decks: [
+                    {
+                        id: 1,
+                        isActive: true,
+                        cards: [
+                            { innerCardId: 'arcane_shield', id: 1 },
+                            { innerCardId: 'moon_staff', id: 2 },
+                        ],
+                    },
+                ],
+            };
+            deckService.getUserDecks.mockResolvedValue(mockDeckResponse as any);
+            mockRedisService.setJson.mockResolvedValue(undefined);
+            mockRedisService.addToSortedSet.mockResolvedValue(undefined);
+        });
+
+        it('should handle artifact with no skills (skills === null)', async () => {
+            // Мокаем ARTIFACTS где skills === null
+            const mockArtifacts = require('../artifact/constants/artifacts');
+            const originalArcaneShield = { ...mockArtifacts.ARTIFACTS.arcane_shield };
+            mockArtifacts.ARTIFACTS.arcane_shield = {
+                ...originalArcaneShield,
+                skills: null,
+            };
+
+            await service.createGameSessionState(lobbyId, userId);
+
+            // Проверяем что skillCost установлен в 0
+            expect(mockRedisService.setJson).toHaveBeenCalled();
+            
+            // Восстанавливаем
+            mockArtifacts.ARTIFACTS.arcane_shield = originalArcaneShield;
+        });
+
+        it('should handle timerDraft as null (not start timer)', async () => {
+            const mockLobby = {
+                id: lobbyId,
+                name: 'Test Lobby',
+                state: LOBBY_STATE_TYPE.WAITING,
+                players: {
+                    [userId]: { id: userId, nickname: 'Player1', isHost: true, isReady: true },
+                    [enemyId]: { id: enemyId, nickname: 'Player2', isHost: false, isReady: true },
+                },
+                options: {
+                    timerDraft: null,
+                    timerMovement: null,
+                    timerTurn: null,
+                },
+            };
+            mockLobbyService.getLobbyById.mockResolvedValue(mockLobby);
+            
+            await service.createGameSessionState(lobbyId, userId);
+
+            expect(mockGameTimerService.startTimer).not.toHaveBeenCalled();
+        });
+
+        it('should start timer when timerDraft has value', async () => {
+            const mockLobby = {
+                id: lobbyId,
+                name: 'Test Lobby',
+                state: LOBBY_STATE_TYPE.WAITING,
+                players: {
+                    [userId]: { id: userId, nickname: 'Player1', isHost: true, isReady: true },
+                    [enemyId]: { id: enemyId, nickname: 'Player2', isHost: false, isReady: true },
+                },
+                options: {
+                    timerDraft: 30,
+                    timerMovement: 20,
+                    timerTurn: 15,
+                },
+            };
+            mockLobbyService.getLobbyById.mockResolvedValue(mockLobby);
+            
+            await service.createGameSessionState(lobbyId, userId);
+
+            expect(mockGameTimerService.startTimer).toHaveBeenCalledWith(lobbyId, TIMER_TYPE.DRAFT, 30);
+        });
+    });
+
+    describe('saveGameForLogic - branch coverage for lines 603-607', () => {
+        const gameId = 'game-123';
+        const key = `game:${gameId}`;
+        const userId = 'user-1';
+        const enemyId = 'user-2';
+
+        it('should update temporaryArtifacts when miniPhase is not MOVEMENT', async () => {
+            const mockGameState = {
+                id: gameId,
+                name: 'Test Game',
+                phase: PHASE.DRAFT,
+                currentTurn: userId,
+                logs: [],
+                player: {
+                    id: userId,
+                    name: 'Player1',
+                    artifacts: { 'artifact-1': { id: 'artifact-1', name: 'Test' } },
+                    temporaryArtifacts: {},
+                },
+                enemy: {
+                    id: enemyId,
+                    name: 'Player2',
+                    artifacts: { 'artifact-2': { id: 'artifact-2', name: 'Test2' } },
+                    temporaryArtifacts: {},
+                },
+                end: null,
+                miniPhase: MINIPHASE.BATTLE,
+                constants: { isNewRound: false },
+            };
+
+            mockLobbyService.getLobbyKey.mockReturnValue(`lobby:${gameId}`);
+            mockLobbyService.getLobbyIndexesKey.mockReturnValue('lobbies:index');
+            mockRedisService.setJson.mockResolvedValue(undefined);
+            mockRedisService.expire.mockResolvedValue(undefined);
+
+            await service.saveGameForLogic(mockGameState as any, key);
+
+            expect(artifactStateService.clearDestroyedArtifacts).toHaveBeenCalled();
+            expect(mockGameState.player.temporaryArtifacts).toEqual(mockGameState.player.artifacts);
+            expect(mockGameState.enemy.temporaryArtifacts).toEqual(mockGameState.enemy.artifacts);
+        });
+
+        it('should update temporaryArtifacts when isNewRound is true', async () => {
+            const mockGameState = {
+                id: gameId,
+                name: 'Test Game',
+                phase: PHASE.BATTLE,
+                currentTurn: userId,
+                logs: [],
+                player: {
+                    id: userId,
+                    name: 'Player1',
+                    artifacts: { 'artifact-1': { id: 'artifact-1', name: 'Test' } },
+                    temporaryArtifacts: {},
+                },
+                enemy: {
+                    id: enemyId,
+                    name: 'Player2',
+                    artifacts: { 'artifact-2': { id: 'artifact-2', name: 'Test2' } },
+                    temporaryArtifacts: {},
+                },
+                end: null,
+                miniPhase: MINIPHASE.MOVEMENT,
+                constants: { isNewRound: true },
+            };
+
+            mockLobbyService.getLobbyKey.mockReturnValue(`lobby:${gameId}`);
+            mockLobbyService.getLobbyIndexesKey.mockReturnValue('lobbies:index');
+            mockRedisService.setJson.mockResolvedValue(undefined);
+            mockRedisService.expire.mockResolvedValue(undefined);
+
+            await service.saveGameForLogic(mockGameState as any, key);
+
+            expect(mockGameState.constants.isNewRound).toBe(false);
+            expect(mockGameState.player.temporaryArtifacts).toEqual(mockGameState.player.artifacts);
+            expect(mockGameState.enemy.temporaryArtifacts).toEqual(mockGameState.enemy.artifacts);
+        });
+
+        it('should NOT update temporaryArtifacts when miniPhase is MOVEMENT and isNewRound is false', async () => {
+            const originalPlayerArtifacts = { 'artifact-1': { id: 'artifact-1', name: 'Test' } };
+            const originalEnemyArtifacts = { 'artifact-2': { id: 'artifact-2', name: 'Test2' } };
+            
+            const mockGameState = {
+                id: gameId,
+                name: 'Test Game',
+                phase: PHASE.BATTLE,
+                currentTurn: userId,
+                logs: [],
+                player: {
+                    id: userId,
+                    name: 'Player1',
+                    artifacts: originalPlayerArtifacts,
+                    temporaryArtifacts: {},
+                },
+                enemy: {
+                    id: enemyId,
+                    name: 'Player2',
+                    artifacts: originalEnemyArtifacts,
+                    temporaryArtifacts: {},
+                },
+                end: null,
+                miniPhase: MINIPHASE.MOVEMENT,
+                constants: { isNewRound: false },
+            };
+
+            mockLobbyService.getLobbyKey.mockReturnValue(`lobby:${gameId}`);
+            mockLobbyService.getLobbyIndexesKey.mockReturnValue('lobbies:index');
+            mockRedisService.setJson.mockResolvedValue(undefined);
+            mockRedisService.expire.mockResolvedValue(undefined);
+
+            await service.saveGameForLogic(mockGameState as any, key);
+
+            // temporaryArtifacts остаются пустыми
+            expect(mockGameState.player.temporaryArtifacts).toEqual({});
+            expect(mockGameState.enemy.temporaryArtifacts).toEqual({});
+        });
+    });
+
+    describe('saveGameForLogicInTransaction - branch coverage for lines 641-670', () => {
+        const gameId = 'game-123';
+        const key = `game:${gameId}`;
+        const userId = 'user-1';
+        const enemyId = 'user-2';
+        const mockMulti = {};
+
+        it('should update temporaryArtifacts when miniPhase is not MOVEMENT', async () => {
+            const mockGameState = {
+                id: gameId,
+                name: 'Test Game',
+                phase: PHASE.DRAFT,
+                currentTurn: userId,
+                logs: [],
+                player: {
+                    id: userId,
+                    name: 'Player1',
+                    artifacts: { 'artifact-1': { id: 'artifact-1', name: 'Test' } },
+                    temporaryArtifacts: {},
+                },
+                enemy: {
+                    id: enemyId,
+                    name: 'Player2',
+                    artifacts: { 'artifact-2': { id: 'artifact-2', name: 'Test2' } },
+                    temporaryArtifacts: {},
+                },
+                end: null,
+                miniPhase: MINIPHASE.BATTLE,
+                constants: { isNewRound: false },
+            };
+
+            await service.saveGameForLogicInTransaction(mockGameState as any, key, mockMulti);
+
+            expect(artifactStateService.clearDestroyedArtifacts).toHaveBeenCalled();
+            expect(mockGameState.player.temporaryArtifacts).toEqual(mockGameState.player.artifacts);
+            expect(mockGameState.enemy.temporaryArtifacts).toEqual(mockGameState.enemy.artifacts);
+            expect(redisService.jsonSetInTransaction).toHaveBeenCalledWith(mockMulti, key, '.', expect.any(Object));
+        });
+
+        it('should update temporaryArtifacts when isNewRound is true', async () => {
+            const mockGameState = {
+                id: gameId,
+                name: 'Test Game',
+                phase: PHASE.BATTLE,
+                currentTurn: userId,
+                logs: [],
+                player: {
+                    id: userId,
+                    name: 'Player1',
+                    artifacts: { 'artifact-1': { id: 'artifact-1', name: 'Test' } },
+                    temporaryArtifacts: {},
+                },
+                enemy: {
+                    id: enemyId,
+                    name: 'Player2',
+                    artifacts: { 'artifact-2': { id: 'artifact-2', name: 'Test2' } },
+                    temporaryArtifacts: {},
+                },
+                end: null,
+                miniPhase: MINIPHASE.MOVEMENT,
+                constants: { isNewRound: true },
+            };
+
+            await service.saveGameForLogicInTransaction(mockGameState as any, key, mockMulti);
+
+            expect(mockGameState.constants.isNewRound).toBe(false);
+            expect(mockGameState.player.temporaryArtifacts).toEqual(mockGameState.player.artifacts);
+            expect(mockGameState.enemy.temporaryArtifacts).toEqual(mockGameState.enemy.artifacts);
+        });
+
+        it('should NOT update temporaryArtifacts when miniPhase is MOVEMENT and isNewRound is false', async () => {
+            const originalPlayerArtifacts = { 'artifact-1': { id: 'artifact-1', name: 'Test' } };
+            const originalEnemyArtifacts = { 'artifact-2': { id: 'artifact-2', name: 'Test2' } };
+            
+            const mockGameState = {
+                id: gameId,
+                name: 'Test Game',
+                phase: PHASE.BATTLE,
+                currentTurn: userId,
+                logs: [],
+                player: {
+                    id: userId,
+                    name: 'Player1',
+                    artifacts: originalPlayerArtifacts,
+                    temporaryArtifacts: {},
+                },
+                enemy: {
+                    id: enemyId,
+                    name: 'Player2',
+                    artifacts: originalEnemyArtifacts,
+                    temporaryArtifacts: {},
+                },
+                end: null,
+                miniPhase: MINIPHASE.MOVEMENT,
+                constants: { isNewRound: false },
+            };
+
+            await service.saveGameForLogicInTransaction(mockGameState as any, key, mockMulti);
+
+            expect(mockGameState.player.temporaryArtifacts).toEqual({});
+            expect(mockGameState.enemy.temporaryArtifacts).toEqual({});
+            expect(redisService.jsonSetInTransaction).toHaveBeenCalled();
+        });
+    });
+
+    describe('createGameSessionWithBotState - branch coverage', () => {
+        const lobbyId = 'lobby-123';
+        const userId = 'user-1';
+
+        it('should handle artifact with no skills (skills === null) for bot game', async () => {
+            const mockLobby = {
+                id: lobbyId,
+                name: 'Test Lobby',
+                state: LOBBY_STATE_TYPE.WAITING,
+                players: {
+                    [userId]: { id: userId, nickname: 'Player1', isHost: true, isReady: true },
+                },
+                options: {
+                    timerDraft: null,
+                    timerMovement: null,
+                    timerTurn: null,
+                },
+            };
+            mockLobbyService.getLobbyById.mockResolvedValue(mockLobby);
+            
+            const mockDeckResponse = {
+                decks: [
+                    {
+                        id: 1,
+                        isActive: true,
+                        cards: [
+                            { innerCardId: 'arcane_shield', id: 1 },
+                        ],
+                    },
+                ],
+            };
+            deckService.getUserDecks.mockResolvedValue(mockDeckResponse as any);
+            deckService.getBotGameDeck.mockResolvedValue([]);
+            mockRedisService.setJson.mockResolvedValue(undefined);
+            mockRedisService.addToSortedSet.mockResolvedValue(undefined);
+
+            // Мокаем ARTIFACTS где skills === null
+            const mockArtifacts = require('../artifact/constants/artifacts');
+            const originalArcaneShield = { ...mockArtifacts.ARTIFACTS.arcane_shield };
+            mockArtifacts.ARTIFACTS.arcane_shield = {
+                ...originalArcaneShield,
+                skills: null,
+            };
+
+            await service.createGameSessionWithBotState(lobbyId, userId);
+
+            expect(mockRedisService.setJson).toHaveBeenCalled();
+            
+            mockArtifacts.ARTIFACTS.arcane_shield = originalArcaneShield;
+        });
+    });
+
+    describe('getGameByUserId - branch coverage', () => {
+        const userId = 'user-1';
+
+        it('should return null when lobby has no players', async () => {
+            const mockGameIds = ['game-1'];
+            const mockGame = { id: 'game-1', players: {} };
+            
+            mockRedisService.getSortedSetRange.mockResolvedValue(mockGameIds);
+            mockRedisService.getJson.mockResolvedValue(mockGame);
+
+            const result = await service.getGameByUserId(userId);
+
+            expect(result).toBeNull();
+        });
+
+        it('should return null when lobby is null', async () => {
+            const mockGameIds = ['game-1'];
+            
+            mockRedisService.getSortedSetRange.mockResolvedValue(mockGameIds);
+            mockRedisService.getJson.mockResolvedValue(null);
+
+            const result = await service.getGameByUserId(userId);
+
+            expect(result).toBeNull();
+        });
+    });
+
+    describe('getTimerInfo - branch coverage', () => {
+        const gameId = 'game-123';
+        const timerType = TIMER_TYPE.DRAFT;
+
+        it('should return null when no timer data and remaining <= 0', async () => {
+            mockRedisService.getJson.mockResolvedValue(null);
+            mockRedisService.ttl.mockResolvedValue(-2);
+
+            const result = await service.getTimerInfo(gameId, timerType);
+
+            expect(result).toBeNull();
+        });
+
+        it('should return timer info when timer data exists but remaining is 0', async () => {
+            const mockTimerData = {
+                gameId,
+                type: timerType,
+                startedAt: Date.now(),
+                duration: 60,
+            };
+            mockRedisService.getJson.mockResolvedValue(mockTimerData);
+            mockRedisService.ttl.mockResolvedValue(0);
+
+            const result = await service.getTimerInfo(gameId, timerType);
+
+            expect(result).not.toBeNull();
+            expect(result?.active).toBe(false);
+            expect(result?.remaining).toBe(0);
+        });
+
+        it('should return timer info with startedAt and duration from timerData', async () => {
+            const mockTimerData = {
+                gameId,
+                type: timerType,
+                startedAt: 1234567890,
+                duration: 60,
+            };
+            mockRedisService.getJson.mockResolvedValue(mockTimerData);
+            mockRedisService.ttl.mockResolvedValue(30);
+
+            const result = await service.getTimerInfo(gameId, timerType);
+
+            expect(result).not.toBeNull();
+            expect(result?.active).toBe(true);
+            expect(result?.remaining).toBe(30);
+            expect(result?.startedAt).toBe(1234567890);
+            expect(result?.duration).toBe(60);
+        });
+    });
+
+    describe('startGameTimer - branch coverage', () => {
+        const gameId = 'game-123';
+        const timerType = TIMER_TYPE.DRAFT;
+
+        it('should use default duration when durationSeconds is 0', async () => {
+            await service.startGameTimer(gameId, timerType, 0);
+
+            expect(mockRedisService.setJson).toHaveBeenCalledWith(
+                `timer:${gameId}:draft`,
+                '.',
+                expect.objectContaining({
+                    gameId,
+                    type: timerType,
+                    duration: expect.any(Number),
+                }),
+                expect.any(Number),
+            );
+        });
+
+        it('should use default duration when durationSeconds is null', async () => {
+            await service.startGameTimer(gameId, timerType, null as any);
+
+            expect(mockRedisService.setJson).toHaveBeenCalled();
+        });
+    });
+
+    describe('cancelAllGameTimers - branch coverage', () => {
+        const gameId = 'game-123';
+
+        it('should cancel all timer types', async () => {
+            mockRedisService.delete.mockResolvedValue(undefined);
+
+            await service.cancelAllGameTimers(gameId);
+
+            expect(mockRedisService.delete).toHaveBeenCalledTimes(3);
+            expect(mockRedisService.delete).toHaveBeenCalledWith(`timer:${gameId}:draft`);
+            expect(mockRedisService.delete).toHaveBeenCalledWith(`timer:${gameId}:movement`);
+            expect(mockRedisService.delete).toHaveBeenCalledWith(`timer:${gameId}:turn`);
+        });
+    });
+});
 });

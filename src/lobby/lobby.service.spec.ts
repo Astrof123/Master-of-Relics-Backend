@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LobbyService } from './lobby.service';
 import { RedisService } from 'src/redis/redis.service';
 import { UsersService } from 'src/users/users.service';
-import { LOBBY_STATE_TYPE } from './types/lobby';
+import { INVITE_STATUS, LOBBY_STATE_TYPE } from './types/lobby';
 import { MAX_TIMER_VALUE, MIN_TIMER_VALUE } from './constants/settings';
 
 const createMockUser = (
@@ -475,4 +475,447 @@ describe('LobbyService', () => {
             ).rejects.toThrow();
         });
     });
+    describe('getAllLobbies', () => {
+        const userId = 'user-123';
+
+        it('should return all lobbies with code for user\'s own lobby', async () => {
+            const mockLobbyIds = ['lobby-1', 'lobby-2'];
+            const mockLobby1 = {
+            id: 'lobby-1',
+            name: 'Lobby 1',
+            players: { [userId]: { id: userId } },
+            state: LOBBY_STATE_TYPE.WAITING,
+            isPrivate: false,
+            code: 'CODE123',
+            options: {},
+            };
+            const mockLobby2 = {
+            id: 'lobby-2',
+            name: 'Lobby 2',
+            players: { 'other-user': { id: 'other-user' } },
+            state: LOBBY_STATE_TYPE.WAITING,
+            isPrivate: true,
+            code: 'CODE456',
+            options: {},
+            };
+
+            mockRedisService.getSortedSetRange.mockResolvedValue(mockLobbyIds);
+            mockRedisService.getJson
+            .mockResolvedValueOnce(mockLobby1)
+            .mockResolvedValueOnce(mockLobby2);
+
+            const result = await service.getAllLobbies(userId);
+
+            expect(result).toHaveLength(2);
+            expect(result[0].code).toBe('CODE123');
+            expect(result[1].code).toBeNull();
+        });
+
+        it('should filter out END state lobbies', async () => {
+            const mockLobbyIds = ['lobby-1', 'lobby-2'];
+            const mockLobby1 = {
+            id: 'lobby-1',
+            name: 'Lobby 1',
+            players: {},
+            state: LOBBY_STATE_TYPE.WAITING,
+            isPrivate: false,
+            code: 'CODE123',
+            options: {},
+            };
+            const mockLobby2 = {
+            id: 'lobby-2',
+            name: 'Lobby 2',
+            players: {},
+            state: LOBBY_STATE_TYPE.END,
+            isPrivate: false,
+            code: 'CODE456',
+            options: {},
+            };
+
+            mockRedisService.getSortedSetRange.mockResolvedValue(mockLobbyIds);
+            mockRedisService.getJson
+            .mockResolvedValueOnce(mockLobby1)
+            .mockResolvedValueOnce(mockLobby2);
+
+            const result = await service.getAllLobbies(userId);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toBe('lobby-1');
+        });
+
+        it('should handle empty lobby list', async () => {
+            mockRedisService.getSortedSetRange.mockResolvedValue([]);
+
+            const result = await service.getAllLobbies(userId);
+
+            expect(result).toEqual([]);
+        });
+        });
+
+        describe('getLobbyByCode', () => {
+        it('should return lobby with matching code and single player', async () => {
+            const mockLobbyIds = ['lobby-1', 'lobby-2'];
+            const mockLobby1 = {
+            id: 'lobby-1',
+            code: 'ABC123',
+            state: LOBBY_STATE_TYPE.WAITING,
+            players: { player1: {} },
+            };
+            const mockLobby2 = {
+            id: 'lobby-2',
+            code: 'ABC123',
+            state: LOBBY_STATE_TYPE.WAITING,
+            players: { player1: {}, player2: {} },
+            };
+
+            mockRedisService.getSortedSetRange.mockResolvedValue(mockLobbyIds);
+            mockRedisService.getJson
+            .mockResolvedValueOnce(mockLobby1)
+            .mockResolvedValueOnce(mockLobby2);
+
+            const result = await service.getLobbyByCode('ABC123');
+
+            expect(result).toEqual(mockLobby1);
+        });
+
+        it('should return null if no lobby matches', async () => {
+            mockRedisService.getSortedSetRange.mockResolvedValue([]);
+
+            const result = await service.getLobbyByCode('NOCODE');
+
+            expect(result).toBeNull();
+        });
+
+        it('should filter out END state lobbies', async () => {
+            const mockLobbyIds = ['lobby-1'];
+            const mockLobby1 = {
+            id: 'lobby-1',
+            code: 'ABC123',
+            state: LOBBY_STATE_TYPE.END,
+            players: { player1: {} },
+            };
+
+            mockRedisService.getSortedSetRange.mockResolvedValue(mockLobbyIds);
+            mockRedisService.getJson.mockResolvedValue(mockLobby1);
+
+            const result = await service.getLobbyByCode('ABC123');
+
+            expect(result).toBeNull();
+        });
+        });
+
+        describe('getLobbyByUserId', () => {
+        const userId = 'user-123';
+
+        it('should return lobby where user is a player', async () => {
+            const mockLobbyIds = ['lobby-1', 'lobby-2'];
+            const mockLobby1 = {
+            id: 'lobby-1',
+            state: LOBBY_STATE_TYPE.WAITING,
+            players: { [userId]: {} },
+            };
+            const mockLobby2 = {
+            id: 'lobby-2',
+            state: LOBBY_STATE_TYPE.WAITING,
+            players: { 'other-user': {} },
+            };
+
+            mockRedisService.getSortedSetRange.mockResolvedValue(mockLobbyIds);
+            mockRedisService.getJson
+            .mockResolvedValueOnce(mockLobby1)
+            .mockResolvedValueOnce(mockLobby2);
+
+            const result = await service.getLobbyByUserId(userId);
+
+            expect(result).toEqual(mockLobby1);
+        });
+
+        it('should return null if user not in any lobby', async () => {
+            mockRedisService.getSortedSetRange.mockResolvedValue([]);
+
+            const result = await service.getLobbyByUserId(userId);
+
+            expect(result).toBeNull();
+        });
+
+        it('should filter out END state lobbies', async () => {
+            const mockLobbyIds = ['lobby-1'];
+            const mockLobby1 = {
+            id: 'lobby-1',
+            state: LOBBY_STATE_TYPE.END,
+            players: { [userId]: {} },
+            };
+
+            mockRedisService.getSortedSetRange.mockResolvedValue(mockLobbyIds);
+            mockRedisService.getJson.mockResolvedValue(mockLobby1);
+
+            const result = await service.getLobbyByUserId(userId);
+
+            expect(result).toBeNull();
+        });
+        });
+
+        describe('deleteInvitation', () => {
+        it('should delete invitation from Redis', async () => {
+            const lobbyInvitation = {
+            id: 'inv-1',
+            addresseeId: 'user-123',
+            lobbyId: 'lobby-1',
+            requesterNickname: 'Requester',
+            requesterId: 'user-456',
+            };
+
+            mockRedisService.removeFromSet.mockResolvedValue(undefined);
+
+            await service.deleteInvitation(lobbyInvitation);
+
+            expect(mockRedisService.removeFromSet).toHaveBeenCalledWith(
+            `user:${lobbyInvitation.addresseeId}:invitations`,
+            JSON.stringify(lobbyInvitation)
+            );
+        });
+        });
+
+        describe('getInvitations', () => {
+        const userId = 'user-123';
+
+        it('should return valid invitations', async () => {
+            const mockInvitations = [
+            JSON.stringify({ id: 'inv-1', lobbyId: 'lobby-1', addresseeId: userId }),
+            JSON.stringify({ id: 'inv-2', lobbyId: 'lobby-2', addresseeId: userId }),
+            ];
+            const mockLobby1 = { id: 'lobby-1', players: { host: {} } };
+            const mockLobby2 = { id: 'lobby-2', players: { host: {}, player2: {} } };
+
+            mockRedisService.getSetMembers.mockResolvedValue(mockInvitations);
+            mockRedisService.getJson
+            .mockResolvedValueOnce(mockLobby1)
+            .mockResolvedValueOnce(mockLobby2);
+
+            const result = await service.getInvitations(userId);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toBe('inv-1');
+        });
+
+        it('should return empty array when no invitations', async () => {
+            mockRedisService.getSetMembers.mockResolvedValue([]);
+
+            const result = await service.getInvitations(userId);
+
+            expect(result).toEqual([]);
+        });
+
+        it('should skip invitations where lobby no longer exists', async () => {
+            const mockInvitations = [
+            JSON.stringify({ id: 'inv-1', lobbyId: 'lobby-1', addresseeId: userId }),
+            ];
+
+            mockRedisService.getSetMembers.mockResolvedValue(mockInvitations);
+            mockRedisService.getJson.mockResolvedValue(null);
+
+            const result = await service.getInvitations(userId);
+
+            expect(result).toEqual([]);
+        });
+        });
+
+        describe('getFriendsForInvite', () => {
+        const userId = 'user-123';
+
+        it('should return friends with invite status', async () => {
+            const mockFriends = [
+            { friendId: 'friend-1', nickname: 'Friend1', isOnline: true },
+            { friendId: 'friend-2', nickname: 'Friend2', isOnline: false },
+            ];
+            const mockInvitations = [
+            { id: 'inv-1', requesterId: userId, addresseeId: 'friend-1' },
+            ];
+
+            mockUsersService.getFriends.mockResolvedValue(mockFriends as any);
+            jest.spyOn(service, 'getInvitations').mockResolvedValue(mockInvitations as any);
+
+            const result = await service.getFriendsForInvite(userId);
+
+            expect(result).toHaveLength(2);
+            expect(result[0].status).toBe(INVITE_STATUS.OFFER);
+        });
+
+        it('should return empty array when user has no friends', async () => {
+            mockUsersService.getFriends.mockResolvedValue([]);
+            jest.spyOn(service, 'getInvitations').mockResolvedValue([]);
+
+            const result = await service.getFriendsForInvite(userId);
+
+            expect(result).toEqual([]);
+        });
+        });
+
+        describe('joinLobbyByInvitation', () => {
+        const userId = 'user-123';
+        const invitationId = 'inv-123';
+
+        it('should return invitation if valid', async () => {
+            const mockInvitations = [
+            JSON.stringify({ id: 'inv-123', lobbyId: 'lobby-1', addresseeId: userId }),
+            ];
+            const mockLobby = { id: 'lobby-1', players: { host: {} } };
+
+            mockRedisService.getSetMembers.mockResolvedValue(mockInvitations);
+            mockRedisService.getJson.mockResolvedValue(mockLobby);
+
+            const result = await service.joinLobbyByInvitation(invitationId, userId);
+
+            expect(result).toEqual({ id: 'inv-123', lobbyId: 'lobby-1', addresseeId: userId });
+        });
+
+        it('should throw INVITATION_NOT_FOUND if invitation does not exist', async () => {
+            mockRedisService.getSetMembers.mockResolvedValue([]);
+
+            await expect(service.joinLobbyByInvitation(invitationId, userId)).rejects.toThrow();
+        });
+
+        it('should throw INVITATION_EXPIRED if lobby is full', async () => {
+            const mockInvitations = [
+            JSON.stringify({ id: 'inv-123', lobbyId: 'lobby-1', addresseeId: userId }),
+            ];
+            const mockLobby = { id: 'lobby-1', players: { host: {}, player2: {} } };
+
+            mockRedisService.getSetMembers.mockResolvedValue(mockInvitations);
+            mockRedisService.getJson.mockResolvedValue(mockLobby);
+
+            await expect(service.joinLobbyByInvitation(invitationId, userId)).rejects.toThrow();
+        });
+
+        it('should throw INVITATION_EXPIRED if lobby no longer exists', async () => {
+            const mockInvitations = [
+            JSON.stringify({ id: 'inv-123', lobbyId: 'lobby-1', addresseeId: userId }),
+            ];
+
+            mockRedisService.getSetMembers.mockResolvedValue(mockInvitations);
+            mockRedisService.getJson.mockResolvedValue(null);
+
+            await expect(service.joinLobbyByInvitation(invitationId, userId)).rejects.toThrow();
+        });
+
+        it('should throw INVITATION_EXPIRED if addresseeId does not match', async () => {
+            const mockInvitations = [
+            JSON.stringify({ id: 'inv-123', lobbyId: 'lobby-1', addresseeId: 'other-user' }),
+            ];
+            const mockLobby = { id: 'lobby-1', players: { host: {} } };
+
+            mockRedisService.getSetMembers.mockResolvedValue(mockInvitations);
+            mockRedisService.getJson.mockResolvedValue(mockLobby);
+
+            await expect(service.joinLobbyByInvitation(invitationId, userId)).rejects.toThrow();
+        });
+        });
+
+        describe('updateOptionsLobby', () => {
+        const userId = 'user-123';
+        const lobbyId = 'lobby-123';
+
+        it('should update lobby options successfully', async () => {
+            const mockLobby = {
+            id: lobbyId,
+            name: 'Test Lobby',
+            players: { [userId]: { id: userId, isHost: true } },
+            code: 'ABC123',
+            isPrivate: false,
+            state: LOBBY_STATE_TYPE.WAITING,
+            };
+            const updateData = {
+            lobbyId,
+            withTimers: true,
+            timerTurn: 45,
+            timerMovement: 30,
+            timerDraft: 20,
+            };
+
+            mockRedisService.getJson.mockResolvedValue(mockLobby);
+            mockRedisService.setJson.mockResolvedValue(undefined);
+
+            const result = await service.updateOptionsLobby(updateData, userId);
+
+            expect(result).toBe(lobbyId);
+            expect(mockRedisService.setJson).toHaveBeenCalled();
+        });
+
+        it('should throw LOBBY_NOT_FOUND if lobby does not exist', async () => {
+            const updateData = { lobbyId, withTimers: true, timerTurn: 30, timerMovement: 20, timerDraft: 15 };
+            
+            mockRedisService.getJson.mockResolvedValue(null);
+
+            await expect(service.updateOptionsLobby(updateData, userId)).rejects.toThrow();
+        });
+
+        it('should throw LOBBY_ALREADY_STARTED if game already started', async () => {
+            const mockLobby = { id: lobbyId, state: LOBBY_STATE_TYPE.PLAYING };
+            const updateData = { lobbyId, withTimers: true, timerTurn: 30, timerMovement: 20, timerDraft: 15 };
+            
+            mockRedisService.getJson.mockResolvedValue(mockLobby);
+
+            await expect(service.updateOptionsLobby(updateData, userId)).rejects.toThrow();
+        });
+
+        it('should set timers to null when withTimers is false', async () => {
+            const mockLobby = {
+            id: lobbyId,
+            name: 'Test Lobby',
+            players: { [userId]: { id: userId, isHost: true } },
+            code: 'ABC123',
+            isPrivate: false,
+            state: LOBBY_STATE_TYPE.WAITING,
+            };
+            const updateData = {
+            lobbyId,
+            withTimers: false,
+            timerTurn: 45,
+            timerMovement: 30,
+            timerDraft: 20,
+            };
+
+            mockRedisService.getJson.mockResolvedValue(mockLobby);
+            mockRedisService.setJson.mockResolvedValue(undefined);
+
+            await service.updateOptionsLobby(updateData, userId);
+
+            const setJsonCall = mockRedisService.setJson.mock.calls[0];
+            const lobbyData = setJsonCall[2];
+            
+            expect(lobbyData.options.timerTurn).toBeNull();
+            expect(lobbyData.options.timerMovement).toBeNull();
+            expect(lobbyData.options.timerDraft).toBeNull();
+        });
+
+        it('should clamp timer values to MIN and MAX', async () => {
+            const mockLobby = {
+            id: lobbyId,
+            name: 'Test Lobby',
+            players: { [userId]: { id: userId, isHost: true } },
+            code: 'ABC123',
+            isPrivate: false,
+            state: LOBBY_STATE_TYPE.WAITING,
+            };
+            const updateData = {
+            lobbyId,
+            withTimers: true,
+            timerTurn: 10,
+            timerMovement: 500,
+            timerDraft: 5,
+            };
+
+            mockRedisService.getJson.mockResolvedValue(mockLobby);
+            mockRedisService.setJson.mockResolvedValue(undefined);
+
+            await service.updateOptionsLobby(updateData, userId);
+
+            const setJsonCall = mockRedisService.setJson.mock.calls[0];
+            const lobbyData = setJsonCall[2];
+            
+            expect(lobbyData.options.timerTurn).toBe(MIN_TIMER_VALUE);
+            expect(lobbyData.options.timerMovement).toBe(MAX_TIMER_VALUE);
+            expect(lobbyData.options.timerDraft).toBe(MIN_TIMER_VALUE);
+        });
+        });
 });
