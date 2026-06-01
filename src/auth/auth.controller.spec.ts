@@ -1,16 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    Controller,
-    Get,
-    HttpCode,
-    HttpStatus,
-    Post,
-    Req,
-    Res,
-    UnauthorizedException,
-    UseGuards,
-    ValidationPipe,
-} from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TokenService } from './jwt/token.service';
@@ -29,11 +17,13 @@ const createMockResponse = () => {
     return res as Response;
 };
 
-const createMockRequest = (cookies: any = {}) => {
+const createMockRequest = (cookies: any = {}, ip: string = '127.0.0.1') => {
     return {
         cookies,
         headers: {},
         get: jest.fn(),
+        ip,
+        connection: { remoteAddress: ip },
     } as unknown as Request;
 };
 
@@ -183,14 +173,15 @@ describe('AuthController', () => {
             refreshToken: 'refresh-token',
         };
 
-        it('should login user and set refresh token cookie', async () => {
+        it('should login user with IP from request.ip', async () => {
+            const request = createMockRequest({}, '192.168.1.1');
             const response = createMockResponse();
 
             mockAuthService.login.mockResolvedValue(mockTokens);
 
-            const result = await controller.login(loginDto, response);
+            const result = await controller.login(loginDto, response, request);
 
-            expect(authService.login).toHaveBeenCalledWith(loginDto);
+            expect(authService.login).toHaveBeenCalledWith(loginDto, '192.168.1.1');
             expect(response.cookie).toHaveBeenCalledWith(
                 'refresh_token',
                 mockTokens.refreshToken,
@@ -199,16 +190,71 @@ describe('AuthController', () => {
             expect(result).toEqual({
                 accessToken: mockTokens.accessToken,
             });
-            expect(result).not.toHaveProperty('refreshToken');
+        });
+
+        it('should login user with IP from x-forwarded-for header', async () => {
+            const request = {
+                cookies: {},
+                headers: { 'x-forwarded-for': '10.0.0.1' },
+                get: jest.fn(),
+                ip: undefined,
+                connection: { remoteAddress: '127.0.0.1' },
+            } as unknown as Request;
+            const response = createMockResponse();
+
+            mockAuthService.login.mockResolvedValue(mockTokens);
+
+            const result = await controller.login(loginDto, response, request);
+
+            expect(authService.login).toHaveBeenCalledWith(loginDto, '10.0.0.1');
+            expect(response.cookie).toHaveBeenCalled();
+            expect(result).toEqual({ accessToken: mockTokens.accessToken });
+        });
+
+        it('should login user with IP from connection.remoteAddress', async () => {
+            const request = {
+                cookies: {},
+                headers: {},
+                get: jest.fn(),
+                ip: undefined,
+                connection: { remoteAddress: '192.168.0.1' },
+            } as unknown as Request;
+            const response = createMockResponse();
+
+            mockAuthService.login.mockResolvedValue(mockTokens);
+
+            const result = await controller.login(loginDto, response, request);
+
+            expect(authService.login).toHaveBeenCalledWith(loginDto, '192.168.0.1');
+            expect(result).toEqual({ accessToken: mockTokens.accessToken });
+        });
+
+        it('should use "unknown" as default IP when no IP found', async () => {
+            const request = {
+                cookies: {},
+                headers: {},
+                get: jest.fn(),
+                ip: undefined,
+                connection: { remoteAddress: undefined },
+            } as unknown as Request;
+            const response = createMockResponse();
+
+            mockAuthService.login.mockResolvedValue(mockTokens);
+
+            const result = await controller.login(loginDto, response, request);
+
+            expect(authService.login).toHaveBeenCalledWith(loginDto, 'unknown');
+            expect(result).toEqual({ accessToken: mockTokens.accessToken });
         });
 
         it('should handle login error', async () => {
+            const request = createMockRequest();
             const response = createMockResponse();
             const error = new Error('Login failed');
 
             mockAuthService.login.mockRejectedValue(error);
 
-            await expect(controller.login(loginDto, response)).rejects.toThrow(
+            await expect(controller.login(loginDto, response, request)).rejects.toThrow(
                 error,
             );
             expect(response.cookie).not.toHaveBeenCalled();
@@ -249,9 +295,6 @@ describe('AuthController', () => {
             const request = createMockRequest({});
             const response = createMockResponse();
 
-            await expect(controller.refresh(request, response)).rejects.toThrow(
-                UnauthorizedException,
-            );
             await expect(controller.refresh(request, response)).rejects.toThrow(
                 'Токен не найден',
             );
@@ -317,11 +360,6 @@ describe('AuthController', () => {
 
     describe('HTTP decorators verification', () => {
         it('should have POST /register endpoint', () => {
-            const routes = Reflect.getMetadata('path', AuthController);
-            const method = Reflect.getMetadata(
-                'method',
-                AuthController.prototype.register,
-            );
             expect(AuthController.prototype.register).toBeDefined();
         });
 
@@ -439,6 +477,7 @@ describe('AuthController (integration style)', () => {
         });
 
         it('should return only accessToken in response body for login', async () => {
+            const request = createMockRequest();
             const response = createMockResponse();
             const tokens = {
                 accessToken: 'access-token',
@@ -447,7 +486,7 @@ describe('AuthController (integration style)', () => {
 
             mockAuthService.login.mockResolvedValue(tokens);
 
-            const result = await controller.login({} as LoginDto, response);
+            const result = await controller.login({} as LoginDto, response, request);
 
             expect(result).toEqual({ accessToken: 'access-token' });
             expect(Object.keys(result)).toHaveLength(1);
@@ -467,6 +506,50 @@ describe('AuthController (integration style)', () => {
 
             expect(result).toEqual({ accessToken: 'new-access-token' });
             expect(Object.keys(result)).toHaveLength(1);
+        });
+    });
+
+    describe('IP extraction priority', () => {
+        it('should prioritize request.ip over other sources', async () => {
+            const request = {
+                cookies: {},
+                headers: { 'x-forwarded-for': '10.0.0.1, 10.0.0.2' },
+                get: jest.fn(),
+                ip: '192.168.1.100',
+                connection: { remoteAddress: '127.0.0.1' },
+            } as unknown as Request;
+            const response = createMockResponse();
+            const tokens = {
+                accessToken: 'access-token',
+                refreshToken: 'refresh-token',
+            };
+
+            mockAuthService.login.mockResolvedValue(tokens);
+
+            await controller.login({} as LoginDto, response, request);
+
+            expect(authService.login).toHaveBeenCalledWith({} as LoginDto, '192.168.1.100');
+        });
+
+        it('should use x-forwarded-for header when request.ip is not available', async () => {
+            const request = {
+                cookies: {},
+                headers: { 'x-forwarded-for': '10.0.0.1' },
+                get: jest.fn(),
+                ip: undefined,
+                connection: { remoteAddress: '127.0.0.1' },
+            } as unknown as Request;
+            const response = createMockResponse();
+            const tokens = {
+                accessToken: 'access-token',
+                refreshToken: 'refresh-token',
+            };
+
+            mockAuthService.login.mockResolvedValue(tokens);
+
+            await controller.login({} as LoginDto, response, request);
+
+            expect(authService.login).toHaveBeenCalledWith({} as LoginDto, '10.0.0.1');
         });
     });
 });

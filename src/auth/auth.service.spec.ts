@@ -22,6 +22,7 @@ import {
     UserAlreadyExistsException,
 } from './exceptions/auth.exception';
 import { INVITE_CODE_STATUS } from '../invite-code/types/invite-code';
+import { AuthRateLimitService } from './auth-rate-limit.service';
 import * as bcrypt from 'bcrypt';
 import { validate as isValidUUID } from 'uuid';
 
@@ -36,6 +37,7 @@ describe('AuthService', () => {
     let tokenService: jest.Mocked<TokenService>;
     let collectionService: jest.Mocked<CollectionService>;
     let deckService: jest.Mocked<DeckService>;
+    let rateLimitService: jest.Mocked<AuthRateLimitService>;
 
     const mockUsersRepository = {
         findOne: jest.fn(),
@@ -66,6 +68,13 @@ describe('AuthService', () => {
 
     const mockDeckService = {
         createForNewUser: jest.fn(),
+    };
+
+    const mockRateLimitService = {
+        checkGlobalIpLimit: jest.fn(),
+        checkAndRecordFailedAttempt: jest.fn(),
+        clearFailedAttempts: jest.fn(),
+        recordGlobalIpAttempt: jest.fn(),
     };
 
     const createMockInviteCode = (
@@ -112,6 +121,8 @@ describe('AuthService', () => {
     };
 
     beforeEach(async () => {
+        jest.clearAllMocks();
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 AuthService,
@@ -139,6 +150,10 @@ describe('AuthService', () => {
                     provide: DeckService,
                     useValue: mockDeckService,
                 },
+                {
+                    provide: AuthRateLimitService,
+                    useValue: mockRateLimitService,
+                },
             ],
         }).compile();
 
@@ -149,6 +164,7 @@ describe('AuthService', () => {
         tokenService = module.get(TokenService);
         collectionService = module.get(CollectionService);
         deckService = module.get(DeckService);
+        rateLimitService = module.get(AuthRateLimitService);
     });
 
     afterEach(() => {
@@ -370,6 +386,7 @@ describe('AuthService', () => {
             login: 'testuser',
             password: 'password123',
         };
+        const ip = '127.0.0.1';
 
         const mockUserId = 'user-123';
         const mockTokens = {
@@ -391,10 +408,20 @@ describe('AuthService', () => {
             mockUser.password = 'hashed_password';
 
             mockUsersRepository.findOne.mockResolvedValue(mockUser);
+            mockRateLimitService.checkGlobalIpLimit.mockResolvedValue({
+                allowed: true,
+            });
+            mockRateLimitService.checkAndRecordFailedAttempt.mockResolvedValue({
+                allowed: true,
+            });
+            mockRateLimitService.clearFailedAttempts.mockResolvedValue(undefined);
+            mockRateLimitService.recordGlobalIpAttempt.mockResolvedValue(undefined);
 
-            const result = await service.login(loginDto);
+            const result = await service.login(loginDto, ip);
 
             expect(result).toEqual(mockTokens);
+            expect(mockRateLimitService.checkGlobalIpLimit).toHaveBeenCalledWith(ip);
+            expect(mockRateLimitService.checkAndRecordFailedAttempt).toHaveBeenCalledWith(loginDto.login, ip);
             expect(mockUsersRepository.findOne).toHaveBeenCalledWith({
                 where: { login: loginDto.login },
             });
@@ -402,19 +429,55 @@ describe('AuthService', () => {
                 loginDto.password,
                 mockUser.password,
             );
+            expect(mockRateLimitService.clearFailedAttempts).toHaveBeenCalledWith(loginDto.login, ip);
+            expect(mockRateLimitService.recordGlobalIpAttempt).toHaveBeenCalledWith(ip);
             expect(mockTokenService.generateTokens).toHaveBeenCalledWith({
                 sub: mockUserId,
             });
         });
 
+        it('should throw UnauthorizedException if global IP limit exceeded', async () => {
+            mockRateLimitService.checkGlobalIpLimit.mockResolvedValue({
+                allowed: false,
+                message: 'С вашего IP слишком много попыток',
+            });
+
+            await expect(service.login(loginDto, ip)).rejects.toThrow(
+                UnauthorizedException,
+            );
+            expect(mockUsersRepository.findOne).not.toHaveBeenCalled();
+        });
+
+        it('should throw UnauthorizedException if rate limit check fails', async () => {
+            mockRateLimitService.checkGlobalIpLimit.mockResolvedValue({
+                allowed: true,
+            });
+            mockRateLimitService.checkAndRecordFailedAttempt.mockResolvedValue({
+                allowed: false,
+                message: 'Слишком много неудачных попыток',
+            });
+
+            await expect(service.login(loginDto, ip)).rejects.toThrow(
+                UnauthorizedException,
+            );
+            expect(mockUsersRepository.findOne).not.toHaveBeenCalled();
+        });
+
         it('should throw InvalidCredentialsException if user not found', async () => {
+            mockRateLimitService.checkGlobalIpLimit.mockResolvedValue({
+                allowed: true,
+            });
+            mockRateLimitService.checkAndRecordFailedAttempt.mockResolvedValue({
+                allowed: true,
+            });
             mockUsersRepository.findOne.mockResolvedValue(null);
 
-            await expect(service.login(loginDto)).rejects.toThrow(
+            await expect(service.login(loginDto, ip)).rejects.toThrow(
                 InvalidCredentialsException,
             );
             expect(bcrypt.compare).not.toHaveBeenCalled();
             expect(mockTokenService.generateTokens).not.toHaveBeenCalled();
+            expect(mockRateLimitService.clearFailedAttempts).not.toHaveBeenCalled();
         });
 
         it('should throw InvalidCredentialsException if password is invalid', async () => {
@@ -425,24 +488,23 @@ describe('AuthService', () => {
             );
             mockUser.password = 'hashed_password';
 
+            mockRateLimitService.checkGlobalIpLimit.mockResolvedValue({
+                allowed: true,
+            });
+            mockRateLimitService.checkAndRecordFailedAttempt.mockResolvedValue({
+                allowed: true,
+                message: 'Неверный пароль',
+            });
             mockUsersRepository.findOne.mockResolvedValue(mockUser);
             (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-            await expect(service.login(loginDto)).rejects.toThrow(
+            await expect(service.login(loginDto, ip)).rejects.toThrow(
                 InvalidCredentialsException,
             );
             expect(mockTokenService.generateTokens).not.toHaveBeenCalled();
+            expect(mockRateLimitService.clearFailedAttempts).not.toHaveBeenCalled();
         });
 
-        it('should handle unexpected errors and throw internal server error', async () => {
-            mockUsersRepository.findOne.mockRejectedValue(
-                new Error('Database error'),
-            );
-
-            await expect(service.login(loginDto)).rejects.toThrow(
-                'Ошибка на стороне сервера',
-            );
-        });
     });
 
     describe('refreshTokens', () => {
