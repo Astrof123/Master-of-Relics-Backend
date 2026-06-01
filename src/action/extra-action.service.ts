@@ -181,6 +181,7 @@ export class ExtraActionService {
         const state = artifact.extraData.lastStateBeforeRoot;
         this.artifactStateService.applyState(artifact, state, logParts);
         gameState.player.movePoints -= 1;
+        gameState.player.extraData.countActionsSinceStartTurn += 1;
     }
 
     handleDestroyArtifact(

@@ -11,8 +11,8 @@ export class UserAlreadyExistsException extends CustomHttpException {
 }
 
 export class InvalidCredentialsException extends CustomHttpException {
-    constructor() {
-        super('Неверный логин или пароль', HttpStatus.UNAUTHORIZED);
+    constructor(message: string = 'Неверный логин или пароль') {
+        super(message, HttpStatus.UNAUTHORIZED);
     }
 }
 

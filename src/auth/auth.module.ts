@@ -8,10 +8,11 @@ import { WebSocketAuthMiddleware } from './middlewares/websocket-auth.middleware
 import { CollectionModule } from 'src/collection/collection.module';
 import { UserStats } from 'src/users/entities/user-stats.entity';
 import { InviteCode } from 'src/invite-code/entities/invite-code.entity';
+import { AuthRateLimitService } from './auth-rate-limit.service';
 
 @Module({
     controllers: [AuthController],
-    providers: [AuthService, TokenService, WebSocketAuthMiddleware],
+    providers: [AuthService, TokenService, WebSocketAuthMiddleware, AuthRateLimitService],
     imports: [
         TypeOrmModule.forFeature([User]),
         TypeOrmModule.forFeature([UserStats]),

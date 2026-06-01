@@ -26,6 +26,7 @@ import { InviteCode } from 'src/invite-code/entities/invite-code.entity';
 import { INVITE_CODE_STATUS } from 'src/invite-code/types/invite-code';
 import { validate as isValidUUID } from 'uuid';
 import { DeckService } from 'src/collection/deck.service';
+import { AuthRateLimitService } from './auth-rate-limit.service';
 
 @Injectable()
 export class AuthService {
@@ -39,6 +40,7 @@ export class AuthService {
         private tokenService: TokenService,
         private collectionService: CollectionService,
         private readonly deckService: DeckService,
+        private readonly rateLimitService: AuthRateLimitService
     ) {}
 
     private generateFriendCode(): string {
@@ -132,48 +134,45 @@ export class AuthService {
         }
     }
 
-    async login(loginDto: LoginDto): Promise<TokensDto> {
+    async login(loginDto: LoginDto, ip: string): Promise<TokensDto> {
         const { login, password } = loginDto;
 
-        try {
-            const user = await this.usersRepository.findOne({
-                where: { login },
-            });
-
-            if (!user) {
-                throw new InvalidCredentialsException();
-            }
-
-            const isPasswordValid = await bcrypt.compare(
-                password,
-                user.password,
-            );
-
-            if (!isPasswordValid) {
-                throw new InvalidCredentialsException();
-            }
-
-            const tokens = await this.tokenService.generateTokens({
-                sub: user.id,
-            });
-
-            return {
-                accessToken: tokens.accessToken,
-                refreshToken: tokens.refreshToken,
-            };
-        } catch (error) {
-            if (
-                error instanceof InvalidCredentialsException ||
-                error instanceof CustomHttpException
-            ) {
-                throw error;
-            }
-
-            throw new HttpException(
-                'Ошибка на стороне сервера',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
+        const globalLimit = await this.rateLimitService.checkGlobalIpLimit(ip);
+        if (!globalLimit.allowed) {
+            throw new UnauthorizedException(globalLimit.message);
         }
+
+        const rateCheck = await this.rateLimitService.checkAndRecordFailedAttempt(login, ip);
+        if (!rateCheck.allowed) {
+            throw new UnauthorizedException(rateCheck.message);
+        }
+
+        const user = await this.usersRepository.findOne({
+            where: { login },
+        });
+
+        if (!user) {
+            throw new InvalidCredentialsException();
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            throw new InvalidCredentialsException(rateCheck.message);
+        }
+
+        await this.rateLimitService.clearFailedAttempts(login, ip);
+        
+        await this.rateLimitService.recordGlobalIpAttempt(ip);
+
+        const tokens = await this.tokenService.generateTokens({
+            sub: user.id,
+        });
+
+        return {
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+        };
     }
 
     async refreshTokens(refreshToken: string) {

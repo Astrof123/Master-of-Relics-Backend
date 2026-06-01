@@ -57,8 +57,13 @@ export class AuthController {
     async login(
         @Body(ValidationPipe) loginDto: LoginDto,
         @Res({ passthrough: true }) response: express.Response,
+        @Req() request: express.Request
     ): Promise<Omit<TokensDto, 'refreshToken'>> {
-        const result = await this.authService.login(loginDto);
+        const ip = request.ip || 
+            request.headers['x-forwarded-for'] as string || 
+            request.connection.remoteAddress || 
+            'unknown';
+        const result = await this.authService.login(loginDto, ip);
 
         this.setRefreshTokenCookie(response, result.refreshToken);
 

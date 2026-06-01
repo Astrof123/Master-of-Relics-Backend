@@ -395,6 +395,7 @@ export class ArtifactService {
         const countArtifactOnSameLine = Object.values(player.artifacts).filter(
             (a) => a.line === artifact.line,
         ).length;
+        
         this.moveArtifact(
             countArtifactOnSameLine - 1,
             artifact,
